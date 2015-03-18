@@ -1025,9 +1025,15 @@ Meteor.startup(function() {
             if (v == null) {
               v = "null";
             }
-            if ((_base = axisValues[k])[v] == null) {
-              _base[v] = 0;
+            try {
+                if ((_base = axisValues[k])[v] == null) {
+                  _base[v] = 0;
+                }
+            } catch (err) {
+                console.log("caught err", err, k, v);
+                _base[v] = 0;
             }
+
             _results.push(axisValues[k][v]++);
           }
           return _results;
