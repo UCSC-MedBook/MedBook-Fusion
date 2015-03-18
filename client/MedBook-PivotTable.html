@@ -1,0 +1,21 @@
+<head>
+    <title>Pivot Demo</title>
+</head>
+
+<body>
+    {{> charts}}
+
+    {{>PivotTable}}
+    
+</body>
+
+<template name="PivotTable">
+    <h2>Pivot Table</h2>
+    <div id="output" style="margin: 30px;"></div>
+</template>
+
+
+<template name="charts">
+  <h2>Charts</h2>
+  <div id="chart1" width="100%"></div>
+</template>
