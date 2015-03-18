@@ -1,3 +1,8 @@
 /* CSS declarations go here */
 
 * {font-family: Verdana;}
+
+body {
+    width: 800px;
+}
+
