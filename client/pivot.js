@@ -20,7 +20,7 @@ Meteor.startup(function() {
             // "Abiraterone": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Abiraterone"),
             // "Enzalutamide": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Enzalutamide"),
         },
-        hidden_attributes: [ 'age', "treatment_for_mcrpc_prior_to_biopsy"], 
+        hidden_attributes: [ "Patient_ID","Sample_ID"] 
     };
 
     var init = {
@@ -41,8 +41,8 @@ Meteor.startup(function() {
 
 function Transform_Clinical_Info(f) {
     delete f["_id"];
-    delete f["Sample_ID"];
-    delete f["Patient_ID"];
+    // delete f["Sample_ID"];
+    // delete f["Patient_ID"];
     delete f["On_Study_Date"];
     delete f["Off_Study_Date"];
 
@@ -116,6 +116,8 @@ function Transform_Clinical_Info(f) {
 };
 function PivotTableRender(thisTemplate) {
      console.log("PivotTable", thisTemplate);
+
+     var which = thisTemplate.data && thisTemplate.data.which ? thisTemplate.data.which : "NW"; 
      templateContext = { 
         onRefresh: function(config) {
             var config_copy = JSON.parse(JSON.stringify(config));
@@ -128,16 +130,17 @@ function PivotTableRender(thisTemplate) {
             delete config_copy["rendererOptions"];
             delete config_copy["localeStrings"];
 
-            Charts.update({ _id : thisTemplate.data.which }, config_copy);
+            Charts.update({ _id : which }, config_copy);
             thisTemplate.params=encodeURI(JSON.stringify(config_copy, undefined, 0));
         }
     }
 
-    var chart = Charts.findOne({_id: thisTemplate.data.which});
+    var chart = Charts.findOne({_id: which});
     var config = $.extend({}, chart, templateContext);
 
     Session.set("ChartData", Clinical_Info.find().fetch().map(Transform_Clinical_Info));
     var chartData = Session.get("ChartData");
+    window.CD = chartData;
     $(thisTemplate.find(".output")).pivotUI(chartData, config);
 }
 
@@ -153,28 +156,3 @@ Template.PivotTable.helpers = {
 }
 
 
-Meteor.startup(function () {
-
-chart = {
-  target: 'chart1',
-  type: 'BarChart',
-  columns: [
-    ['string', 'Topping'],
-    ['number', 'Slices']
-  ],
-  rows: [
-    ['Mushrooms', 3],
-    ['Onions', 1],
-    ['Olives', 1],
-    ['Zucchini', 1],
-    ['Pepperoni', 2]
-  ],
-  options: {
-    'title':'How Much Pizza I Ate Last Night',
-    'width':400,
-    'height':300
-  }
-};
-
-drawChart(chart);
-});

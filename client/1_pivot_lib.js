@@ -1,4 +1,16 @@
 
+ google.load('visualization', '1', {packages: ['controls', 'charteditor']});
+
+  GROUPER = function(container, data, rowKey, colKey) {
+    if (container.GROUPS == null) container.GROUPS =  {};
+    if (rowKey == null) rowKey = "N/A";
+    if (colKey == null) colKey = "N/A";
+    var key = rowKey + ";" + colKey
+    if (key in container.GROUPS)
+        container.GROUPS[key].push(data)
+    else
+        container.GROUPS[key] = [data];
+  }
 Meteor.startup(function() {
   var callWithJQuery,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -76,7 +88,8 @@ Meteor.startup(function() {
           return function(data, rowKey, colKey) {
             return {
               count: 0,
-              push: function() {
+              push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 return this.count++;
               },
               value: function() {
@@ -98,6 +111,7 @@ Meteor.startup(function() {
             return {
               uniq: [],
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 var _ref;
                 if (_ref = record[attr], __indexOf.call(this.uniq, _ref) < 0) {
                   return this.uniq.push(record[attr]);
@@ -120,6 +134,7 @@ Meteor.startup(function() {
             return {
               uniq: [],
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 var _ref;
                 if (_ref = record[attr], __indexOf.call(this.uniq, _ref) < 0) {
                   return this.uniq.push(record[attr]);
@@ -147,6 +162,7 @@ Meteor.startup(function() {
             return {
               sum: 0,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 if (!isNaN(parseFloat(record[attr]))) {
                   return this.sum += parseFloat(record[attr]);
                 }
@@ -171,6 +187,7 @@ Meteor.startup(function() {
             return {
               val: null,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 var x, _ref;
                 x = parseFloat(record[attr]);
                 if (!isNaN(x)) {
@@ -197,6 +214,7 @@ Meteor.startup(function() {
             return {
               val: null,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 var x, _ref;
                 x = parseFloat(record[attr]);
                 if (!isNaN(x)) {
@@ -224,6 +242,7 @@ Meteor.startup(function() {
               sum: 0,
               len: 0,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 if (!isNaN(parseFloat(record[attr]))) {
                   this.sum += parseFloat(record[attr]);
                   return this.len++;
@@ -250,6 +269,7 @@ Meteor.startup(function() {
               sumNum: 0,
               sumDenom: 0,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 if (!isNaN(parseFloat(record[num]))) {
                   this.sumNum += parseFloat(record[num]);
                 }
@@ -281,6 +301,7 @@ Meteor.startup(function() {
               sumNum: 0,
               sumDenom: 0,
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 if (!isNaN(parseFloat(record[num]))) {
                   this.sumNum += parseFloat(record[num]);
                 }
@@ -318,6 +339,7 @@ Meteor.startup(function() {
               }[type],
               inner: wrapped.apply(null, x)(data, rowKey, colKey),
               push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
                 return this.inner.push(record);
               },
               format: formatter,
@@ -1040,9 +1062,38 @@ Meteor.startup(function() {
         });
         uiTable = $("<table>").attr("cellpadding", 5);
         rendererControl = $("<td>");
-        renderer = $("<select>").addClass('pvtRenderer').appendTo(rendererControl).bind("change", function() {
+        var controlPanel = $("<div class='dataExplorerControlPanel'>").appendTo(rendererControl);
+        renderer = $("<select>").addClass('pvtRenderer').appendTo(controlPanel).bind("change", function() {
           return refresh();
         });
+        $("<br>").appendTo(controlPanel);
+
+        function getHTML() {
+            var wrapper = uiTable.find(".ChartWrapper")[0].wrapper;
+            console.log("wrapper", wrapper);
+        }
+
+        /*
+        $("<button>Group</button>").addClass('post').appendTo(controlPanel).bind("change", function() { });
+        $("<button>Contrast</button>").addClass('post').appendTo(controlPanel).bind("click", function() { });
+        */
+        $("<button>Edit Chart</button>").addClass('editChart').appendTo(controlPanel).bind("click", function() {
+            var $cw = uiTable.find(".ChartWrapper");
+            if ($cw.length == 1) {
+                var wrapper = $cw[0].wrapper;
+                var editor = new google.visualization.ChartEditor();
+                google.visualization.events.addListener(editor, 'ok', function() {
+                  return editor.getChartWrapper().draw($cw[0]);
+                });
+                return editor.openDialog(wrapper);
+            } else {
+                alert("Chart Editing is not available on Tables");
+            }
+        });
+        $("<button>Post</button>").addClass('post').appendTo(controlPanel).bind("click", function() { 
+        });
+
+
         _ref1 = opts.renderers;
         for (x in _ref1) {
           if (!__hasProp.call(_ref1, x)) continue;

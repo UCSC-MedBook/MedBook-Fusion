@@ -6,3 +6,17 @@ body {
     width: 800px;
 }
 
+.dataExplorerControlPanel {
+    margin: 3px;
+    padding: 2px;
+    border: solid gray 1px;
+    border-radius: 15px;
+    text-align:center; 
+}
+
+.dataExplorerControlPanel button {
+    margin: 5px;
+}
+.dataExplorerControlPanel select {
+    margin: 5px;
+}
