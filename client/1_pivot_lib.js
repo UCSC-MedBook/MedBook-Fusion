@@ -1063,6 +1063,7 @@ Meteor.startup(function() {
         uiTable = $("<table>").attr("cellpadding", 5);
         rendererControl = $("<td>");
         var controlPanel = $("<div class='dataExplorerControlPanel'>").appendTo(rendererControl);
+        $("<label>Chart Type</label>").appendTo(controlPanel);
         renderer = $("<select>").addClass('pvtRenderer').appendTo(controlPanel).bind("change", function() {
           return refresh();
         });
@@ -1072,26 +1073,6 @@ Meteor.startup(function() {
             var wrapper = uiTable.find(".ChartWrapper")[0].wrapper;
             console.log("wrapper", wrapper);
         }
-
-        /*
-        $("<button>Group</button>").addClass('post').appendTo(controlPanel).bind("change", function() { });
-        $("<button>Contrast</button>").addClass('post').appendTo(controlPanel).bind("click", function() { });
-        */
-        $("<button>Edit Chart</button>").addClass('editChart').appendTo(controlPanel).bind("click", function() {
-            var $cw = uiTable.find(".ChartWrapper");
-            if ($cw.length == 1) {
-                var wrapper = $cw[0].wrapper;
-                var editor = new google.visualization.ChartEditor();
-                google.visualization.events.addListener(editor, 'ok', function() {
-                  return editor.getChartWrapper().draw($cw[0]);
-                });
-                return editor.openDialog(wrapper);
-            } else {
-                alert("Chart Editing is not available on Tables");
-            }
-        });
-        $("<button>Post</button>").addClass('post').appendTo(controlPanel).bind("click", function() { 
-        });
 
 
         _ref1 = opts.renderers;
