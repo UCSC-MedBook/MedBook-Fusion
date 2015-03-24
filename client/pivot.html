@@ -1,6 +1,21 @@
 <template name="PivotTable">
     <h2>Explorer</h2>
+    {{> Controls }}
+
     <div class="output" style="margin: 30px;"></div>
+</template>
+
+<template name="Controls">
+    <h3>Studies</h3>
+    {{#each studies}}
+    {{/each}}
+
+    <h2>Genes</h2>
+      <input class="genelist" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+
+
+    <h2>Gene Sets</h2>
+
 </template>
 
 

@@ -20,3 +20,7 @@ body {
 .dataExplorerControlPanel select {
     margin: 5px;
 }
+
+.genelist {
+   width: 400px;
+}

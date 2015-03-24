@@ -156,3 +156,53 @@ Template.PivotTable.helpers = {
 }
 
 
+
+
+Template.Controls.rendered = function() {
+     Meteor.subscribe("Expression", "prad_wcdt");
+     // genes = Expression.find({}, { sort: {gene:1 }, fields: {"gene":1 }})
+     var $genelist = $("#genelist");
+      $genelist.select2({
+
+          multiple: true,
+          ajax: {
+            url: "/explorer/genes",
+            dataType: 'json',
+            delay: 250,
+            data: function (term) {
+              var qp = {
+                q: term
+              };
+              console.log("genes query", qp)
+              return qp;
+            },
+            results: function (data, page, query) {
+              // parse the results into the format expected by Select2.
+              // since we are using custom formatting functions we do not need to
+              // alter the remote JSON data
+              return {
+                  results: data.items
+              };
+            },
+            cache: true
+          },
+          escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
+          minimumInputLength: 2,
+      });
+     /*
+     $genelist.select2({ tags: ["AR", "BRCA"]});
+
+           createSearchChoice: function(term, data) {
+                    debugger;
+
+                    alert(term);
+                     var res = Expression.find({gene: { $regex: term+".*"}}, { sort: {gene:1 }, fields: {"gene":1 }}).map( function(g) 
+                         { return  {id: g.gene, text: g.gene} });
+                     return res;
+                }
+     */
+     $genelist.keydown(function(f) {
+             alert("key");
+     })
+};
+

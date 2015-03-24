@@ -1,0 +1,51 @@
+<template name="MasterLayout">
+    <div class="container-fluid">
+		<table class="table table-bordered">
+		    <tbody>
+		        <tr>
+		            <td>
+						<div class="studies-panel">
+			 Study:
+                         <!--
+			{{#with studies}}
+				<select id="study" class="span1-12">
+					<option value="">Select a Study ...</option>
+					{{#each this}}
+					<option  value="{{id}}" selected={{selected}}>{{short_name}}</option>
+					{{/each}}
+				</select>
+			{{else}}
+				No studies yet.
+			{{/with}}
+                        -->
+			<button class="nuc">Reset</button>
+			
+		</div>
+				</td>
+				<td>
+					
+				 	<div id="contrast1" width=200>
+                        <!--
+						Contrast {{> Contrast}}
+                        -->
+					</div>
+				</td>
+				<td>
+					{{#if currentUser}}
+					User: {{ currentUser.username }} Member of: {{member}} <button class="logout btn">Logout</button>
+					{{else}}
+					Not Logged in {{> loginButtons}}
+					{{/if}}
+				</td>
+		        </tr>
+		    </tbody>
+		</table>
+		{{#if currentUser}} 
+		<ul class="nav nav-tabs" role="tablist">
+		</ul>
+		<div >
+			{{> yield}}
+		</div>
+		{{/if}}
+    </div>
+</template>
