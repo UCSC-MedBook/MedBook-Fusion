@@ -1202,6 +1202,11 @@ Meteor.startup(function() {
           c = shownAttributes[i];
           _fn(c);
         }
+
+        this.magicAdd = function(c) {
+            _fn(c);
+        }
+
         tr1 = $("<tr>").appendTo(uiTable);
         aggregator = $("<select>").addClass('pvtAggregator').bind("change", function() {
           return refresh();

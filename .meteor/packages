@@ -12,4 +12,5 @@ iron:router
 accounts-password
 accounts-ui
 accounts-google
-mizzao:bootstrap-3
+ajduke:bootstrap-tagsinput
+cfs:http-methods

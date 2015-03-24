@@ -7,6 +7,11 @@ function valueIn(field, value) {
         return "";
     }
 }
+var PivotTableInit = {
+    cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
+    rendererName: "Bar Chart",
+};
+
 Meteor.startup(function() {
     var derivers = $.pivotUtilities.derivers;
     var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
@@ -23,15 +28,13 @@ Meteor.startup(function() {
         hidden_attributes: [ "Patient_ID","Sample_ID"] 
     };
 
-    var init = {
-        cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
-        rendererName: "Bar Chart",
-    };
 
-    if (Charts.find({ _id : "NW" }).count() == 0 ) {
-        var config = $.extend({}, init, { _id : "NW" });
-        Charts.insert(config);
-    }
+    /*
+    if (Charts.find({ userId: Meteor.userId() }).count() == 0 ) {
+        var chart = { pivotTableConfig: PivotTableInit }; 
+        Charts.insert(chart);
+    };
+    */
 
     Tracker.autorun(function() {
         Session.set("ChartData", Clinical_Info.find().fetch().map(Transform_Clinical_Info));
@@ -48,7 +51,6 @@ function Transform_Clinical_Info(f) {
 
     var on = f["On_Study_Date"];
     var off = f["OffStudy_Date"];
-    console.log(f);
     if (off == null)
         off = Date.now();
 
@@ -115,33 +117,40 @@ function Transform_Clinical_Info(f) {
     return f;
 };
 function PivotTableRender(thisTemplate) {
-     console.log("PivotTable", thisTemplate);
-
      var which = thisTemplate.data && thisTemplate.data.which ? thisTemplate.data.which : "NW"; 
      templateContext = { 
         onRefresh: function(config) {
-            var config_copy = JSON.parse(JSON.stringify(config));
-            console.log("pivot", config_copy);
-            //delete some values which are functions
-            delete config_copy["aggregators"];
-            delete config_copy["renderers"];
-            delete config_copy["derivedAttributes"];
-            //delete some bulky default values
-            delete config_copy["rendererOptions"];
-            delete config_copy["localeStrings"];
+            var prev = Charts.findOne({ userId : Meteor.userId() });
+            var save = {
+                cols: config.cols,
+                rows: config.rows,
+                aggregatorName: config.aggregatorName,
+                rendererName: config.rendererName,
+            };
 
-            Charts.update({ _id : which }, config_copy);
-            thisTemplate.params=encodeURI(JSON.stringify(config_copy, undefined, 0));
+            debugger;
+            if (prev)
+                Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
+            else
+                Charts.insert({ userId : Meteor.userId(), pivotTableConfig: save});
+
+            // thisTemplate.params=encodeURI(JSON.stringify(config_copy, undefined, 0));
         }
     }
+    var workingSet = Clinical_Info.find().fetch();
+    console.log("genelist", $("#genelist").select2("val"));
 
-    var chart = Charts.findOne({_id: which});
-    var config = $.extend({}, chart, templateContext);
+    var chart = Charts.findOne({userId: Meteor.userId()});
+    var config;
+    if (chart)
+        config = chart.pivotTableConfig;
+    else
+        config = PivotTableInit;
 
     Session.set("ChartData", Clinical_Info.find().fetch().map(Transform_Clinical_Info));
     var chartData = Session.get("ChartData");
     window.CD = chartData;
-    $(thisTemplate.find(".output")).pivotUI(chartData, config);
+    window.PVT = $(thisTemplate.find(".output")).pivotUI(chartData, $.extend({}, templateContext, config));
 }
 
 Template.PivotTable.rendered = function() {
@@ -173,7 +182,6 @@ Template.Controls.rendered = function() {
               var qp = {
                 q: term
               };
-              console.log("genes query", qp)
               return qp;
             },
             results: function (data, page, query) {
@@ -189,18 +197,6 @@ Template.Controls.rendered = function() {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
       });
-     /*
-     $genelist.select2({ tags: ["AR", "BRCA"]});
-
-           createSearchChoice: function(term, data) {
-                    debugger;
-
-                    alert(term);
-                     var res = Expression.find({gene: { $regex: term+".*"}}, { sort: {gene:1 }, fields: {"gene":1 }}).map( function(g) 
-                         { return  {id: g.gene, text: g.gene} });
-                     return res;
-                }
-     */
      $genelist.keydown(function(f) {
              alert("key");
      })
