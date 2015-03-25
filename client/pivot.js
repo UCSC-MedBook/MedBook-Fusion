@@ -34,14 +34,15 @@ Meteor.startup(function() {
         var chart = { pivotTableConfig: PivotTableInit }; 
         Charts.insert(chart);
     };
-    */
 
     Tracker.autorun(function() {
         Session.set("ChartData", Clinical_Info.find().fetch().map(Transform_Clinical_Info));
     });
+    */
 
 });
 
+// The "this" object has to be the default dictonary of all possible keys.
 function Transform_Clinical_Info(f) {
     delete f["_id"];
     // delete f["Sample_ID"];
@@ -60,6 +61,17 @@ function Transform_Clinical_Info(f) {
     delete f["On_Study_Date"];
     delete f["Off_Study_Date"];
 
+
+    // Make sure that 
+    Object.keys(this).map(function(k) {
+        if  (f[k] == null) {
+            debugger;
+            f[k] = this[k];
+        }
+    });
+
+
+    /*
     if  (f["Abiraterone"] == null)
         f["Abiraterone"] = "unknown";
 
@@ -84,6 +96,7 @@ function Transform_Clinical_Info(f) {
 
     if (f["Reason_for_Stopping_Treatment"] == null)
         f["Reason_for_Stopping_Treatment"] = "unknown";
+    */
 
     delete f["Death on study"];
 
@@ -154,8 +167,13 @@ function PivotTableRender(thisTemplate) {
     else
         config = PivotTableInit;
 
-    Session.set("ChartData", Clinical_Info.find().fetch().map(Transform_Clinical_Info));
-    var chartData = Session.get("ChartData");
+    var chartData = Clinical_Info.find().fetch();
+
+    var keyUnion = {};  
+    chartData.map(function(c) { $.extend(keyUnion, c); });
+    Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
+    chartData = chartData.map(Transform_Clinical_Info, keyUnion);
+
     window.CD = chartData;
     window.PVT = $(thisTemplate.find(".output")).pivotUI(chartData, $.extend({}, templateContext, config));
 }
