@@ -69,6 +69,13 @@ function Transform_Clinical_Info(f) {
     if  (f["biopsy_site"] == null)
         f["biopsy_site"] = "unknown";
 
+    if  (f["site"] == null)
+        f["site"] = "unknown";
+
+    if  (f["Days_on_Study"] == null)
+        f["Days_on_Study"] = "unknown";
+
+
     if  (f["biopsy_site"] == null)
         f["biopsy_site"] = "unknown";
 
