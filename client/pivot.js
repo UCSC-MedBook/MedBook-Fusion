@@ -65,7 +65,6 @@ function Transform_Clinical_Info(f) {
     // Make sure that 
     Object.keys(this).map(function(k) {
         if  (f[k] == null) {
-            debugger;
             f[k] = this[k];
         }
     });
@@ -148,7 +147,6 @@ function PivotTableRender(thisTemplate) {
                 rendererName: config.rendererName,
             };
 
-            debugger;
             if (prev)
                 Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
             else
@@ -158,7 +156,6 @@ function PivotTableRender(thisTemplate) {
         }
     }
     var workingSet = Clinical_Info.find().fetch();
-    console.log("genelist", $("#genelist").select2("val"));
 
     var chart = Charts.findOne({userId: Meteor.userId()});
     var config;
@@ -166,10 +163,6 @@ function PivotTableRender(thisTemplate) {
         config = chart.pivotTableConfig;
     else
         config = PivotTableInit;
-
-    var genelist = $("#genelist").select2("val");
-    var expr = Expression.find({ gene: genelist });
-    debugger;
 
     var chartData = Clinical_Info.find().fetch();
 
@@ -201,8 +194,13 @@ Template.Controls.rendered = function() {
      Meteor.subscribe("Expression", "prad_wcdt");
      // genes = Expression.find({}, { sort: {gene:1 }, fields: {"gene":1 }})
      var $genelist = $("#genelist");
-     $genelist.select2({
+     var prev = Charts.findOne({ userId : Meteor.userId() });
 
+     $genelist.select2({
+          initSelection : function (element, callback) {
+            var data = prev.genelist.map(function(g) { return { id: g, text: g }});
+            callback(data);
+          },
           multiple: true,
           ajax: {
             url: "/explorer/genes",
@@ -227,8 +225,9 @@ Template.Controls.rendered = function() {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
       });
-     $genelist.keydown(function(f) {
-             alert("key");
-     })
+     $genelist.select2("val", prev.genelist );
+     $genelist.on("change", function() {
+          Charts.update({ _id : prev._id }, {$set: {genelist: $(this).select2("val")}});
+     });
 };
 
