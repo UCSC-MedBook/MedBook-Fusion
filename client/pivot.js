@@ -167,7 +167,12 @@ function PivotTableRender(thisTemplate) {
     else
         config = PivotTableInit;
 
+    var genelist = $("#genelist").select2("val");
+    var expr = Expression.find({ gene: genelist });
+    debugger;
+
     var chartData = Clinical_Info.find().fetch();
+
 
     var keyUnion = {};  
     chartData.map(function(c) { $.extend(keyUnion, c); });
@@ -196,7 +201,7 @@ Template.Controls.rendered = function() {
      Meteor.subscribe("Expression", "prad_wcdt");
      // genes = Expression.find({}, { sort: {gene:1 }, fields: {"gene":1 }})
      var $genelist = $("#genelist");
-      $genelist.select2({
+     $genelist.select2({
 
           multiple: true,
           ajax: {
