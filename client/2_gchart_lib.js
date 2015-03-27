@@ -210,6 +210,7 @@ Meteor.startup(function() {
       };
     };
     $.pivotUtilities.gchart_renderers = {
+// "Box Plot": makeGoogleChart("CandlestickChart"),
       "Pie Chart": makeGoogleChart("PieChart"),
       "Donut Chart": makeGoogleChart("PieChart", {
         pieHole: 0.3,
