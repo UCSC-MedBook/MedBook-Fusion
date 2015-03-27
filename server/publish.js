@@ -35,6 +35,8 @@ Contrast.deny({
 
 
 
-Meteor.publish('Expression', function(studyID) {
-    return Expression.find({studyID:studyID});
+Meteor.publish('GeneExpression', function(studyID, genes) {
+    var cursor =  Expression.find({studyID:studyID, gene: {$in: genes}});
+    console.log("Expression publish", studyID, genes, cursor.count());
+    return cursor;
 });

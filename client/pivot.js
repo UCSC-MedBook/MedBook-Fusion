@@ -9,6 +9,7 @@ function valueIn(field, value) {
 }
 var PivotTableInit = {
     cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
+
     rendererName: "Bar Chart",
 };
 
@@ -25,7 +26,7 @@ Meteor.startup(function() {
             // "Abiraterone": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Abiraterone"),
             // "Enzalutamide": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Enzalutamide"),
         },
-        hidden_attributes: [ "Patient_ID","Sample_ID"] 
+        hidden_attributes: [ "_id", "Patient_ID", "Sample_ID"] 
     };
 
 
@@ -136,44 +137,40 @@ function Transform_Clinical_Info(f) {
     return f;
 };
 function PivotTableRender(thisTemplate) {
-     var which = thisTemplate.data && thisTemplate.data.which ? thisTemplate.data.which : "NW"; 
-     templateContext = { 
-        onRefresh: function(config) {
-            var prev = Charts.findOne({ userId : Meteor.userId() });
-            var save = {
-                cols: config.cols,
-                rows: config.rows,
-                aggregatorName: config.aggregatorName,
-                rendererName: config.rendererName,
-            };
-
-            if (prev)
-                Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
-            else
-                Charts.insert({ userId : Meteor.userId(), pivotTableConfig: save});
-
-            // thisTemplate.params=encodeURI(JSON.stringify(config_copy, undefined, 0));
+    Tracker.autorun(function(){
+         templateContext = { 
+            onRefresh: function(config) {
+                var prev = Charts.findOne({ userId : Meteor.userId() });
+                var save = { cols: config.cols, rows: config.rows,
+                    aggregatorName: config.aggregatorName,
+                    rendererName: config.rendererName,
+                };
+                if (prev)
+                    Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
+                else
+                    Charts.insert({ userId : Meteor.userId(), pivotTableConfig: save});
+            }
         }
-    }
-    var workingSet = Clinical_Info.find().fetch();
-
-    var chart = Charts.findOne({userId: Meteor.userId()});
-    var config;
-    if (chart)
-        config = chart.pivotTableConfig;
-    else
-        config = PivotTableInit;
-
-    var chartData = Clinical_Info.find().fetch();
-
-
-    var keyUnion = {};  
-    chartData.map(function(c) { $.extend(keyUnion, c); });
-    Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
-    chartData = chartData.map(Transform_Clinical_Info, keyUnion);
-
-    window.CD = chartData;
-    window.PVT = $(thisTemplate.find(".output")).pivotUI(chartData, $.extend({}, templateContext, config));
+        var chartData = Clinical_Info.find().fetch();
+        var chart = Charts.findOne({userId: Meteor.userId()});
+// Join the gene expression data into the chartData 
+        Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
+        var expr = Expression.find({gene: { $in: chart.genelist}});
+        expr.observe({added: function(gene) {
+            var gs = gene.samples;
+            chartData.map(function(sample) {
+                if (sample.Sample_ID in gs)
+                    sample[gene.gene + " Expression"] = gs[sample.Sample_ID].rsem_quan_log2;
+            });
+            var config = chart ? chart.pivotTableConfig : PivotTableInit;
+            var keyUnion = {};  
+            chartData.map(function(c) { $.extend(keyUnion, c); });
+            Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
+            chartData = chartData.map(Transform_Clinical_Info, keyUnion);
+            var final =  $.extend({}, PivotCommonParams, templateContext, config);
+            $(thisTemplate.find(".output")).pivotUI(chartData, final);
+         }});
+     });
 }
 
 Template.PivotTable.rendered = function() {
@@ -191,7 +188,6 @@ Template.PivotTable.helpers = {
 
 
 Template.Controls.rendered = function() {
-     Meteor.subscribe("Expression", "prad_wcdt");
      // genes = Expression.find({}, { sort: {gene:1 }, fields: {"gene":1 }})
      var $genelist = $("#genelist");
      var prev = Charts.findOne({ userId : Meteor.userId() });
@@ -227,7 +223,9 @@ Template.Controls.rendered = function() {
       });
      $genelist.select2("val", prev.genelist );
      $genelist.on("change", function() {
-          Charts.update({ _id : prev._id }, {$set: {genelist: $(this).select2("val")}});
+        var genelist =  $(this).select2("val");
+        Meteor.subscribe("GeneExpression", "prad_wcdt", genelist);
+        Charts.update({ _id : prev._id }, {$set: {genelist: genelist}});
      });
 };
 
