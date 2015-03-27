@@ -26,7 +26,7 @@ Meteor.startup(function() {
             // "Abiraterone": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Abiraterone"),
             // "Enzalutamide": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Enzalutamide"),
         },
-        hidden_attributes: [ "_id", "Patient_ID", "Sample_ID"] 
+        hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
     };
 
 
