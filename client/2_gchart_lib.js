@@ -1,4 +1,11 @@
 Meteor.startup(function() {
+    window.makeGoogleChart2 = function(chartType, extraOptions) {
+        var foo = makeGoogleChart(chartType, extraOptions);
+        return function(pivotData, opts) {
+          // debugger;
+          return foo(pivotData, opts);
+          }
+    },
 
     window.makeGoogleChart = function(chartType, extraOptions) {
       return function(pivotData, opts) {
@@ -136,7 +143,7 @@ Meteor.startup(function() {
         var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(result);
         editChartBtn.click(editChart);
         var contrastBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Make a contrast between two groups</button>').appendTo(result);
-        var postBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Post</button>').appendTo(result);
+        var postBtn = $('<button type="button" onclick="$.getScript(\'/postScript\')" style="margin:10px;" class="btn btn-default">Post</button>').appendTo(result);
         var form = $("<form hidden>").appendTo(result);
         contrastBtn.click(function() { form.toggle(); });
         var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(form);
@@ -211,8 +218,9 @@ Meteor.startup(function() {
     };
     $.pivotUtilities.gchart_renderers = {
 // "Box Plot": makeGoogleChart("CandlestickChart"),
-      "Pie Chart": makeGoogleChart("PieChart"),
-      "Donut Chart": makeGoogleChart("PieChart", {
+      "Scatter Chart": makeGoogleChart2("ScatterChart"),
+      "Pie Chart": makeGoogleChart2("PieChart"),
+      "Donut Chart": makeGoogleChart2("PieChart", {
         pieHole: 0.3,
       }),
       "Line Chart": makeGoogleChart("LineChart"),

@@ -154,14 +154,7 @@ function PivotTableRender(thisTemplate) {
         var chartData = Clinical_Info.find().fetch();
         var chart = Charts.findOne({userId: Meteor.userId()});
 // Join the gene expression data into the chartData 
-        Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
-        var expr = Expression.find({gene: { $in: chart.genelist}});
-        expr.observe({added: function(gene) {
-            var gs = gene.samples;
-            chartData.map(function(sample) {
-                if (sample.Sample_ID in gs)
-                    sample[gene.gene + " Expression"] = gs[sample.Sample_ID].rsem_quan_log2;
-            });
+        function drawChart() {
             var config = chart ? chart.pivotTableConfig : PivotTableInit;
             var keyUnion = {};  
             chartData.map(function(c) { $.extend(keyUnion, c); });
@@ -169,7 +162,20 @@ function PivotTableRender(thisTemplate) {
             chartData = chartData.map(Transform_Clinical_Info, keyUnion);
             var final =  $.extend({}, PivotCommonParams, templateContext, config);
             $(thisTemplate.find(".output")).pivotUI(chartData, final);
-         }});
+        }
+        if (chart && chart.genelist) {
+            Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
+            var expr = Expression.find({gene: { $in: chart.genelist}});
+            expr.observe({added: function(gene) {
+                var gs = gene.samples;
+                chartData.map(function(sample) {
+                    if (sample.Sample_ID in gs)
+                        sample[gene.gene + " Expression"] = gs[sample.Sample_ID].rsem_quan_log2;
+                });
+                drawChart();
+             }});
+        } else 
+            drawChart();
      });
 }
 
@@ -194,12 +200,12 @@ Template.Controls.rendered = function() {
 
      $genelist.select2({
           initSelection : function (element, callback) {
-            var data = prev.genelist.map(function(g) { return { id: g, text: g }});
-            callback(data);
+            if (prev && prev.genelist)
+                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
           },
           multiple: true,
           ajax: {
-            url: "/explorer/genes",
+            url: "/fusion/genes",
             dataType: 'json',
             delay: 250,
             data: function (term) {
@@ -221,7 +227,8 @@ Template.Controls.rendered = function() {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
       });
-     $genelist.select2("val", prev.genelist );
+     if (prev && prev.genelist)
+         $genelist.select2("val", prev.genelist );
      $genelist.on("change", function() {
         var genelist =  $(this).select2("val");
         Meteor.subscribe("GeneExpression", "prad_wcdt", genelist);
