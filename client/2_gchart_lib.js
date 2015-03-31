@@ -72,6 +72,7 @@ Meteor.startup(function() {
         if (groupByTitle !== "") {
           title += " " + opts.localeStrings.by + " " + groupByTitle;
         }
+        document.title = title;
         options = {
           width: $(window).width() / 1.4,
           height: $(window).height() / 1.4,
@@ -143,7 +144,11 @@ Meteor.startup(function() {
         var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(result);
         editChartBtn.click(editChart);
         var contrastBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Make a contrast between two groups</button>').appendTo(result);
-        var postBtn = $('<button type="button" onclick="$.getScript(\'/postScript\')" style="margin:10px;" class="btn btn-default">Post</button>').appendTo(result);
+        window.postButton = function foo() {
+            window.medbookpost = { title: document.title };
+            $.getScript('/postScript');
+        }
+        var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').appendTo(result);
         var form = $("<form hidden>").appendTo(result);
         contrastBtn.click(function() { form.toggle(); });
         var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(form);
