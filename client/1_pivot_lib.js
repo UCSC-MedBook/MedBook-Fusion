@@ -6,6 +6,7 @@
     if (rowKey == null) rowKey = "N/A";
     if (colKey == null) colKey = "N/A";
     var key = rowKey + ";" + colKey
+    debugger;
     if (key in container.GROUPS)
         container.GROUPS[key].push(data)
     else
@@ -692,12 +693,12 @@ Meteor.startup(function() {
         _ref = this.colAttrs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           x = _ref[_i];
-          colKey.push((_ref1 = record[x]) != null ? _ref1 : "null");
+          colKey.push((_ref1 = record[x]) != null ? x +":"+ _ref1 : "null");
         }
         _ref2 = this.rowAttrs;
         for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
           x = _ref2[_j];
-          rowKey.push((_ref3 = record[x]) != null ? _ref3 : "null");
+          rowKey.push((_ref3 = record[x]) != null ? x +":"+ _ref3 : "null");
         }
         flatRowKey = rowKey.join(String.fromCharCode(0));
         flatColKey = colKey.join(String.fromCharCode(0));

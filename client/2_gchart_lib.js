@@ -40,14 +40,32 @@ Meteor.startup(function() {
           }
           return _results;
         })();
+
+        var groupheaders = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = rowKeys.length; _i < _len; _i++) {
+            h = rowKeys[_i].map(function(k, n) { 
+                var rowAttr = pivotData.rowAttrs.length > 0 ? pivotData.rowAttrs[n] : "";
+                return rowAttr + ":" + k;
+            });
+            _results.push(h.join(","));
+          }
+          return _results;
+        })();
+
         headers.unshift("");
         numCharsInHAxis = 0;
         dataArray = [headers];
-        var groupArray = [headers];
+        var groupArray = [groupheaders];
         for (_i = 0, _len = colKeys.length; _i < _len; _i++) {
           colKey = colKeys[_i];
           row = [colKey.join("-")];
-          grouprow = [colKey.join("-")];
+
+          grouprow = [colKey.map(function(k, i) {
+                  var colAttr = pivotData.colAttrs.length > 0 ? pivotData.colAttrs[_i] : "";
+                  return  colAttr + ":" + k
+          }).join(",")];
           numCharsInHAxis += row[0].length;
           for (_j = 0, _len1 = rowKeys.length; _j < _len1; _j++) {
             rowKey = rowKeys[_j];
@@ -154,6 +172,7 @@ Meteor.startup(function() {
         var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(form);
         var header = $("<thead><tr><th>Group</th><th>Samples</th></tr></thead>").appendTo(groupTable);
         var body = $("<tbody>").appendTo(groupTable);
+        debugger;
         groupArray.map(function(row)  {
            if (row) {
                row.map(function(item) {
