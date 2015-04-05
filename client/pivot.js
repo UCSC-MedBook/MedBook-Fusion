@@ -136,6 +136,19 @@ function Transform_Clinical_Info(f) {
 
     return f;
 };
+
+Zclass = function(x) {
+    if (x >= 2)
+        return "2z";
+    if (x >= 1)
+        return "1z";
+    if (x  < 1 && x > -1) return "near mean";
+    if (x  < -1 && x > -2) return "-1z";
+    if (x  < -2)  return "-2z";
+}
+
+
+
 function PivotTableRender(thisTemplate) {
     Tracker.autorun(function(){
          templateContext = { 
@@ -152,7 +165,10 @@ function PivotTableRender(thisTemplate) {
             }
         }
         var chartData = Clinical_Info.find().fetch();
+
         var chart = Charts.findOne({userId: Meteor.userId()});
+
+
 // Join the gene expression data into the chartData 
         function drawChart() {
             var config = chart ? chart.pivotTableConfig : PivotTableInit;
@@ -165,12 +181,33 @@ function PivotTableRender(thisTemplate) {
         }
         if (chart && chart.genelist) {
             Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
+
             var expr = Expression.find({gene: { $in: chart.genelist}});
             expr.observe({added: function(gene) {
                 var gs = gene.samples;
+
+                var validSampleList = Object.keys(gs).filter(function(k) { 
+                        if (k.match(/^DTB-.*$/)) { 
+                            var val = gs[k].rsem_quan_log2;
+                            return val != null && !isNaN(val);
+                        }
+                        return false;
+                });
+
+                var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
+                var m = ss.mean(data);
+                var sd = ss.standard_deviation(data);
+
+                var cls = {}
+                validSampleList.map(function(k){
+                    var z = ss.z_score(parseFloat(gs[k].rsem_quan_log2), m, sd);
+                    cls[k] =  z; // Zclass(z);
+                });
+
                 chartData.map(function(sample) {
-                    if (sample.Sample_ID in gs)
-                        sample[gene.gene + " Expression"] = gs[sample.Sample_ID].rsem_quan_log2;
+                    if (sample.Sample_ID in cls) {
+                        sample[gene.gene + " Expr"] = cls[sample.Sample_ID];
+                    }
                 });
                 drawChart();
              }});

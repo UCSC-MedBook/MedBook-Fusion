@@ -172,7 +172,6 @@ Meteor.startup(function() {
         var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(form);
         var header = $("<thead><tr><th>Group</th><th>Samples</th></tr></thead>").appendTo(groupTable);
         var body = $("<tbody>").appendTo(groupTable);
-        debugger;
         groupArray.map(function(row)  {
            if (row) {
                row.map(function(item) {
@@ -241,8 +240,8 @@ Meteor.startup(function() {
       };
     };
     $.pivotUtilities.gchart_renderers = {
-// "Box Plot": makeGoogleChart("CandlestickChart"),
-      "Scatter Chart": makeGoogleChart2("ScatterChart"),
+      "Box Plot": makeD3Chart("BoxPlot"),
+      "Scatter Chart": makeGoogleScatter("ScatterChart"),
       "Pie Chart": makeGoogleChart2("PieChart"),
       "Donut Chart": makeGoogleChart2("PieChart", {
         pieHole: 0.3,

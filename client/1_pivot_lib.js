@@ -6,7 +6,6 @@
     if (rowKey == null) rowKey = "N/A";
     if (colKey == null) colKey = "N/A";
     var key = rowKey + ";" + colKey
-    debugger;
     if (key in container.GROUPS)
         container.GROUPS[key].push(data)
     else
@@ -548,6 +547,8 @@ Meteor.startup(function() {
      */
     PivotData = (function() {
       function PivotData(input, opts) {
+
+        this.input = input;
         this.getAggregator = __bind(this.getAggregator, this);
         this.getRowKeys = __bind(this.getRowKeys, this);
         this.getColKeys = __bind(this.getColKeys, this);
