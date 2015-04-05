@@ -62,7 +62,9 @@ window.makeD3Chart= function(chartType, extraOptions) {
         if (window.$div == null) {
             window.$div = $("<div class='d3boxplot'></div>");
             var div = window.$div[0];
-            displayBoxPlots(plotDataSets, h, v, div);
+            $div.ready(function() {
+                displayBoxPlots(plotDataSets, h, v, div);
+            });
         }
         return window.$div
     }
@@ -120,7 +122,8 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer) {
 
     chart.domain([min, max]);
 
-  svg = d3.select("body").append("svg")
+  svg = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
+      .selectAll("svg")
       .data(plotDataSets)
     .enter().append("svg")
       .attr("class", "box")
@@ -129,15 +132,14 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer) {
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    /*
   svg.insert("text", "box")
             .attr( 'x', width/2)
             .attr( 'y', -20)
             .attr( 'text-anchor', 'middle' )
             .attr( 'font-size', "16px" )
             .attr( 'font-weight', "bold" )
-            .text( function(d) { return d.text });
-    */
+            .text( function(d) { 
+                    return d[0] });
 
   svg.call(chart);
 
