@@ -7,7 +7,7 @@
 .box circle {
   fill: #fff;
   stroke: #000;
-  stroke-width: 1.5px;
+  stroke-width: 0.1px;
 }
 
 .box rect {

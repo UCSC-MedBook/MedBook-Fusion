@@ -1,14 +1,17 @@
 
 function BoxPlotChartData(pivotData) {
+
+    /*
     var h = pivotData.getColKeys();
     var v = pivotData.rowAttrs;
+    */
+    var h = pivotData.getRowKeys();
+    var v = pivotData.colAttrs;
     plotDataSets = [];
     predicateObjects = [];
+    plotDataSet = [];
+    plotDataSets.push([ "foo" /*predicatesArray.join(",") */, plotDataSet]);
     h.map(function (predicatesArray) { 
-        plotDataSet = [];
-        plotDataSets.push([
-            predicatesArray.join(","),
-            plotDataSet]);
 
         predicateObject = {};
         predicatesArray.map(function(predicate) {
@@ -17,9 +20,15 @@ function BoxPlotChartData(pivotData) {
         });
         predicateObjects.push(predicateObject)
     });
-    value_color =  "blue";
-    value_class =  "positive";
     var value_color_scale = d3.scale.category10();
+
+    var colorKey = []
+    h.map(function(k, i) {
+        var value_class = h[i].join(",");
+        colorKey.push({ text: value_class, color: value_color_scale(i) });
+    });
+    colorKey.sort();
+
     pivotData.input.map(function(elem, j) {
         predicateObjects.map(function(predicate, i) {
             var good = true;
@@ -29,21 +38,22 @@ function BoxPlotChartData(pivotData) {
                 if (value == "N/A") return;
                 var f = parseFloat(value);
                 var value_color = value_color_scale(i);
+                var value_class = h[i].join(",");
                 console.log("value_color", value_color);
-                var g = { Formula: plotDataSets[i][1].length, 
+                var g = { Formula: plotDataSets[0][1].length, 
                         Patient: elem.Sample_ID, 
                         ValueClass: value_class, 
                         ValueColor: value_color,
-                        Phenotype: "" ,
+                        Phenotype: value_class ,
                         Value: f,
                       };
-                plotDataSets[i][1].push(g);
+                plotDataSets[0][1].push(g);
             }
         });
     });
     h = h.join(",");
     v = v.join(",");
-    return [plotDataSets, h, v];
+    return [plotDataSets, h, v, colorKey];
 }
 
 var totalWidth, width,height;
@@ -51,7 +61,7 @@ var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 window.makeD3Chart= function(chartType, extraOptions) {
   return function(pivotData, opts) {
-        var chv = BoxPlotChartData(pivotData);
+        var chvk = BoxPlotChartData(pivotData);
         var n = 9;
 
         totalWidth = Math.max(150, 1024/ n);
@@ -60,15 +70,21 @@ window.makeD3Chart= function(chartType, extraOptions) {
 
 
 
-        var plotDataSets = chv[0];
-        var h = chv[1];
-        var v = chv[2];
+        var plotDataSets = chvk[0];
+        var v = chvk[1];
+        var h = chvk[2];
+        var colorKey = chvk[3];
+        
+        if (window.$div != null) {
+            window.$div.remove();
+            window.$div = null;
+        }
 
         if (window.$div == null) {
             window.$div = $("<div class='d3boxplot'></div>");
             var div = window.$div[0];
             $div.ready(function() {
-                displayBoxPlots(plotDataSets, h, v, div, totalWidth);
+                displayBoxPlots(plotDataSets, h, v, div, totalWidth, colorKey);
             });
         }
         return window.$div
@@ -103,7 +119,7 @@ function iqr(k) {
 }
 
 
-function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth) {
+function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey) {
 
     var min = Infinity,
         max = -Infinity;
@@ -134,15 +150,16 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth) {
   var svg0 = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
 
 
-    var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
-     svg0.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
+  /*
+  var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
+  svg0.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
 
   svg = svg0
       .selectAll("svg")
       .data(plotDataSets)
-    .enter()
-    .append("g")
-      .attr("transform", function() { 
+      .enter()
+      .append("g")
+         .attr("transform", function() { 
               var r =  "translate(" +  X + ", 0)"
               X += totalWidth;
               return r;
@@ -168,6 +185,27 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth) {
             .text( function(d) { return d[0] });
 
   svg.call(chart);
+  */
+
+
+  var wrap = svg0.selectAll('g.nv-legend').data(colorKey)
+  var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-legend').append('g')
+      .append('circle').style("fill", function(a, i) {return a.color })
+      .style('stroke-width', 2) .attr('class','nv-legend-symbol') .attr('r', 5);
+  var g = wrap.select('g');
+  wrap.attr('transform', function(a,i) { return 'translate(' + margin.left + ',' + (margin.top +(i*20)) + ')'});
+  var series = g.selectAll('.nv-series').data(function(d) { return d });
+  var seriesEnter = series.enter().append('g').attr('class', 'nv-series')
+
+  /*
+  g.append('text').attr('text-anchor', 'start').attr('class','nv-legend-text').attr('dy', '.32em')
+  .attr("text", function(d) { 
+      debugger;
+      return d.text});
+  */
+
+  series.select('circle').style("fill", function(d) { return d.color });
+
 
 };
 
