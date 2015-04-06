@@ -39,7 +39,6 @@ function BoxPlotChartData(pivotData) {
                 var f = parseFloat(value);
                 var value_color = value_color_scale(i);
                 var value_class = h[i].join(",");
-                console.log("value_color", value_color);
                 var g = { Formula: plotDataSets[0][1].length, 
                         Patient: elem.Sample_ID, 
                         ValueClass: value_class, 
@@ -147,14 +146,13 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
 
   var X = margin.leftMost;
 
-  var svg0 = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
+  var svgTop = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024).attr("class", "svgTop")
+  var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
-
-  /*
   var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
-  svg0.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
+  svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
 
-  svg = svg0
+  svg = svgBoxPlot
       .selectAll("svg")
       .data(plotDataSets)
       .enter()
@@ -165,7 +163,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
               return r;
           })
      .append("svg")
-      .attr("class", "box")
+      .attr("class", "box svgPlot")
       .attr("width", 40 + width + margin.left + margin.right)
       .attr("height", height + margin.bottom + margin.top)
     .append("g")
@@ -185,20 +183,37 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
             .text( function(d) { return d[0] });
 
   svg.call(chart);
-  */
+
+  var gLegend = svgTop
+                  .append("g").attr("transform", 
+                              function() { return "translate(" +  (X+50)  + ", 50)"; })
+                      .append("svg");
 
 
-  var wrap = svg0.selectAll('g.nv-legend').data(colorKey)
-  var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-legend').append('g')
+  var wrap = gLegend.selectAll('g.gLegendItem').data(colorKey)
+  var legend = wrap.enter().append('g').attr('class', 'gLegendItem').append('g')
+  legend.attr("width", 100);
+  legend.attr("height", 20);
+  legend
+      .append("g").attr("x", 20)
       .append('circle').style("fill", function(a, i) {return a.color })
-      .style('stroke-width', 2) .attr('class','nv-legend-symbol') .attr('r', 5);
+      .style('stroke-width', 2) .attr('class','gLegendItem-symbol') .attr('r', 5);
+
+  legend
+      .append("g")
+      .append('text').attr("x", 15).attr("y", 5)
+      .attr("class", "legendText")
+      .attr("text-anchor", "start")
+      .attr("fill", "black")
+      .text(function(d) { return d.text });
+
   var g = wrap.select('g');
   wrap.attr('transform', function(a,i) { return 'translate(' + margin.left + ',' + (margin.top +(i*20)) + ')'});
-  var series = g.selectAll('.nv-series').data(function(d) { return d });
-  var seriesEnter = series.enter().append('g').attr('class', 'nv-series')
+  var series = g.selectAll('.gSeries').data(function(d) { return d });
+  var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
 
   /*
-  g.append('text').attr('text-anchor', 'start').attr('class','nv-legend-text').attr('dy', '.32em')
+  g.append('text').attr('text-anchor', 'start').attr('class','gLegendItem-text').attr('dy', '.32em')
   .attr("text", function(d) { 
       debugger;
       return d.text});
