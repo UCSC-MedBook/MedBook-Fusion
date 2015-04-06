@@ -69,9 +69,11 @@ window.makeD3Chart= function(chartType, extraOptions) {
         return window.$div
     }
 };
-var margin = {top: 50, right: 50, bottom: 20, left: 50},
-    width = 320 - margin.left - margin.right,
-    height = 300 - margin.top - margin.bottom;
+var margin = {top: 50, right: 00, bottom: 40, left: 10},
+
+totalWidth = 300;
+width = 200 - margin.left - margin.right,
+height = 400 - margin.top - margin.bottom;
 
 
 
@@ -114,23 +116,48 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer) {
             if (elem.Value < min) min = elem.Value;
         });
     }); 
+
+    var domain = [3, -3]
+    window.yRange = d3.scale.linear().range([0, height]).domain(domain);
+
     var chart = d3.box()
         .whiskers(iqr(1.5))
         .width(width)
         .height(height);
 
 
-    chart.domain([min, max]);
+    // chart.domain([min, max]);
+    chart.domain([-3, 3]);
 
-  svg = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
+
+  var X = 0;
+
+  var svg0 = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
+
+
+    var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
+     svg0.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
+
+  svg = svg0
       .selectAll("svg")
       .data(plotDataSets)
-    .enter().append("svg")
-      .attr("class", "box")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.bottom + margin.top + 20)
+    .enter()
     .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      .attr("transform", function() { 
+              var r =  "translate(" +  X + ", 0)"
+              X += totalWidth;
+              return r;
+          })
+     .append("svg")
+      .attr("class", "box")
+      .attr("width", 40 + width + margin.left + margin.right)
+      .attr("height", height + margin.bottom + margin.top)
+    .append("g")
+      .attr("transform", function() { 
+              var r =  "translate(" + (20+ margin.left)  + "," + margin.top + ")"
+              return r;
+              });
+
 
   svg.insert("text", "box")
             .attr( 'x', width/2)

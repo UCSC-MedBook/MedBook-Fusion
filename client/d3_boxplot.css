@@ -2,12 +2,18 @@
   font: 10px sans-serif;
 }
 
+
 .box line,
 .box rect,
 .box circle {
   fill: #fff;
   stroke: #000;
   stroke-width: 1.5px;
+}
+
+.box rect {
+  stroke:rgb(255,0,0);
+  stroke-width:2
 }
 
 .box .center {

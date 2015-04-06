@@ -53,14 +53,20 @@ d3.box = function() {
           whiskerData = whiskerIndices && whiskerIndices.map(function(i) { return d[i]; });
 
       // Compute the new x-scale.
+      /*
       var x1 = d3.scale.linear()
-          .domain(domain && domain.call(this, d, i) || [min, max])
+          // .domain(domain && domain.call(this, d, i) || [min, max])
+          .domain([-3, 3])
           .range([height, 0]);
 
       // Retrieve the old x-scale, if this is an update.
       var x0 = this.__chart__ || d3.scale.linear()
-          .domain([0, Infinity])
+          // .domain([0, Infinity])
+          .domain([-3, 3])
           .range(x1.range());
+      */
+      var x1 = yRange;
+      var x0 = yRange;
 
       // Stash the new scale.
       this.__chart__ = x1;
@@ -84,8 +90,12 @@ d3.box = function() {
         .transition()
           .duration(duration)
           .style("opacity", 1)
-          .attr("y1", function(d) { return x1(d[0]); })
-          .attr("y2", function(d) { return x1(d[1]); });
+          .attr("y1", function(d) { 
+                  console.log("trans rect y1", d[0]);
+                  return x1(d[0]); })
+          .attr("y2", function(d) { 
+                  console.log("trans rect y2", d[1]);
+                  return x1(d[1]); });
 
 
       center.transition()
@@ -107,10 +117,14 @@ d3.box = function() {
 
       box.enter().append("rect")
           .attr("class", "box")
-          .attr("x", 0)
-          .attr("y", function(d) { return x0(d[2]); })
-          .attr("width", width)
-          .attr("height", function(d) { return x0(d[0]) - x0(d[2]); })
+          .attr("x", 10)
+          .attr("y", function(d) { 
+                  console.log("box d2",d[2]); 
+                  return x0(d[2]); })
+          .attr("width", width -20)
+          .attr("height", function(d) { 
+                  console.log("box d0",d[0]); 
+                  return x0(d[0]) - x0(d[2]); })
           .style("fill", "transparent")
           .style("pointer-events", "none")
         .transition()
@@ -234,12 +248,13 @@ d3.box = function() {
       var format = tickFormat || x1.tickFormat(8);
 
       // Update box ticks.
+      /*
       var boxTick = g.selectAll("text.box")
           .data(quartileData);
 
       boxTick.enter().append("text")
           .attr("class", "box")
-          .attr("dy", ".3em")
+          // .attr("dy", ".3em")
           .attr("dx", function(d, i) { return i & 1 ? 6 : -6 })
           .attr("x", function(d, i) { return i & 1 ? width : 0 })
           .attr("y", x0)
@@ -284,6 +299,7 @@ d3.box = function() {
           .attr("y", x1)
           .style("opacity", 1e-6)
           .remove();
+      */
     });
     d3.timer.flush();
   }
