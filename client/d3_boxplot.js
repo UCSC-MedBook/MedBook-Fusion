@@ -17,29 +17,23 @@ function BoxPlotChartData(pivotData) {
         });
         predicateObjects.push(predicateObject)
     });
-
     value_color =  "blue";
     value_class =  "positive";
-
-    pivotData.input.map(function(elem) {
+    var value_color_scale = d3.scale.category10();
+    pivotData.input.map(function(elem, j) {
         predicateObjects.map(function(predicate, i) {
             var good = true;
-            Object.keys(predicate).map(function(key) {
-                if (predicate[key] == elem[key])
-                    good = false;
-            });
+            Object.keys(predicate).map(function(key) { if (predicate[key] == elem[key]) good = false; });
             if (good) {
                 var value = elem[v[0]];
-                if (value == "N/A")
-                    return;
-
-                
+                if (value == "N/A") return;
                 var f = parseFloat(value);
-
+                var value_color = value_color_scale(i);
+                console.log("value_color", value_color);
                 var g = { Formula: plotDataSets[i][1].length, 
                         Patient: elem.Sample_ID, 
                         ValueClass: value_class, 
-                        ValueColor: value_color, 
+                        ValueColor: value_color,
                         Phenotype: "" ,
                         Value: f,
                       };
@@ -51,9 +45,20 @@ function BoxPlotChartData(pivotData) {
     v = v.join(",");
     return [plotDataSets, h, v];
 }
+
+var totalWidth, width,height;
+var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
+
 window.makeD3Chart= function(chartType, extraOptions) {
   return function(pivotData, opts) {
         var chv = BoxPlotChartData(pivotData);
+        var n = 9;
+
+        totalWidth = Math.max(150, 1024/ n);
+        width = totalWidth - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+
+
 
         var plotDataSets = chv[0];
         var h = chv[1];
@@ -63,18 +68,12 @@ window.makeD3Chart= function(chartType, extraOptions) {
             window.$div = $("<div class='d3boxplot'></div>");
             var div = window.$div[0];
             $div.ready(function() {
-                displayBoxPlots(plotDataSets, h, v, div);
+                displayBoxPlots(plotDataSets, h, v, div, totalWidth);
             });
         }
         return window.$div
     }
 };
-var margin = {top: 50, right: 00, bottom: 40, left: 10},
-
-totalWidth = 200;
-width = totalWidth - margin.left - margin.right,
-height = 400 - margin.top - margin.bottom;
-
 
 
 function randomize(d) {
@@ -104,7 +103,7 @@ function iqr(k) {
 }
 
 
-function displayBoxPlots(plotDataSets, h, v, svgContainer) {
+function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth) {
 
     var min = Infinity,
         max = -Infinity;
@@ -130,7 +129,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer) {
     chart.domain([-3, 3]);
 
 
-  var X = 0;
+  var X = margin.leftMost;
 
   var svg0 = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024)
 
@@ -163,10 +162,10 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer) {
             .attr( 'x', width/2)
             .attr( 'y', -20)
             .attr( 'text-anchor', 'middle' )
+            .attr( 'width', totalWidth )
             .attr( 'font-size', "16px" )
             .attr( 'font-weight', "bold" )
-            .text( function(d) { 
-                    return d[0] });
+            .text( function(d) { return d[0] });
 
   svg.call(chart);
 
