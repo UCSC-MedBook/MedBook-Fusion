@@ -125,7 +125,7 @@ d3.box = function() {
           .attr("height", function(d) { 
                   console.log("box d0",d[0]); 
                   return x0(d[0]) - x0(d[2]); })
-          .style("fill", "transparent")
+          // .style("fill", "transparent")
           .style("pointer-events", "none")
         .transition()
           .duration(duration)
@@ -144,9 +144,9 @@ d3.box = function() {
 
       medianLine.enter().append("line")
           .attr("class", "median")
-          .attr("x1", 0)
+          .attr("x1", 0 +10)
           .attr("y1", x0)
-          .attr("x2", width)
+          .attr("x2", width -20)
           .attr("y2", x0)
         .transition()
           .duration(duration)
@@ -164,9 +164,9 @@ d3.box = function() {
 
       whisker.enter().insert("line", "circle, text")
           .attr("class", "whisker")
-          .attr("x1", 0)
+          .attr("x1", 10)
           .attr("y1", x0)
-          .attr("x2", width)
+          .attr("x2", width -20)
           .attr("y2", x0)
           .style("opacity", 1e-6)
         .transition()

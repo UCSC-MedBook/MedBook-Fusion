@@ -71,8 +71,8 @@ window.makeD3Chart= function(chartType, extraOptions) {
 };
 var margin = {top: 50, right: 00, bottom: 40, left: 10},
 
-totalWidth = 300;
-width = 200 - margin.left - margin.right,
+totalWidth = 200;
+width = totalWidth - margin.left - margin.right,
 height = 400 - margin.top - margin.bottom;
 
 
