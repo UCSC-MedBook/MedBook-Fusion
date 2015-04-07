@@ -9,16 +9,22 @@ function BoxPlotChartData(pivotData) {
     var v = pivotData.colAttrs;
     plotDataSets = [];
     predicateObjects = [];
-    plotDataSet = [];
-    plotDataSets.push([ "foo" /*predicatesArray.join(",") */, plotDataSet]);
-    h.map(function (predicatesArray) { 
+    v.map(function(vv, nthColumn) {
+        plotDataSets.push([ vv, []]);
+        h.map(function (predicatesArray) { 
 
-        predicateObject = {};
-        predicatesArray.map(function(predicate) {
-            var p = predicate.split(":");
-            predicateObject[p[0]] = p[1];
+            predicateObject = {n: nthColumn};
+            predicatesArray.map(function(predicate) {
+                var p = predicate.split(":");
+                predicateObject[p[0]] = p[1];
+            });
+
+            predicateObject[vv] = function(value) { 
+                return ! isNaN(value);
+            };
+
+            predicateObjects.push(predicateObject)
         });
-        predicateObjects.push(predicateObject)
     });
     var value_color_scale = d3.scale.category10();
 
@@ -31,25 +37,39 @@ function BoxPlotChartData(pivotData) {
 
     pivotData.input.map(function(elem, j) {
         predicateObjects.map(function(predicate, i) {
+
+            var n = predicate.n;
             var good = true;
-            Object.keys(predicate).map(function(key) { if (predicate[key] == elem[key]) good = false; });
+            Object.keys(predicate).map(
+                function(key) { 
+                    if (key != 'n') {
+                        if (predicate[key] instanceof Function) {
+                            if (!predicate[key](elem[key]))
+                                good = false;
+                        } else if (predicate[key] == elem[key]) 
+                            good = false;
+                    }
+                });
             if (good) {
-                var value = elem[v[0]];
-                if (value == "N/A") return;
+                var value = elem[v[n]];
+                if (value == "N/A")
+                    return;
                 var f = parseFloat(value);
-                var value_color = value_color_scale(i);
-                var value_class = h[i].join(",");
-                var g = { Formula: plotDataSets[0][1].length, 
-                        Patient: elem.Sample_ID, 
-                        ValueClass: value_class, 
-                        ValueColor: value_color,
-                        Phenotype: value_class ,
-                        Value: f,
-                      };
-                plotDataSets[0][1].push(g);
+                var ii = i % h.length;
+                var value_color = value_color_scale(ii);
+                var value_class = h[ii].join(",");
+                var g = { 
+                    Patient: elem.Sample_ID, 
+                    ValueClass: value_class, 
+                    ValueColor: value_color,
+                    Phenotype: value_class ,
+                    Value: f,
+                };
+                plotDataSets[n][1].push(g);
             }
         });
     });
+    debugger;
     h = h.join(",");
     v = v.join(",");
     return [plotDataSets, h, v, colorKey];
