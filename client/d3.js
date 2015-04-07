@@ -678,8 +678,10 @@
     function attrFunction() {                                                                                          // 670
       var x = value.apply(this, arguments);                                                                            // 671
 
+      /*
       if (typeof(x) != "string" && isNaN(x))
           debugger;
+      */
       if (x == null) this.removeAttribute(name); else this.setAttribute(name, x);                                      // 672
     }                                                                                                                  // 673
     function attrFunctionNS() {                                                                                        // 674

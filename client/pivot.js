@@ -193,7 +193,6 @@ function PivotTableRender(thisTemplate) {
                         }
                         return false;
                 });
-                debugger;
 
                 var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
                 var m = ss.mean(data);

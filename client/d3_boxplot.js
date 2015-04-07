@@ -69,7 +69,6 @@ function BoxPlotChartData(pivotData) {
             }
         });
     });
-    debugger;
     h = h.join(",");
     v = v.join(",");
     return [plotDataSets, h, v, colorKey];
@@ -231,14 +230,6 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
   wrap.attr('transform', function(a,i) { return 'translate(' + margin.left + ',' + (margin.top +(i*20)) + ')'});
   var series = g.selectAll('.gSeries').data(function(d) { return d });
   var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
-
-  /*
-  g.append('text').attr('text-anchor', 'start').attr('class','gLegendItem-text').attr('dy', '.32em')
-  .attr("text", function(d) { 
-      debugger;
-      return d.text});
-  */
-
   series.select('circle').style("fill", function(d) { return d.color });
 
 
