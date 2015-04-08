@@ -14,16 +14,18 @@
     {{/each}}
 
 
-    <h2>Gene Sets</h2>
+    <h2>Genes</h2>
+      <input class="genelist" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+      <span>
+      <button id="clear">Clear Gene List</button>
     <select id="genesets">
-      <option >No set selected</option>
+      <option >Gene Sets</option>
       {{#each genesets}}
           <option>{{this.name}}</option>
       {{/each}}
     </select>
-
-    <h2>Genes</h2>
-      <input class="genelist" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+      <button id="clear">All Genes In</button>
+      </span>
 
 </template>
 

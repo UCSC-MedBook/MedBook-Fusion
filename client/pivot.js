@@ -171,6 +171,7 @@ function PivotTableRender(thisTemplate) {
         var chart = Charts.findOne({userId: Meteor.userId()});
 
 
+
 // Join the gene expression data into the chartData 
         function drawChart() {
             var pvtRenderer =  $('.pvtRenderer').val()
@@ -185,40 +186,57 @@ function PivotTableRender(thisTemplate) {
             var final =  $.extend({}, PivotCommonParams, templateContext, config);
             $(thisTemplate.find(".output")).pivotUI(chartData, final);
         }
+        window.forceRedrawChart = drawChart;
         if (chart && chart.genelist) {
             Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
+            Meteor.subscribe("GeneExpressionIsoform", "prad_wcdt", chart.genelist);
 
             var expr = Expression.find({gene: { $in: chart.genelist}});
+            var exprIsoform = ExpressionIsoform.find({gene: { $in: chart.genelist}});
             var initializiing = true ; // pattern as per http://stackoverflow.com/questions/21355802/meteor-observe-changes-added-callback-on-server-fires-on-all-item
-            expr.observe({added: function(gene) {
-                var gs = gene.samples;
+            var obs = {
 
-                var validSampleList = Object.keys(gs).filter(function(k) { 
-                        if (k.match(/^DTB-.*$/)) { 
-                            var val = gs[k].rsem_quan_log2;
-                            return val != null && !isNaN(val);
+                added: function(gene) {
+                    var gs = gene.samples;
+
+                    var validSampleList = Object.keys(gs).filter(function(k) { 
+                            if (k.match(/^DTB-.*$/)) { 
+                                var val = gs[k].rsem_quan_log2;
+                                return val != null && !isNaN(val);
+                            }
+                            return false;
+                    });
+
+                    var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
+                    var m = ss.mean(data);
+                    var sd = ss.standard_deviation(data);
+
+                    var cls = {}
+                    validSampleList.map(function(k){
+                        cls[k] = parseFloat(gs[k].rsem_quan_log2)
+                        /*
+                        var z = ss.z_score(parseFloat(gs[k].rsem_quan_log2), m, sd);
+                        cls[k] =  z; // Zclass(z);
+                        */
+                    });
+
+                    chartData.map(function(sample) {
+                        if (sample.Sample_ID in cls) {
+                            var s = gene.gene;
+
+                            if ('transcript' in gene) {
+                                s += ' ' + gene['transcript'];
+                            } else
+                                s += ' Expr';
+                            
+                            sample[s] = cls[sample.Sample_ID];
                         }
-                        return false;
-                });
-
-                var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
-                var m = ss.mean(data);
-                var sd = ss.standard_deviation(data);
-
-                var cls = {}
-                validSampleList.map(function(k){
-                    var z = ss.z_score(parseFloat(gs[k].rsem_quan_log2), m, sd);
-                    cls[k] =  z; // Zclass(z);
-                });
-
-                chartData.map(function(sample) {
-                    if (sample.Sample_ID in cls) {
-                        sample[gene.gene + " Expr"] = cls[sample.Sample_ID];
-                    }
-                if (window.TCD) window.clearTimeout(window.TCD);
-                window.TCD = setTimeout(drawChart, 200);
-                });
-             }});
+                    if (window.TCD) window.clearTimeout(window.TCD);
+                    window.TCD = setTimeout(drawChart, 200);
+                    });
+                 }};
+             expr.observe(obs);
+             exprIsoform.observe(obs);
              initializing = false;
         } else 
             drawChart();
@@ -229,12 +247,6 @@ Template.PivotTable.rendered = function() {
     PivotTableRender(this);
 }
 
-Template.PivotTable.helpers({
-    force : function() {
-        PivotTableRender(this);
-        return true;
-   }
-});
 
 Template.Controls.helpers({
    genesets : function() {
@@ -251,9 +263,16 @@ Template.Controls.events({
            var before = $genelist.select2("val");
            var after = before.concat(gs.members);
            $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
-           debugger
            geneListChange();
        }
+   },
+
+   'click #clear' : function(evt, tmpl) {
+       var $genelist = $("#genelist");
+       $genelist.select2("data", [] );
+       geneListChange();
+       forceRedrawChart();
+
    }
 })
 
@@ -261,6 +280,7 @@ function geneListChange() {
     var $elem = $("#genelist");
     var data =  $elem.select2("val");
     Meteor.subscribe("GeneExpression", "prad_wcdt", data);
+    Meteor.subscribe("GeneExpressionIsoform", "prad_wcdt", data);
     var prev = Charts.findOne({ userId : Meteor.userId() });
     Charts.update({ _id : prev._id }, {$set: {genelist: data}});
  }

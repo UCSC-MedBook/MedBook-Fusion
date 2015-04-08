@@ -150,18 +150,14 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
         });
     }); 
 
-    var domain = [3, -3]
-    window.yRange = d3.scale.linear().range([0, height]).domain(domain);
+    window.yRange = d3.scale.linear().range([0, height]).domain([max, min]);
 
     var chart = d3.box()
         .whiskers(iqr(1.5))
         .width(width)
         .height(height);
 
-
-    // chart.domain([min, max]);
-    chart.domain([-3, 3]);
-
+    chart.domain([min, max]);
 
   var X = margin.leftMost;
 

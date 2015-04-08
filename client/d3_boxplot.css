@@ -11,18 +11,18 @@
 }
 
 .box rect {
-  stroke-width:2;
+  stroke-width:1;
   stroke: #000;
-  fill: rgba(200,255,200,0.3);
+  fill: rgba(200,255,200,0.1);
 }
 
 .box .center {
   stroke-dasharray: 3,3;
 }
 
-.box mean{
-  stroke-dasharray: 3,3;
+.median {
   stroke: red;
+  stroke-width:1;
 }
 .positive { color:pink; }
 .negative { color:blue; }

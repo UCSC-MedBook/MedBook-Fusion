@@ -41,6 +41,12 @@ Meteor.publish('GeneExpression', function(studyID, genes) {
     return cursor;
 });
 
+Meteor.publish('GeneExpressionIsoform', function(studyID, genes) {
+    var cursor =  ExpressionIsoform.find({studyID:studyID, gene: {$in: genes}});
+    console.log("ExpressionIsoform publish", studyID, genes, cursor.count());
+    return cursor;
+});
+
 Meteor.publish('GeneSets', function() {
     var cursor = GeneSets.find();
     console.log("GeneSets publish", cursor.count());

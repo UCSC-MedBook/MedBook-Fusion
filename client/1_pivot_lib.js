@@ -1367,7 +1367,7 @@ Meteor.startup(function() {
               }
               return true;
             };
-            if (preflight(input, subopts))
+            // not yet ready if (preflight(input, subopts))
                 pivotTable.pivot(input, subopts);
 
             pivotUIOptions = $.extend(opts, {

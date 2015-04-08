@@ -138,25 +138,6 @@ d3.box = function() {
           .attr("y", function(d) { return x1(d[2]); })
           .attr("height", function(d) { return x1(d[0]) - x1(d[2]); });
 
-      // Update median line.
-      var medianLine = g.selectAll("line.median")
-          .data([quartileData[1]]);
-
-      medianLine.enter().append("line")
-          .attr("class", "median")
-          .attr("x1", 0)
-          .attr("y1", x0)
-          .attr("x2", width)
-          .attr("y2", x0)
-        .transition()
-          .duration(duration)
-          .attr("y1", x1)
-          .attr("y2", x1);
-
-      medianLine.transition()
-          .duration(duration)
-          .attr("y1", x1)
-          .attr("y2", x1);
 
       // Update whiskers.
       var whisker = g.selectAll("line.whisker")
@@ -168,7 +149,7 @@ d3.box = function() {
           .attr("y1", x0)
           .attr("x2", width)
           .attr("y2", x0)
-          .style("opacity", 1e-6)
+          .style("opacity", 0.5)
         .transition()
           .duration(duration)
           .attr("y1", x1)
@@ -185,7 +166,7 @@ d3.box = function() {
           .duration(duration)
           .attr("y1", x1)
           .attr("y2", x1)
-          .style("opacity", 1e-6)
+          .style("opacity", 1)
           .remove();
 
       // Update samples.
@@ -300,6 +281,26 @@ d3.box = function() {
           .style("opacity", 1e-6)
           .remove();
       */
+      // Update median line.
+      var medianLine = g.selectAll("line.median")
+          .data([quartileData[1]]);
+
+      medianLine.enter().append("line")
+          .attr("class", "median")
+          .attr("stroke", "red")
+          .attr("x1", 0)
+          .attr("y1", x0)
+          .attr("x2", width)
+          .attr("y2", x0)
+        .transition()
+          .duration(duration)
+          .attr("y1", x1)
+          .attr("y2", x1);
+
+      medianLine.transition()
+          .duration(duration)
+          .attr("y1", x1)
+          .attr("y2", x1);
     });
     d3.timer.flush();
   }
