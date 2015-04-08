@@ -9,20 +9,31 @@
 </template>
 
 <template name="Controls">
-    <h3>Studies</h3>
+    <h2>Studies</h2>
     {{#each studies}}
     {{/each}}
 
-    <h2>Genes</h2>
-      <input class="genelist" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
-
 
     <h2>Gene Sets</h2>
+    <select id="genesets">
+      <option >No set selected</option>
+      {{#each genesets}}
+          <option>{{this.name}}</option>
+      {{/each}}
+    </select>
+
+    <h2>Genes</h2>
+      <input class="genelist" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
 
 </template>
 
 
 <template name="charts">
   <h2>Charts</h2>
+  <div id="chart1" width="100%"></div>
+</template>
+
+<template name="gene_set">
+  <h2>Geneset</h2>
   <div id="chart1" width="100%"></div>
 </template>

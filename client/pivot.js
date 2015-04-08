@@ -14,6 +14,8 @@ var PivotTableInit = {
 };
 
 Meteor.startup(function() {
+    Meteor.subscribe("GeneSets");
+
     var derivers = $.pivotUtilities.derivers;
     var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
 
@@ -171,6 +173,10 @@ function PivotTableRender(thisTemplate) {
 
 // Join the gene expression data into the chartData 
         function drawChart() {
+            var pvtRenderer =  $('.pvtRenderer').val()
+            var pvtAggregator =  $('.pvtAggregator').val()
+            console.log("pvtRenderer", pvtRenderer, "pvtAggregator", pvtAggregator);
+
             var config = chart ? chart.pivotTableConfig : PivotTableInit;
             var keyUnion = {};  
             chartData.map(function(c) { $.extend(keyUnion, c); });
@@ -183,6 +189,7 @@ function PivotTableRender(thisTemplate) {
             Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
 
             var expr = Expression.find({gene: { $in: chart.genelist}});
+            var initializiing = true ; // pattern as per http://stackoverflow.com/questions/21355802/meteor-observe-changes-added-callback-on-server-fires-on-all-item
             expr.observe({added: function(gene) {
                 var gs = gene.samples;
 
@@ -208,9 +215,11 @@ function PivotTableRender(thisTemplate) {
                     if (sample.Sample_ID in cls) {
                         sample[gene.gene + " Expr"] = cls[sample.Sample_ID];
                     }
+                if (window.TCD) window.clearTimeout(window.TCD);
+                window.TCD = setTimeout(drawChart, 200);
                 });
-                drawChart();
              }});
+             initializing = false;
         } else 
             drawChart();
      });
@@ -220,18 +229,44 @@ Template.PivotTable.rendered = function() {
     PivotTableRender(this);
 }
 
-Template.PivotTable.helpers = {
+Template.PivotTable.helpers({
     force : function() {
         PivotTableRender(this);
         return true;
    }
-}
+});
 
+Template.Controls.helpers({
+   genesets : function() {
+      return GeneSets.find({}, {sort: {"name":1}});
+   }
+})
 
+Template.Controls.events({
+   'change #genesets' : function(evt, tmpl) {
+       var val = $(evt.target).val();
+       var gs = GeneSets.findOne({name: val});
+       if (gs) {
+           var $genelist = $("#genelist");
+           var before = $genelist.select2("val");
+           var after = before.concat(gs.members);
+           $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
+           debugger
+           geneListChange();
+       }
+   }
+})
+
+function geneListChange() {
+    var $elem = $("#genelist");
+    var data =  $elem.select2("val");
+    Meteor.subscribe("GeneExpression", "prad_wcdt", data);
+    var prev = Charts.findOne({ userId : Meteor.userId() });
+    Charts.update({ _id : prev._id }, {$set: {genelist: data}});
+ }
 
 
 Template.Controls.rendered = function() {
-     // genes = Expression.find({}, { sort: {gene:1 }, fields: {"gene":1 }})
      var $genelist = $("#genelist");
      var prev = Charts.findOne({ userId : Meteor.userId() });
 
@@ -251,14 +286,7 @@ Template.Controls.rendered = function() {
               };
               return qp;
             },
-            results: function (data, page, query) {
-              // parse the results into the format expected by Select2.
-              // since we are using custom formatting functions we do not need to
-              // alter the remote JSON data
-              return {
-                  results: data.items
-              };
-            },
+            results: function (data, page, query) { return { results: data.items }; },
             cache: true
           },
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
@@ -266,10 +294,6 @@ Template.Controls.rendered = function() {
       });
      if (prev && prev.genelist)
          $genelist.select2("val", prev.genelist );
-     $genelist.on("change", function() {
-        var genelist =  $(this).select2("val");
-        Meteor.subscribe("GeneExpression", "prad_wcdt", genelist);
-        Charts.update({ _id : prev._id }, {$set: {genelist: genelist}});
-     });
+     $genelist.on("change", geneListChange)
 };
 

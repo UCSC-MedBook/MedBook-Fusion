@@ -40,3 +40,9 @@ Meteor.publish('GeneExpression', function(studyID, genes) {
     console.log("Expression publish", studyID, genes, cursor.count());
     return cursor;
 });
+
+Meteor.publish('GeneSets', function() {
+    var cursor = GeneSets.find();
+    console.log("GeneSets publish", cursor.count());
+    return cursor;
+});

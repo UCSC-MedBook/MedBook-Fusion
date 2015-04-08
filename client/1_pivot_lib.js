@@ -12,6 +12,44 @@
         container.GROUPS[key] = [data];
   }
 Meteor.startup(function() {
+
+  function preflight(input, subopts) {
+     var chartType = $('.pvtRenderer').val();
+     if (chartType  != "Box Plot")
+        return true;
+
+     var analysis = {};
+
+     function and(a,b) { return a && b };
+
+     function allString(values) {
+         return values.map(function(v) { return v == "N/A" || typeof(v) == "string" } ).reduce(and);
+     }
+     function allNumbers(values) {
+         return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
+     }
+     function extract(key) {
+         var values = input.map(function(elem) { return elem[key]; })
+         values.splice(values.indexOf("N/A"), 1);
+         return values;
+     }
+     var rowsAllNumbers = subopts.rows ? subopts.rows.map(extract).map(allNumbers).reduce(and) : false;
+     var colsAllNumbers = subopts.cols ? subopts.cols.map(extract).map(allNumbers).reduce(and) : false;
+     var rowsAllString =  subopts.rows ? subopts.rows.map(extract).map(allString).reduce(and)  : false;
+     var colsAllString =  subopts.cols ? subopts.cols.map(extract).map(allString).reduce(and)  : false;
+     console.log("chartType", chartType);
+     console.log( "rowsAllNumbers", rowsAllNumbers, "colsAllNumbers", colsAllNumbers, "rowsAllString", rowsAllString, "colsAllString", colsAllString);
+     debugger;
+
+     if (chartType  == "Box Plot" && !(colsAllNumbers && rowsAllString)) {
+         $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for rows (left size)</h3></div>")
+
+         return false;
+     }
+     return true;
+  }
+
+
   var callWithJQuery,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice,
@@ -1153,7 +1191,8 @@ Meteor.startup(function() {
               });
             }));
             checkContainer = $("<div>").addClass("pvtCheckContainer").appendTo(valueList);
-            _ref2 = keys.sort(getSort(opts.sorters, c));
+            _ref2 = keys // .sort(getSort(opts.sorters, c));
+
             for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
               k = _ref2[_k];
               v = axisValues[c][k];
@@ -1199,6 +1238,9 @@ Meteor.startup(function() {
           colList.append(attrElem).append(valueList);
           return attrElem.bind("dblclick", showFilterList);
         };
+
+
+
         for (i in shownAttributes) {
           if (!__hasProp.call(shownAttributes, i)) continue;
           c = shownAttributes[i];
@@ -1325,7 +1367,9 @@ Meteor.startup(function() {
               }
               return true;
             };
-            pivotTable.pivot(input, subopts);
+            if (preflight(input, subopts))
+                pivotTable.pivot(input, subopts);
+
             pivotUIOptions = $.extend(opts, {
               cols: subopts.cols,
               rows: subopts.rows,
