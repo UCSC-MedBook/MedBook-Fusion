@@ -26,19 +26,19 @@ function BoxPlotChartData(pivotData) {
     var numbers = [], categories = [];
     v.map(function(label, nthColumn) {
         if (boxPlot.colNumbers[nthColumn])
-            numbers.push( { label: label, decide: function(elem) { return isNaN(!elem[label]); } });
+            numbers.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
         else 
             categories.push(
                 boxPlot.allColValues[nthColumn].map(
                   function (value) { 
-                      return ({ label: label, decide: function(elem) { return elem[label] == value; } });
+                      return ({ label: label+":"+value, decide: function(elem) { return elem[label] == value; } });
                 })
             );
     });;
     categories.splice(0 ,0, numbers)
     var plots = cartesianProductOf(categories);
     var plotDataSets = plots.map(function(predicates) {
-        var labels = _.pluck(predicates, 'label').join("\n");
+        var labels = _.pluck(predicates, 'label').join("\n").replace(/:/g, "\n");
         var points = [];
         var plot = [labels, points];
         var i = 0;
@@ -46,13 +46,12 @@ function BoxPlotChartData(pivotData) {
         pivotData.input.map(function(elem) {
             var good = true;
             for (var p = 0; p < predicates.length; p++)
-                if (predicates[p].decide(elem))
+                if (!predicates[p].decide(elem))
                     good = false;
 
             if (good) {
                 var value = elem[predicates[0].label];
                 var f = parseFloat(value);
-                debugger
                 var ii = i % h.length;
                 var value_color = value_color_scale(ii);
                 var value_class = h[ii].join(",");
@@ -139,7 +138,16 @@ function iqr(k) {
 function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey) {
 
     var min = Infinity,
-        max = -Infinity;
+        max = -Infinity,
+        lineHeight = 18;
+
+    var maxNumLines = 0;
+    plotDataSets.map(function(p) {
+        maxNumLines = Math.max(maxNumLines, p[0].split(/\n/).length);
+    });
+
+    var baseline = margin.top + (maxNumLines * lineHeight);
+    debugger;
 
 
     plotDataSets.map(function (plotDataSet)  {
@@ -164,7 +172,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
   var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
   var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
-  svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + margin.top + ")").call(yAxis);
+  svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + baseline + " )").call(yAxis);
 
   svg = svgBoxPlot
       .selectAll("svg")
@@ -172,7 +180,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
       .enter()
       .append("g")
          .attr("transform", function() { 
-              var r =  "translate(" +  X + ", 0)"
+              var r =  "translate(" +  X + ", " + 0 + ")"
               X += totalWidth;
               return r;
           })
@@ -182,25 +190,46 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
       .attr("height", height + margin.bottom + margin.top)
     .append("g")
       .attr("transform", function() { 
-              var r =  "translate(" + (20+ margin.left)  + "," + margin.top + ")"
+              var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
               return r;
               });
 
+function wrap(text, width, svg) {
+  text.each(function() {
+    var text = d3.select(this),
+        lines = text.text().split(/[\n]/),
+        lineNumber = 1,
+        y = text.attr("y");
 
-  svg.insert("text", "box")
+    var y = (lineNumber++ * -lineHeight)
+    var line = lines.pop();
+    var tspan = text.text(line).attr("y", y );
+
+    while ((line = lines.pop()) != null) {
+      y = (lineNumber++ * -lineHeight)
+      tspan = text.append("tspan").attr("x", width/2).attr("y", y).text(line)
+            .attr( 'text-anchor', 'middle' )
+            .attr( 'font-size', "16px" )
+            .attr( 'font-weight', "bold" )
+    }
+  });
+}
+
+  var yy = svg.insert("text", "box")
             .attr( 'x', width/2)
             .attr( 'y', -20)
             .attr( 'text-anchor', 'middle' )
-            .attr( 'width', totalWidth )
             .attr( 'font-size', "16px" )
             .attr( 'font-weight', "bold" )
-            .text( function(d) { return d[0] });
+            .text( function(d) { return d[0] })
+            .call(wrap, totalWidth)
+   
 
   svg.call(chart);
 
   var gLegend = svgTop
                   .append("g").attr("transform", 
-                              function() { return "translate(" +  (X+50)  + ", 50)"; })
+                          function() { return "translate(" +  (X+50)  + ", 50)"; })
                       .append("svg");
 
 
