@@ -21,27 +21,45 @@ Meteor.startup(function() {
      var analysis = {};
 
      function and(a,b) { return a && b };
+     function or(a,b) { return a || b };
+     function xor(a,b) { return a || b };
 
-     function allString(values) {
-         return values.map(function(v) { return v == "N/A" || typeof(v) == "string" } ).reduce(and);
-     }
      function allNumbers(values) {
          return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
      }
      function extract(key) {
-         var values = input.map(function(elem) { return elem[key]; })
-         values.splice(values.indexOf("N/A"), 1);
-         return values;
+         var v = unique(_.pluck(input, key).filter(function(v) { return v != "N/A" }));
+         return v;
      }
-     var rowsAllNumbers = subopts.rows ? subopts.rows.map(extract).map(allNumbers).reduce(and) : false;
-     var colsAllNumbers = subopts.cols ? subopts.cols.map(extract).map(allNumbers).reduce(and) : false;
-     var rowsAllString =  subopts.rows ? subopts.rows.map(extract).map(allString).reduce(and)  : false;
-     var colsAllString =  subopts.cols ? subopts.cols.map(extract).map(allString).reduce(and)  : false;
-     console.log("chartType", chartType);
-     console.log( "rowsAllNumbers", rowsAllNumbers, "colsAllNumbers", colsAllNumbers, "rowsAllString", rowsAllString, "colsAllString", colsAllString);
-     debugger;
+     function unique(values) {
+         var m = {};
+         for (var i = 0; i < values.length; i++)
+             m[values[i]] = true;
+         return Object.keys(m);
+     }
+     var allRowValues = subopts.rows.map(extract)
+     var allColValues = subopts.cols.map(extract)
 
-     if (chartType  == "Box Plot" && !(colsAllNumbers && rowsAllString)) {
+     var rowNumbers = allRowValues.map(allNumbers)
+     var colNumbers = allColValues.map(allNumbers)
+
+     var rowsAllNumbers = rowNumbers.length ? rowNumbers.reduce(and) : false;
+     var colsAllNumbers = colNumbers.length ? colNumbers.reduce(and) : false;
+
+     if (chartType  == "Box Plot" && !colsAllNumbers) {
+        input.allRowValues = allRowValues;
+        input.allColValues = allColValues;
+
+        input.rowNumbers = rowNumbers;
+        input.colNumbers = colNumbers;
+
+        input.rowsAllNumbers = rowsAllNumbers;
+        input.colsAllNumbers = colsAllNumbers;
+
+     }
+
+
+     if (chartType  == "Box Plot" && !colsAllNumbers) {
          $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for rows (left size)</h3></div>")
 
          return false;
@@ -1367,7 +1385,7 @@ Meteor.startup(function() {
               }
               return true;
             };
-            // not yet ready if (preflight(input, subopts))
+            if (preflight(input, subopts))
                 pivotTable.pivot(input, subopts);
 
             pivotUIOptions = $.extend(opts, {
