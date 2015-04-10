@@ -45,22 +45,19 @@ Meteor.startup(function() {
 
      var rowsAllNumbers = rowNumbers.length ? rowNumbers.reduce(and) : false;
      var colsAllNumbers = colNumbers.length ? colNumbers.reduce(and) : false;
+     var colsAnyNumbers = colNumbers.length ? colNumbers.reduce(or) : false;
 
-     if (chartType  == "Box Plot" && !colsAllNumbers) {
-        input.allRowValues = allRowValues;
-        input.allColValues = allColValues;
-
-        input.rowNumbers = rowNumbers;
-        input.colNumbers = colNumbers;
-
-        input.rowsAllNumbers = rowsAllNumbers;
-        input.colsAllNumbers = colsAllNumbers;
-
-     }
+     input.boxplot = {};
+     input.boxplot.allRowValues = allRowValues;
+     input.boxplot.allColValues = allColValues;
+     input.boxplot.rowNumbers = rowNumbers;
+     input.boxplot.colNumbers = colNumbers;
+     input.boxplot.rowsAllNumbers = rowsAllNumbers;
+     input.boxplot.colsAllNumbers = colsAllNumbers;
 
 
-     if (chartType  == "Box Plot" && !colsAllNumbers) {
-         $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for rows (left size)</h3></div>")
+     if (chartType  == "Box Plot" && !colsAnyNumbers) {
+         $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for columns (top) or rows (left size)</h3></div>")
 
          return false;
      }

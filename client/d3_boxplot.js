@@ -1,33 +1,17 @@
 
-function BoxPlotChartData(pivotData) {
-
-    /*
-    var h = pivotData.getColKeys();
-    var v = pivotData.rowAttrs;
-    */
-    var h = pivotData.getRowKeys();
-    var v = pivotData.colAttrs;
-    plotDataSets = [];
-    predicateObjects = [];
-    v.map(function(vv, nthColumn) {
-        plotDataSets.push([ vv, []]);
-        h.map(function (predicatesArray) { 
-
-            predicateObject = {n: nthColumn};
-            predicatesArray.map(function(predicate) {
-                var p = predicate.split(":");
-                predicateObject[p[0]] = p[1];
+function cartesianProductOf(array) {
+    return _.reduce(array, function(a, b) {
+        return _.flatten(_.map(a, function(x) {
+            return _.map(b, function(y) {
+                return x.concat([y]);
             });
+        }), true);
+    }, [ [] ]);
+};
 
-            predicateObject[vv] = function(value) { 
-                return ! isNaN(value);
-            };
-
-            predicateObjects.push(predicateObject)
-        });
-    });
+function BoxPlotChartData(pivotData) {
+    var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
-
     var colorKey = []
     h.map(function(k, i) {
         var value_class = h[i].join(",");
@@ -35,26 +19,40 @@ function BoxPlotChartData(pivotData) {
     });
     colorKey.sort();
 
-    pivotData.input.map(function(elem, j) {
-        predicateObjects.map(function(predicate, i) {
+    var v = pivotData.colAttrs;
 
-            var n = predicate.n;
+    var boxPlot = pivotData.input.boxplot;
+
+    var numbers = [], categories = [];
+    v.map(function(label, nthColumn) {
+        if (boxPlot.colNumbers[nthColumn])
+            numbers.push( { label: label, decide: function(elem) { return isNaN(!elem[label]); } });
+        else 
+            categories.push(
+                boxPlot.allColValues[nthColumn].map(
+                  function (value) { 
+                      return ({ label: label, decide: function(elem) { return elem[label] == value; } });
+                })
+            );
+    });;
+    categories.splice(0 ,0, numbers)
+    var plots = cartesianProductOf(categories);
+    var plotDataSets = plots.map(function(predicates) {
+        var labels = _.pluck(predicates, 'label').join("\n");
+        var points = [];
+        var plot = [labels, points];
+        var i = 0;
+
+        pivotData.input.map(function(elem) {
             var good = true;
-            Object.keys(predicate).map(
-                function(key) { 
-                    if (key != 'n') {
-                        if (predicate[key] instanceof Function) {
-                            if (!predicate[key](elem[key]))
-                                good = false;
-                        } else if (predicate[key] == elem[key]) 
-                            good = false;
-                    }
-                });
+            for (var p = 0; p < predicates.length; p++)
+                if (predicates[p].decide(elem))
+                    good = false;
+
             if (good) {
-                var value = elem[v[n]];
-                if (value == "N/A")
-                    return;
+                var value = elem[predicates[0].label];
                 var f = parseFloat(value);
+                debugger
                 var ii = i % h.length;
                 var value_color = value_color_scale(ii);
                 var value_class = h[ii].join(",");
@@ -65,9 +63,10 @@ function BoxPlotChartData(pivotData) {
                     Phenotype: value_class ,
                     Value: f,
                 };
-                plotDataSets[n][1].push(g);
+                points.push(g);
             }
         });
+        return plot;
     });
     h = h.join(",");
     v = v.join(",");
