@@ -12,49 +12,72 @@ function cartesianProductOf(array) {
 function BoxPlotChartData(pivotData) {
     var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
-    var colorKey = []
+    var rowCategoricalVariables = [];
+    
+
     h.map(function(k, i) {
-        var value_class = h[i].join(",");
-        colorKey.push({ text: value_class, color: value_color_scale(i) });
+        var value_class = k.join(",");
+        rowCategoricalVariables.push({ text: value_class, color: value_color_scale(i),
+            deciders: 
+                k.map(function(kk) { 
+                        var yy = kk.split(":")
+                        var label = yy[0];
+                        var value = yy[1];
+                        return function(elem) { return elem[label] == value; }
+                    })
+        })
     });
-    colorKey.sort();
+    rowCategoricalVariables.sort();
 
     var v = pivotData.colAttrs;
-
     var boxPlot = pivotData.input.boxplot;
 
-    var numbers = [], categories = [];
+    var numberVariables = [], columnCategoricalVariables = [];
     v.map(function(label, nthColumn) {
         if (boxPlot.colNumbers[nthColumn])
-            numbers.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
+            numberVariables.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
         else 
-            categories.push(
+            columnCategoricalVariables.push(
                 boxPlot.allColValues[nthColumn].map(
                   function (value) { 
                       return ({ label: label+":"+value, decide: function(elem) { return elem[label] == value; } });
                 })
             );
     });;
-    categories.splice(0 ,0, numbers)
-    var plots = cartesianProductOf(categories);
-    var plotDataSets = plots.map(function(predicates) {
-        var labels = _.pluck(predicates, 'label').join("\n").replace(/:/g, "\n");
+    columnCategoricalVariables.splice(0 ,0, numberVariables)
+    var plots = cartesianProductOf(columnCategoricalVariables);
+    var plotDataSets = plots.map(function(plotPredicates) {
+        var labels = _.pluck(plotPredicates, 'label').join("\n").replace(/:/g, "\n");
         var points = [];
         var plot = [labels, points];
         var i = 0;
 
-        pivotData.input.map(function(elem) {
+        pivotData.input.map(function(elem, e) {
             var good = true;
-            for (var p = 0; p < predicates.length; p++)
-                if (!predicates[p].decide(elem))
+            for (var p = 0; good && p < plotPredicates.length; p++)
+                if (!plotPredicates[p].decide(elem))
                     good = false;
 
+            var value_class = null;
+            var value_color = null;
+
+            for (var p = 0; good && p < rowCategoricalVariables.length; p++) {
+                var deciders = rowCategoricalVariables[p].deciders;
+                var oneIsGood = false;
+                for (var q = 0; good && q < deciders.length; q++) {
+                    if (deciders[q](elem)) {
+                        oneIsGood = true;
+                    }
+                }
+                if (oneIsGood) {
+                    value_class = rowCategoricalVariables[p].text;
+                    value_color = rowCategoricalVariables[p].color;
+                }
+            }
+
             if (good) {
-                var value = elem[predicates[0].label];
+                var value = elem[plotPredicates[0].label];
                 var f = parseFloat(value);
-                var ii = i % h.length;
-                var value_color = value_color_scale(ii);
-                var value_class = h[ii].join(",");
                 var g = { 
                     Patient: elem.Sample_ID, 
                     ValueClass: value_class, 
@@ -69,10 +92,11 @@ function BoxPlotChartData(pivotData) {
     });
     h = h.join(",");
     v = v.join(",");
-    return [plotDataSets, h, v, colorKey];
+    return [plotDataSets, h, v, rowCategoricalVariables];
 }
 
-var totalWidth, width,height;
+var chartWidth = 2048;
+var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 window.makeD3Chart= function(chartType, extraOptions) {
@@ -80,8 +104,8 @@ window.makeD3Chart= function(chartType, extraOptions) {
         var chvk = BoxPlotChartData(pivotData);
         var n = 9;
 
-        totalWidth = Math.max(150, 1024/ n);
-        width = totalWidth - margin.left - margin.right,
+        plotWidth = Math.max(150, chartWidth/ n);
+        width = plotWidth - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
 
 
@@ -89,7 +113,7 @@ window.makeD3Chart= function(chartType, extraOptions) {
         var plotDataSets = chvk[0];
         var v = chvk[1];
         var h = chvk[2];
-        var colorKey = chvk[3];
+        var rowCategoricalVariables = chvk[3];
         
         if (window.$div != null) {
             window.$div.remove();
@@ -100,7 +124,7 @@ window.makeD3Chart= function(chartType, extraOptions) {
             window.$div = $("<div class='d3boxplot'></div>");
             var div = window.$div[0];
             $div.ready(function() {
-                displayBoxPlots(plotDataSets, h, v, div, totalWidth, colorKey);
+                displayBoxPlots(plotDataSets, h, v, div, plotWidth, rowCategoricalVariables);
             });
         }
         return window.$div
@@ -135,7 +159,7 @@ function iqr(k) {
 }
 
 
-function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey) {
+function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategoricalVariables) {
 
     var min = Infinity,
         max = -Infinity,
@@ -147,8 +171,6 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
     });
 
     var baseline = margin.top + (maxNumLines * lineHeight);
-    debugger;
-
 
     plotDataSets.map(function (plotDataSet)  {
         plotDataSet[1].map(function (elem, i) {
@@ -168,7 +190,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
 
   var X = margin.leftMost;
 
-  var svgTop = d3.select(svgContainer).append("svg").attr("width", 1024).attr("height", 1024).attr("class", "svgTop")
+  var svgTop = d3.select(svgContainer).append("svg").attr("width", chartWidth).attr("height", chartWidth).attr("class", "svgTop")
   var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
   var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
@@ -181,7 +203,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, totalWidth, colorKey)
       .append("g")
          .attr("transform", function() { 
               var r =  "translate(" +  X + ", " + 0 + ")"
-              X += totalWidth;
+              X += plotWidth;
               return r;
           })
      .append("svg")
@@ -222,7 +244,7 @@ function wrap(text, width, svg) {
             .attr( 'font-size', "16px" )
             .attr( 'font-weight', "bold" )
             .text( function(d) { return d[0] })
-            .call(wrap, totalWidth)
+            .call(wrap, plotWidth)
    
 
   svg.call(chart);
@@ -233,7 +255,7 @@ function wrap(text, width, svg) {
                       .append("svg");
 
 
-  var wrap = gLegend.selectAll('g.gLegendItem').data(colorKey)
+  var wrap = gLegend.selectAll('g.gLegendItem').data(rowCategoricalVariables)
   var legend = wrap.enter().append('g').attr('class', 'gLegendItem').append('g')
   legend.attr("width", 100);
   legend.attr("height", 20);
