@@ -7,13 +7,13 @@
 .box circle {
   fill: #fff;
   stroke: #000;
-  stroke-width: 0.1px;
+  stroke-width: 1;
 }
 
 .box rect {
-  stroke-width:1;
+  stroke-width:2;
   stroke: #000;
-  fill: rgba(200,255,200,0.1);
+  fill: transparent;
 }
 
 .box .center {

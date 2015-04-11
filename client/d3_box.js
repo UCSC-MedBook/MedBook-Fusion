@@ -77,39 +77,49 @@ d3.box = function() {
       // elements also fade in and out.
 
       // Update center line: the vertical line spanning the whiskers.
-      var center = g.selectAll("line.center")
-          .data(whiskerData ? [whiskerData] : []);
-
-      center.enter().insert("line", "rect")
-          .attr("class", "center")
-          .attr("x1", width / 2)
-          .attr("y1", function(d) { return x0(d[0]); })
-          .attr("x2", width / 2)
-          .attr("y2", function(d) { return x0(d[1]); })
-          .style("opacity", 1)
-        .transition()
-          .duration(duration)
-          .style("opacity", 1)
-          .attr("y1", function(d) { 
-                  console.log("trans rect y1", d[0]);
-                  return x1(d[0]); })
-          .attr("y2", function(d) { 
-                  console.log("trans rect y2", d[1]);
-                  return x1(d[1]); });
 
 
-      center.transition()
-          .duration(duration)
-          .style("opacity", 1)
-          .attr("y1", function(d) { return x1(d[0]); })
-          .attr("y2", function(d) { return x1(d[1]); });
+      function Center(klass, range) {
+          var center = g.selectAll("line." + klass)
+              .data(range ? [range] : []);
 
-      center.exit().transition()
-          .duration(duration)
-          .style("opacity", 1e-6)
-          .attr("y1", function(d) { return x1(d[0]); })
-          .attr("y2", function(d) { return x1(d[1]); })
-          .remove();
+          center.enter().insert("line", "rect")
+              .attr("class", klass)
+              .attr("x1", width / 2)
+              .attr("y1", function(d) { return x0(d[0]); })
+              .attr("x2", width / 2)
+              .attr("y2", function(d) { return x0(d[1]); })
+              .style("opacity", 1)
+              .style("stroke", "rgb(0,122,0)")
+              .style("stroke-width", 3)
+            .transition()
+              .duration(duration)
+              .style("stroke", "rgb(0,122,0)")
+              .style("stroke-width", 3)
+              .style("opacity", 1)
+              .attr("y1", function(d) { 
+                      console.log("trans rect y1", d[0]);
+                      return x1(d[0]); })
+              .attr("y2", function(d) { 
+                      console.log("trans rect y2", d[1]);
+                      return x1(d[1]); });
+
+
+          center.transition()
+              .duration(duration)
+              .style("opacity", 1)
+              .attr("y1", function(d) { return x1(d[0]); })
+              .attr("y2", function(d) { return x1(d[1]); });
+
+          center.exit().transition()
+              .duration(duration)
+              .style("opacity", 1e-6)
+              .attr("y1", function(d) { return x1(d[0]); })
+              .attr("y2", function(d) { return x1(d[1]); })
+              .remove();
+      }
+      Center("centerTop", [whiskerData[0], quartileData[0]]);
+      Center("centerBottom", [quartileData[2], whiskerData[1]]);
 
       // Update innerquartile box.
       var box = g.selectAll("rect.box")
@@ -145,16 +155,20 @@ d3.box = function() {
 
       whisker.enter().insert("line", "circle, text")
           .attr("class", "whisker")
-          .attr("x1", 0)
+          .attr("x1", 0.25*width)
           .attr("y1", x0)
-          .attr("x2", width)
+          .attr("x2", 0.75*width)
           .attr("y2", x0)
           .style("opacity", 0.5)
+          .style("stroke", "rgb(0,122,0)")
+          .style("stroke-width", 3)
         .transition()
           .duration(duration)
           .attr("y1", x1)
           .attr("y2", x1)
-          .style("opacity", 1);
+          .style("opacity", 1)
+          .style("stroke", "rgb(0,122,0)")
+          .style("stroke-width", 3)
 
       whisker.transition()
           .duration(duration)
@@ -213,8 +227,8 @@ d3.box = function() {
             ccc .transition()        
                 .duration(1500)      
                     .attr("r", function(d) { return d.r; })
-                    .style("stroke", null)
-                    .style("stroke-width", 0);
+                    .style("stroke", "black")
+                    .style("stroke-width", 1)
         });
 
 
@@ -298,7 +312,8 @@ d3.box = function() {
 
       medianLine.enter().append("line")
           .attr("class", "median")
-          .attr("stroke", "red")
+          .style("stroke", "rgb(52,113,4)")
+          .style("stroke-width", 2)
           .attr("x1", 0)
           .attr("y1", x0)
           .attr("x2", width)
@@ -389,5 +404,7 @@ function boxQuartiles(d) {
           .attr("r", function(d) { return d.r; })
           .style("opacity", 0.2)
           .style("fill", function(d) { return d.ValueColor });
+          .style("stroke", "black")
+          .style("stroke-width", 1)
 
           */
