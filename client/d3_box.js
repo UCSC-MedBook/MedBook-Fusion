@@ -174,8 +174,7 @@ d3.box = function() {
           .data(full)
 
       sample.enter().insert("circle", "text")
-          .attr("class", function(d) { 
-                      return d.ValueClass; })
+          .attr("class", function(d) { return d.ValueClass + " " + d.Patient.replace("-", ""); })
           .attr("cx", function(d) { return d.cx; })
           .attr("cy", function(d) { return d.cy; })
           .attr("r", function(d) { return d.r; })
@@ -185,6 +184,7 @@ d3.box = function() {
       var div = d3.select("body").append("div")   
           .attr("class", "tooltip")               
           .style("opacity", 0);
+      var ccc;
 
       sample
         .on("mouseover", function(d) {
@@ -197,13 +197,24 @@ d3.box = function() {
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);
             div.html(m)
-                .style("left", (d3.event.pageX) + "px")     
+                .style("left", (d3.event.pageX + 15) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px");    
+                ccc = d3.selectAll("." + d.Patient.replace("-", ""))
+                    .attr("r", function(d) { return 2 *d.r; })
+                    .style("stroke", "red")
+                    .style("stroke-width", "3")
+
             })                  
         .on("mouseout", function(d) {       
             div.transition()        
                 .duration(500)      
                 .style("opacity", 0);   
+
+            ccc .transition()        
+                .duration(1500)      
+                    .attr("r", function(d) { return d.r; })
+                    .style("stroke", null)
+                    .style("stroke-width", 0);
         });
 
 
@@ -369,3 +380,14 @@ function boxQuartiles(d) {
 }
 
 })();
+/*
+      sample.enter().insert("circle", "text")
+          .attr("class", function(d) { 
+                      return d.ValueClass; })
+          .attr("cx", function(d) { return d.cx; })
+          .attr("cy", function(d) { return d.cy; })
+          .attr("r", function(d) { return d.r; })
+          .style("opacity", 0.2)
+          .style("fill", function(d) { return d.ValueColor });
+
+          */
