@@ -188,13 +188,17 @@ function PivotTableRender(thisTemplate) {
         }
         window.forceRedrawChart = drawChart;
         if (chart && chart.genelist) {
-            debugger;
             var studies = Session.get("studies");
-            Meteor.subscribe("GeneExpression", studies, chart.genelist);
-            Meteor.subscribe("GeneExpressionIsoform", studies, chart.genelist);
+            var expr = null, exprIsoform = null;
 
-            var expr = Expression.find({gene: { $in: chart.genelist}});
-            var exprIsoform = ExpressionIsoform.find({gene: { $in: chart.genelist}});
+            if (gene.genelist) {
+                Meteor.subscribe("GeneExpression", studies, chart.genelist);
+                Meteor.subscribe("GeneExpressionIsoform", studies, chart.genelist);
+
+                expr = Expression.find({gene: { $in: chart.genelist}});
+                exprIsoform = ExpressionIsoform.find({gene: { $in: chart.genelist}});
+            }
+
             var initializiing = true ; // pattern as per http://stackoverflow.com/questions/21355802/meteor-observe-changes-added-callback-on-server-fires-on-all-item
             var obs = {
 
@@ -237,8 +241,10 @@ function PivotTableRender(thisTemplate) {
                     window.TCD = setTimeout(drawChart, 200);
                     });
                  }};
-             expr.observe(obs);
-             exprIsoform.observe(obs);
+             if (expr)
+                 expr.observe(obs);
+             if (exprIsoform)
+                 exprIsoform.observe(obs);
              initializing = false;
         } else 
             drawChart();
@@ -290,8 +296,10 @@ function updateChartDocument() {
     var $elem = $("#genelist");
     var data =  $elem.select2("val");
     var studies = Session.get("studies");
-    Meteor.subscribe("GeneExpression", studies, data);
-    Meteor.subscribe("GeneExpressionIsoform", studies, data);
+    if (studies && studies.length > 0 && data && data.length > 0) {
+        Meteor.subscribe("GeneExpression", studies, data);
+        Meteor.subscribe("GeneExpressionIsoform", studies, data);
+    }
     var prev = Charts.findOne({ userId : Meteor.userId() });
     Charts.update({ _id : prev._id }, {$set: {studies: studies,  samplelist: samplelist, genelist: data}});
  }
@@ -304,7 +312,7 @@ Template.Controls.rendered =(function() {
      } );
 
      var $studies = $("#studies");
-     var $studies = $("#samplelist");
+     var $samplelist = $("#samplelist");
      var $genelist = $("#genelist");
      var prev = Charts.findOne({ userId : Meteor.userId() });
 
