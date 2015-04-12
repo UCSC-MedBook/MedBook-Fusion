@@ -50,7 +50,6 @@ function BoxPlotChartData(pivotData) {
         var labels = _.pluck(plotPredicates, 'label').join("\n").replace(/:/g, "\n");
         var points = [];
         var plot = [labels, points];
-        var i = 0;
 
         pivotData.input.map(function(elem, e) {
             var good = true;
@@ -95,18 +94,22 @@ function BoxPlotChartData(pivotData) {
     return [plotDataSets, h, v, rowCategoricalVariables];
 }
 
-var chartWidth = 2048;
+var ChartHeightMax = 2048;
+var ChartWidthMax = 2048;
+var PlotHeight = 400;
+
 var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
+
 
 window.makeD3Chart= function(chartType, extraOptions) {
   return function(pivotData, opts) {
         var chvk = BoxPlotChartData(pivotData);
         var n = 9;
 
-        plotWidth = Math.max(150, chartWidth/ n);
+        plotWidth = Math.max(150, ChartWidthMax/ n);
         width = plotWidth - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
+        height = PlotHeight - margin.top - margin.bottom;
 
 
 
@@ -190,7 +193,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
 
   var X = margin.leftMost;
 
-  var svgTop = d3.select(svgContainer).append("svg").attr("width", chartWidth).attr("height", chartWidth).attr("class", "svgTop")
+  var svgTop = d3.select(svgContainer).append("svg").attr("width", ChartWidthMax).attr("height", ChartHeightMax).attr("class", "svgTop")
   var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
   var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
@@ -262,7 +265,8 @@ function wrap(text, width, svg) {
   legend
       .append("g").attr("x", 20)
       .append('circle').style("fill", function(a, i) {return a.color })
-      .style('stroke-width', 2) .attr('class','gLegendItem-symbol') .attr('r', 5);
+      .style('stroke', "#000")
+      .style('stroke-width', 1) .attr('class','gLegendItem-symbol') .attr('r', 5);
 
   legend
       .append("g")
@@ -277,6 +281,9 @@ function wrap(text, width, svg) {
   var series = g.selectAll('.gSeries').data(function(d) { return d });
   var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
   series.select('circle').style("fill", function(d) { return d.color });
+
+  svgTop.attr("width", X + 350); // 150 includes  the legend
+  svgTop.attr("height", PlotHeight);
 
 
 };

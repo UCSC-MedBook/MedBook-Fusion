@@ -132,9 +132,7 @@ d3.box = function() {
                   console.log("box d2",d[2]); 
                   return x0(d[2]); })
           .attr("width", width)
-          .attr("height", function(d) { 
-                  console.log("box d0",d[0]); 
-                  return x0(d[0]) - x0(d[2]); })
+          .attr("height", function(d) { return x0(d[0]) - x0(d[2]); })
           // .style("fill", "transparent")
           .style("pointer-events", "none")
         .transition()
@@ -395,16 +393,3 @@ function boxQuartiles(d) {
 }
 
 })();
-/*
-      sample.enter().insert("circle", "text")
-          .attr("class", function(d) { 
-                      return d.ValueClass; })
-          .attr("cx", function(d) { return d.cx; })
-          .attr("cy", function(d) { return d.cy; })
-          .attr("r", function(d) { return d.r; })
-          .style("opacity", 0.2)
-          .style("fill", function(d) { return d.ValueColor });
-          .style("stroke", "black")
-          .style("stroke-width", 1)
-
-          */
