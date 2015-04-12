@@ -1,4 +1,8 @@
 
+Meteor.publish('studies', function() {
+    return Studies.find({});
+});
+
 Meteor.publish('Clinical_Info', function() {
     return Clinical_Info.find({});
 });
@@ -35,15 +39,15 @@ Contrast.deny({
 
 
 
-Meteor.publish('GeneExpression', function(studyID, genes) {
-    var cursor =  Expression.find({studyID:studyID, gene: {$in: genes}});
-    console.log("Expression publish", studyID, genes, cursor.count());
+Meteor.publish('GeneExpression', function(studies, genes) {
+    var cursor =  Expression.find({studyID:{$in: studies}, gene: {$in: genes}});
+    console.log("Expression publish", studies, genes, cursor.count());
     return cursor;
 });
 
-Meteor.publish('GeneExpressionIsoform', function(studyID, genes) {
-    var cursor =  ExpressionIsoform.find({studyID:studyID, gene: {$in: genes}});
-    console.log("ExpressionIsoform publish", studyID, genes, cursor.count());
+Meteor.publish('GeneExpressionIsoform', function(studies, genes) {
+    var cursor =  ExpressionIsoform.find({studyID:{$in: studies}, gene: {$in: genes}});
+    console.log("ExpressionIsoform publish", studies, genes, cursor.count());
     return cursor;
 });
 

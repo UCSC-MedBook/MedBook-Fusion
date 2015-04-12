@@ -37,7 +37,8 @@ Template.Quick.rendered = function() {
 
      $input.on("change", function() {
         var val =  $(this).select2("val");
-        Meteor.subscribe(collection, "prad_wcdt", val);
+        var studies = Session.get("studies");
+        Meteor.subscribe(collection, studies, val);
         var set = {};
         set[chartElement] = val;
         Charts.update({ _id : previousChart._id }, {$set: set});

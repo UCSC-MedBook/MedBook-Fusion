@@ -188,8 +188,10 @@ function PivotTableRender(thisTemplate) {
         }
         window.forceRedrawChart = drawChart;
         if (chart && chart.genelist) {
-            Meteor.subscribe("GeneExpression", "prad_wcdt", chart.genelist);
-            Meteor.subscribe("GeneExpressionIsoform", "prad_wcdt", chart.genelist);
+            debugger;
+            var studies = Session.get("studies");
+            Meteor.subscribe("GeneExpression", studies, chart.genelist);
+            Meteor.subscribe("GeneExpressionIsoform", studies, chart.genelist);
 
             var expr = Expression.find({gene: { $in: chart.genelist}});
             var exprIsoform = ExpressionIsoform.find({gene: { $in: chart.genelist}});
@@ -200,7 +202,7 @@ function PivotTableRender(thisTemplate) {
                     var gs = gene.samples;
 
                     var validSampleList = Object.keys(gs).filter(function(k) { 
-                            if (k.match(/^DTB-.*$/)) { 
+                            if (k.match(/^DTB-.*$/) || k.match(/^TCGA-.*/)) { 
                                 var val = gs[k].rsem_quan_log2;
                                 return val != null && !isNaN(val);
                             }
@@ -243,18 +245,26 @@ function PivotTableRender(thisTemplate) {
      });
 }
 
-Template.PivotTable.rendered = function() {
+Template.PivotTable.rendered =( function() {
     PivotTableRender(this);
-}
+})
 
 
 Template.Controls.helpers({
    genesets : function() {
       return GeneSets.find({}, {sort: {"name":1}});
+   },
+   studies : function() {
+      return Studies.find({}, {sort: {"name":1}});
    }
 })
 
 Template.Controls.events({
+   'change #studies' : function(evt, tmpl) {
+       var s = $("#studies").select2("val");
+       Session.set("studies", s);
+   },
+
    'change #genesets' : function(evt, tmpl) {
        var val = $(evt.target).val();
        var gs = GeneSets.findOne({name: val});
@@ -263,30 +273,38 @@ Template.Controls.events({
            var before = $genelist.select2("val");
            var after = before.concat(gs.members);
            $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
-           geneListChange();
+           updateChartDocument();
        }
    },
 
    'click #clear' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
-       geneListChange();
+       updateChartDocument();
        forceRedrawChart();
 
    }
 })
 
-function geneListChange() {
+function updateChartDocument() {
     var $elem = $("#genelist");
     var data =  $elem.select2("val");
-    Meteor.subscribe("GeneExpression", "prad_wcdt", data);
-    Meteor.subscribe("GeneExpressionIsoform", "prad_wcdt", data);
+    var studies = Session.get("studies");
+    Meteor.subscribe("GeneExpression", studies, data);
+    Meteor.subscribe("GeneExpressionIsoform", studies, data);
     var prev = Charts.findOne({ userId : Meteor.userId() });
-    Charts.update({ _id : prev._id }, {$set: {genelist: data}});
+    Charts.update({ _id : prev._id }, {$set: {studies: studies,  samplelist: samplelist, genelist: data}});
  }
 
 
-Template.Controls.rendered = function() {
+Template.Controls.rendered =(function() {
+     $("#studies").select2( {
+       placeholder: "Select one ore more studies",
+       allowClear: true
+     } );
+
+     var $studies = $("#studies");
+     var $studies = $("#samplelist");
      var $genelist = $("#genelist");
      var prev = Charts.findOne({ userId : Meteor.userId() });
 
@@ -314,6 +332,8 @@ Template.Controls.rendered = function() {
       });
      if (prev && prev.genelist)
          $genelist.select2("val", prev.genelist );
-     $genelist.on("change", geneListChange)
-};
+     $genelist.on("change", updateChartDocument)
+     $samplelist.on("change", updateChartDocument)
+     $studies.on("change", updateChartDocument)
+});
 

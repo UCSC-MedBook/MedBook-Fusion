@@ -1,0 +1,69 @@
+<template name="PivotTable">
+<div class="page-header">
+  <h1>Data Fusion Tool</h1>
+    Data fusion integrates of multiple data and knowledge representing the same real-world object into a consistent,
+    accurate, and useful representation.
+    This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations.
+</div>
+
+    {{> Controls }}
+
+    <div class="output" style="margin: 30px;"></div>
+</template>
+
+
+<template name="Controls">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title">Select Studies (required)</h3>
+       </div>
+       <div class="panel-body">
+         <select id="studies"  multiple="multiple">
+            {{#each studies}}
+               <option value="{{this.id}}">{{this.name}}</option>
+            {{/each}}
+        </select>
+       </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title">Select Genes (optional)</h3>
+       </div>
+       <div class="panel-body">
+              <input class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+              <span>
+              <button id="clear">Clear Gene List</button>
+            <select id="genesets">
+              <option >Gene Sets</option>
+              {{#each genesets}}
+                  <option>{{this.name}}</option>
+              {{/each}}
+            </select>
+              <button id="clear">All Genes In</button>
+              </span>
+        </div>
+    </div>
+
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title">Filter to these Patients or Samples (optional)</h3>
+       </div>
+       <div class="panel-body">
+              <input class="samplelist" style="width:100%;" id="genelist" placeholder="Enter PatientID or Sample ID">
+        </div>
+    </div>
+
+</template>
+
+
+<template name="charts">
+  <h2>Charts</h2>
+  <div id="chart1" width="100%"></div>
+</template>
+
+<template name="gene_set">
+  <h2>Geneset</h2>
+  <div id="chart1" width="100%"></div>
+</template>
