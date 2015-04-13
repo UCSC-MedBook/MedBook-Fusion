@@ -256,9 +256,13 @@ function PivotTableRender(thisTemplate) {
              if (exprIsoform)
                  exprIsoform.observe(obs);
              initializing = false;
-        } else 
-            drawChart();
-     });
+        } else  {
+        }
+    });
+   if (window.TCD) window.clearTimeout(window.TCD);
+   window.TCD = setTimeout(forceRedrawChart, 250);
+       
+
 }
 
 Template.PivotTable.rendered =( function() {
