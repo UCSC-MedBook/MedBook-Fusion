@@ -12,6 +12,9 @@ var PivotTableInit = {
 
     rendererName: "Bar Chart",
 };
+id_text = function(array) {
+    return array.map(function(e) { return { id: e, text: e} });
+}
 
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
@@ -187,11 +190,14 @@ function PivotTableRender(thisTemplate) {
             $(thisTemplate.find(".output")).pivotUI(chartData, final);
         }
         window.forceRedrawChart = drawChart;
-        if (chart && chart.genelist) {
+
+        var studies = Session.get("studies");
+
+        if (studies && studies.length > 0 && chart && chart.genelist) {
             var studies = Session.get("studies");
             var expr = null, exprIsoform = null;
 
-            if (gene.genelist) {
+            if (chart.genelist) {
                 Meteor.subscribe("GeneExpression", studies, chart.genelist);
                 Meteor.subscribe("GeneExpressionIsoform", studies, chart.genelist);
 
@@ -204,7 +210,6 @@ function PivotTableRender(thisTemplate) {
 
                 added: function(gene) {
                     var gs = gene.samples;
-
                     var validSampleList = Object.keys(gs).filter(function(k) { 
                             if (k.match(/^DTB-.*$/) || k.match(/^TCGA-.*/)) { 
                                 var val = gs[k].rsem_quan_log2;
@@ -212,6 +217,11 @@ function PivotTableRender(thisTemplate) {
                             }
                             return false;
                     });
+                    var f = Session.get("samplelist");
+                    if (f)  {
+                        f = f.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
+                        validSampleList = _.intersection(validSampleList, f);
+                    }
 
                     var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
                     var m = ss.mean(data);
@@ -269,6 +279,12 @@ Template.Controls.events({
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
        Session.set("studies", s);
+       updateChartDocument();
+   },
+   'change #samplelist' : function(evt, tmpl) {
+       var s = $("#samplelist").val();
+       Session.set("samplelist", s);
+       updateChartDocument();
    },
 
    'change #genesets' : function(evt, tmpl) {
@@ -293,15 +309,16 @@ Template.Controls.events({
 })
 
 function updateChartDocument() {
-    var $elem = $("#genelist");
-    var data =  $elem.select2("val");
+    var genelist = $("#genelist").select2("val");
     var studies = Session.get("studies");
-    if (studies && studies.length > 0 && data && data.length > 0) {
-        Meteor.subscribe("GeneExpression", studies, data);
-        Meteor.subscribe("GeneExpressionIsoform", studies, data);
+    var samplelist = Session.get("samplelist");
+
+    if (studies && studies.length > 0 && genelist && genelist.length > 0) {
+        Meteor.subscribe("GeneExpression", studies, genelist);
+        Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
     }
     var prev = Charts.findOne({ userId : Meteor.userId() });
-    Charts.update({ _id : prev._id }, {$set: {studies: studies,  samplelist: samplelist, genelist: data}});
+    Charts.update({ _id : prev._id }, {$set: {studies: studies,  samplelist: samplelist, genelist: genelist}});
  }
 
 
@@ -311,11 +328,17 @@ Template.Controls.rendered =(function() {
        allowClear: true
      } );
 
-     var $studies = $("#studies");
-     var $samplelist = $("#samplelist");
-     var $genelist = $("#genelist");
      var prev = Charts.findOne({ userId : Meteor.userId() });
 
+     var $samplelist = $("#samplelist");
+     $samplelist.val(prev.samplelist);
+     Session.set("samplelist", prev.samplelist);
+
+     var $studies = $("#studies");
+     $studies.select2("data",  id_text(prev.studies));
+     Session.set("studies", prev.studies);
+
+     var $genelist = $("#genelist");
      $genelist.select2({
           initSelection : function (element, callback) {
             if (prev && prev.genelist)

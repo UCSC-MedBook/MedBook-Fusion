@@ -40,8 +40,9 @@ Contrast.deny({
 
 
 Meteor.publish('GeneExpression', function(studies, genes) {
-    var cursor =  Expression.find({studyID:{$in: studies}, gene: {$in: genes}});
-    console.log("Expression publish", studies, genes, cursor.count());
+    var q = ({studyID:{$in: studies}, gene: {$in: genes}});
+    var cursor =  Expression.find(q);
+    console.log("Expression publish", q,"returns", cursor.count());
     return cursor;
 });
 
