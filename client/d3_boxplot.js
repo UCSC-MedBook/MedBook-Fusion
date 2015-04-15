@@ -282,9 +282,27 @@ function wrap(text, width, svg) {
   var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
   series.select('circle').style("fill", function(d) { return d.color });
 
-  svgTop.attr("width", X + 350); // 150 includes  the legend
+  svgTop.attr("width", X + 500); // approximate size of legend
   svgTop.attr("height", PlotHeight);
 
+  setTimeout(function() {
+      var legendText =  d3.selectAll("text.legendText");
+      if (legendText && legendText.length > 0)
+        legendText = legendText[0];
+      if (legendText && legendText.length > 0) {
+          var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
+          if (!isNaN(maxX) && isFinite(maxX)) {
+              console.log("maxX", maxX);
+              svgTop.attr("width", X + 100 + maxX); 
+          }
+          var maxY = Math.max(PlotHeight, 100 + (legendText.length * 20));
+          if (!isNaN(maxY) && isFinite(maxY)) {
+              console.log("maxY", maxY);
+              svgTop.attr("height", maxY); 
+              gLegend.attr("height", maxY); 
+          }
+      }
+  },200)
 
 };
 
