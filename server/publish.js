@@ -71,3 +71,10 @@ Meteor.publish('GeneSets', function() {
     console.log("GeneSets publish", cursor.count());
     return cursor;
 });
+
+Meteor.publish('Metadata', function() {
+    var cursor =  CRFmetadataCollection.find({}, { sort: {"name":1}});
+    console.log("Metadata publish", cursor.count());
+    return cursor;
+
+});

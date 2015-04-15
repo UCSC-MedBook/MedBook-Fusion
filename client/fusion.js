@@ -193,6 +193,15 @@ function PivotTableRender(thisTemplate) {
 
         var studies = Session.get("studies");
 
+        var additionalQueries = Session.get("additionalQueries");
+        if (additionalQueries && additionalQueries.length > 0) {
+            additionalQueries.map(function(query) {
+                query = JSON.parse(unescape(query));
+                Meteor.subscribe(query.c, studies, chart.genelist);
+            });
+        }
+
+
         if (studies && studies.length > 0 && chart && chart.genelist) {
             var studies = Session.get("studies");
             var expr = null, exprIsoform = null;
@@ -236,6 +245,16 @@ function PivotTableRender(thisTemplate) {
                         */
                     });
 
+
+                    // here
+                    var additionalQueries = Session.get("additionalQueries");
+                    if (additionalQueries && additionalQueries.length > 0) {
+                        additionalQueries.map(function(query) {
+                            debugger;
+                            query = JSON.parse(unescape(query));
+                        });
+                    }
+
                     chartData.map(function(sample) {
                         if (sample.Sample_ID in cls) {
                             var s = gene.gene;
@@ -276,6 +295,33 @@ Template.Controls.helpers({
    },
    studies : function() {
       return Studies.find({}, {sort: {"name":1}});
+   },
+   additionalQueries : function() {
+       var html = '';
+       CRFmetadataCollection.find({}).forEach(function(vv) {
+           var collName = vv.name;
+           html += '<optGroup label="'+ collName +'">';
+
+           var ft = vv.fieldTypes;
+           var hasSample_ID = false;
+           vv.fieldOrder.map(function(fieldName, i) {
+               if (fieldName == "Sample_ID")
+                   hasSample_ID = true;
+           });
+           vv.fieldOrder.map(function(fieldName, i) {
+
+               var meta = { c: collName, f: fieldName, 
+                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" 
+               };
+               var value = escape(JSON.stringify(meta));
+                 
+
+               html += '    <option value="'+ value + '">'+collName + "/" +fieldName+'</option>';
+           });
+
+           html += '</optGroup>\n';
+       });
+       return html;
    }
 })
 
@@ -283,6 +329,11 @@ Template.Controls.events({
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
        Session.set("studies", s);
+       updateChartDocument();
+   },
+   'change #additionalQueries' : function(evt, tmpl) {
+       var s = $("#additionalQueries").select2("val");
+       Session.set("additionalQueries", s);
        updateChartDocument();
    },
    'change #samplelist' : function(evt, tmpl) {
@@ -315,6 +366,7 @@ Template.Controls.events({
 function updateChartDocument() {
     var genelist = $("#genelist").select2("val");
     var studies = Session.get("studies");
+    var additionalQueries = Session.get("additionalQueries");
     var samplelist = Session.get("samplelist");
 
     if (studies && studies.length > 0 && genelist && genelist.length > 0) {
@@ -322,15 +374,21 @@ function updateChartDocument() {
         Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
     }
     var prev = Charts.findOne({ userId : Meteor.userId() });
-    Charts.update({ _id : prev._id }, {$set: {studies: studies,  samplelist: samplelist, genelist: genelist}});
+    Charts.update({ _id : prev._id }, {$set: {studies: studies,  additionalQueries: addtionalQueries, samplelist: samplelist, genelist: genelist}});
  }
 
 
 Template.Controls.rendered =(function() {
-     $("#studies").select2( {
-       placeholder: "Select one ore more studies",
+     $("#additionalQueries").select2( {
+       placeholder: "Select one or more fields",
        allowClear: true
      } );
+
+     $("#studies").select2( {
+       placeholder: "Select one or more studies",
+       allowClear: true
+     } );
+
 
      var prev = Charts.findOne({ userId : Meteor.userId() });
 
@@ -339,8 +397,20 @@ Template.Controls.rendered =(function() {
      Session.set("samplelist", prev.samplelist);
 
      var $studies = $("#studies");
-     $studies.select2("data",  id_text(prev.studies));
-     Session.set("studies", prev.studies);
+     if (prev.studies) {
+         $studies.select2("data",  id_text(prev.studies));
+         Session.set("studies", prev.studies);
+     }
+
+     var $additionalQueries = $("#additionalQueries");
+     if (prev.additionalQueries) {
+         $additionalQueries.select2("data",  prev.additionalQueries.map(function(q) {
+             var qq = JSON.parse(unescape(q));
+             return { id: q, text: qq.c + "." + qq.f }
+         }));
+         Session.set("additionalQueries", prev.additionalQueries);
+     }
+
 
      var $genelist = $("#genelist");
      $genelist.select2({
@@ -365,8 +435,9 @@ Template.Controls.rendered =(function() {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
       });
-     if (prev && prev.genelist)
+     if (prev && prev.genelist) {
          $genelist.select2("val", prev.genelist );
+     }
      $genelist.on("change", updateChartDocument)
      $samplelist.on("change", updateChartDocument)
      $studies.on("change", updateChartDocument)
