@@ -192,26 +192,30 @@ function PivotTableRender(thisTemplate) {
         window.forceRedrawChart = drawChart;
 
         var studies = Session.get("studies");
+        var genelist = Session.get("genelist");
 
         var additionalQueries = Session.get("additionalQueries");
         if (additionalQueries && additionalQueries.length > 0) {
             additionalQueries.map(function(query) {
                 query = JSON.parse(unescape(query));
-                Meteor.subscribe(query.c, studies, chart.genelist);
+                var collName = query.c;
+                if (!(collName in CRFmetadataCollectionMap)) {
+                    CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
+                }
+                Meteor.subscribe(collName, studies, genelist);
             });
         }
 
-
-        if (studies && studies.length > 0 && chart && chart.genelist) {
+        if (studies && studies.length > 0 && genelist) {
             var studies = Session.get("studies");
             var expr = null, exprIsoform = null;
 
-            if (chart.genelist) {
-                Meteor.subscribe("GeneExpression", studies, chart.genelist);
-                Meteor.subscribe("GeneExpressionIsoform", studies, chart.genelist);
+            if (genelist && genelist.length > 0) {
+                Meteor.subscribe("GeneExpression", studies, genelist);
+                Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
 
-                expr = Expression.find({gene: { $in: chart.genelist}});
-                exprIsoform = ExpressionIsoform.find({gene: { $in: chart.genelist}});
+                expr = Expression.find({gene: { $in: genelist}});
+                exprIsoform = ExpressionIsoform.find({gene: { $in: genelist}});
             }
 
             var initializiing = true ; // pattern as per http://stackoverflow.com/questions/21355802/meteor-observe-changes-added-callback-on-server-fires-on-all-item
@@ -250,8 +254,8 @@ function PivotTableRender(thisTemplate) {
                     var additionalQueries = Session.get("additionalQueries");
                     if (additionalQueries && additionalQueries.length > 0) {
                         additionalQueries.map(function(query) {
-                            debugger;
                             query = JSON.parse(unescape(query));
+                            // Meteor.subscribe( CRFmetadataCollectionMap[collName] );
                         });
                     }
 
@@ -349,6 +353,7 @@ Template.Controls.events({
            var $genelist = $("#genelist");
            var before = $genelist.select2("val");
            var after = before.concat(gs.members);
+           Session.set("genelist", after);
            $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
            updateChartDocument();
        }
@@ -357,6 +362,7 @@ Template.Controls.events({
    'click #clear' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
+       Session.set("genelist", []);
        updateChartDocument();
        forceRedrawChart();
 
@@ -364,7 +370,7 @@ Template.Controls.events({
 })
 
 function updateChartDocument() {
-    var genelist = $("#genelist").select2("val");
+    var genelist = Session.get("genelist");
     var studies = Session.get("studies");
     var additionalQueries = Session.get("additionalQueries");
     var samplelist = Session.get("samplelist");
@@ -374,7 +380,7 @@ function updateChartDocument() {
         Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
     }
     var prev = Charts.findOne({ userId : Meteor.userId() });
-    Charts.update({ _id : prev._id }, {$set: {studies: studies,  additionalQueries: addtionalQueries, samplelist: samplelist, genelist: genelist}});
+    Charts.update({ _id : prev._id }, {$set: {studies: studies,  additionalQueries: additionalQueries, samplelist: samplelist, genelist: genelist}});
  }
 
 
@@ -438,6 +444,7 @@ Template.Controls.rendered =(function() {
      if (prev && prev.genelist) {
          $genelist.select2("val", prev.genelist );
      }
+     Session.set("genelist", prev.genelist);
      $genelist.on("change", updateChartDocument)
      $samplelist.on("change", updateChartDocument)
      $studies.on("change", updateChartDocument)

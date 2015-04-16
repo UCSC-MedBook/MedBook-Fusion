@@ -76,5 +76,15 @@ Meteor.publish('Metadata', function() {
     var cursor =  CRFmetadataCollection.find({}, { sort: {"name":1}});
     console.log("Metadata publish", cursor.count());
     return cursor;
+});
+CRFmetadataCollection.find({}, { fields: { name: 1 }}).forEach(function(c) {
+     /*
+    CRFmetadataCollectionMap[c] = new Meteor.Collection(c);
 
+    Meteor.publish(c, function() {
+        var cursor = CRFmetadataCollection.find({}, { sort: {"name":1}});
+        console.log("Metadata", c, "publish", cursor.count());
+        return cursor;
+    });
+    */
 });

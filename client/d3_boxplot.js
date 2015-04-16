@@ -96,7 +96,7 @@ function BoxPlotChartData(pivotData) {
 
 var ChartHeightMax = 2048;
 var ChartWidthMax = 2048;
-var PlotHeight = 400;
+var PlotHeight = 500;
 
 var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
@@ -212,7 +212,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
      .append("svg")
       .attr("class", "box svgPlot")
       .attr("width", 40 + width + margin.left + margin.right)
-      .attr("height", height + margin.bottom + margin.top)
+      .attr("height", 50 + height + margin.bottom + margin.top)
     .append("g")
       .attr("transform", function() { 
               var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
@@ -283,7 +283,7 @@ function wrap(text, width, svg) {
   series.select('circle').style("fill", function(d) { return d.color });
 
   svgTop.attr("width", X + 500); // approximate size of legend
-  svgTop.attr("height", PlotHeight);
+  svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
 
   setTimeout(function() {
       var legendText =  d3.selectAll("text.legendText");
