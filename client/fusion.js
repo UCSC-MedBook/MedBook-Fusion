@@ -307,7 +307,7 @@ Template.Controls.helpers({
                var value = escape(JSON.stringify(meta));
                  
 
-               html += '    <option value="'+ value + '">'+collName + "/" +fieldName+'</option>';
+               html += '    <option value="'+ value + '">'+collName + ":" +fieldName+'</option>';
            });
 
            html += '</optGroup>\n';
@@ -358,7 +358,7 @@ function setupQueries(additionalQueries ) {
                         fieldNames.map(function(fieldName) {
                             if (fieldName in data) {
                                 var datum = data[fieldName];
-                                var displayFieldName = collName + "/" + fieldName;
+                                var displayFieldName = collName + ":" + fieldName;
 
                                 if (!(data.Patient_ID in chartData_map_Patient_ID))
                                     chartData_map_Patient_ID[data.Patient_ID] = {};
