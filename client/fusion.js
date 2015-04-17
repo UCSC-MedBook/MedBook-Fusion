@@ -183,7 +183,14 @@ function PivotTableRender(thisTemplate) {
 
             var config = chart ? chart.pivotTableConfig : PivotTableInit;
             var keyUnion = {};  
-            chartData.map(function(c) { $.extend(keyUnion, c); });
+            chartData.map(function(datum) { 
+                if ("Sample_ID" in datum && datum.Sample_ID in chartData_map_Sample_ID) {
+                    $.extend(datum, chartData_map_Sample_ID[ datum.Sample_ID ]);
+                } else if ("Patient_ID" in datum && datum.Patient_ID in chartData_map_Patient_ID)
+                    $.extend(datum, chartData_map_Patient_ID[ datum.Patient_ID ]);
+
+                $.extend(keyUnion, datum);
+            });
             Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
             chartData = chartData.map(Transform_Clinical_Info, keyUnion);
             var final =  $.extend({}, PivotCommonParams, templateContext, config);
@@ -194,17 +201,6 @@ function PivotTableRender(thisTemplate) {
         var studies = Session.get("studies");
         var genelist = Session.get("genelist");
 
-        var additionalQueries = Session.get("additionalQueries");
-        if (additionalQueries && additionalQueries.length > 0) {
-            additionalQueries.map(function(query) {
-                query = JSON.parse(unescape(query));
-                var collName = query.c;
-                if (!(collName in CRFmetadataCollectionMap)) {
-                    CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
-                }
-                Meteor.subscribe(collName, studies, genelist);
-            });
-        }
 
         if (studies && studies.length > 0 && genelist) {
             var studies = Session.get("studies");
@@ -250,14 +246,6 @@ function PivotTableRender(thisTemplate) {
                     });
 
 
-                    // here
-                    var additionalQueries = Session.get("additionalQueries");
-                    if (additionalQueries && additionalQueries.length > 0) {
-                        additionalQueries.map(function(query) {
-                            query = JSON.parse(unescape(query));
-                            // Meteor.subscribe( CRFmetadataCollectionMap[collName] );
-                        });
-                    }
 
                     chartData.map(function(sample) {
                         if (sample.Sample_ID in cls) {
@@ -329,6 +317,68 @@ Template.Controls.helpers({
    }
 })
 
+var aggregatedJoinOn = {}
+var chartData_map_Sample_ID = {};
+var chartData_map_Patient_ID = {};
+
+
+function setupQueries(additionalQueries ) {
+
+    if (additionalQueries && additionalQueries.length > 0) {
+        // aggregate fields 
+        var aggregatedQueries = {};
+        additionalQueries.map(function(query) {
+            var query = JSON.parse(unescape(query));
+
+            var collName = query.c;
+            var fieldName = query.f;
+            aggregatedJoinOn[collName] = query.j;
+
+            if (collName in aggregatedQueries)
+                aggregatedQueries[collName] = _.union(aggregatedQueries[collName], fieldName);
+            else
+                aggregatedQueries[collName] = [fieldName];
+
+            if (collName in window) 
+                CRFmetadataCollectionMap[collName] = window[collName];
+            else if (!(collName in CRFmetadataCollectionMap || collName in window)) 
+                CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
+            
+        });
+        Meteor.subscribe("aggregatedQueries", aggregatedQueries);
+
+        Session.set("additionalQueries", additionalQueries);
+        Session.set("aggregatedQueries", aggregatedQueries);
+
+        if (aggregatedQueries) {
+            Object.keys(aggregatedQueries).map(function(collName) {
+
+                CRFmetadataCollectionMap[collName].find().observe( {
+                    added: function(data) {
+                        console.log("added called");
+                        var fieldNames = aggregatedQueries[collName];
+                        fieldNames.map(function(fieldName) {
+                            if (fieldName in data) {
+                                var datum = data[fieldName];
+                                var displayFieldName = collName + "/" + fieldName;
+                                console.log("chartData",  displayFieldName, data.Patient_ID, data.Sample_ID);
+
+                                if (!(data.Patient_ID in chartData_map_Patient_ID))
+                                    chartData_map_Patient_ID[data.Patient_ID] = {};
+                                chartData_map_Patient_ID[data.Patient_ID][collName + "." + fieldName] = datum;
+
+                                if (!(data.Sample_ID in chartData_map_Sample_ID))
+                                    chartData_map_Sample_ID[data.Sample_ID] = {};
+                                chartData_map_Sample_ID[data.Sample_ID][collName + "." + fieldName] = datum;
+                            }
+                        }); // fieldNames map
+                   } // added
+               });  // obseve
+            }); // Object.keys(aggregatedQueries)
+        }
+    } // if (additionalQueries && additionalQueries.length > 0)
+} // function setupQueries(additionalQueries ) 
+
 Template.Controls.events({
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
@@ -336,8 +386,8 @@ Template.Controls.events({
        updateChartDocument();
    },
    'change #additionalQueries' : function(evt, tmpl) {
-       var s = $("#additionalQueries").select2("val");
-       Session.set("additionalQueries", s);
+       var aggregatedQueries = $("#additionalQueries").select2("val");
+       setupQueries(aggregatedQueries);
        updateChartDocument();
    },
    'change #samplelist' : function(evt, tmpl) {
@@ -414,7 +464,7 @@ Template.Controls.rendered =(function() {
              var qq = JSON.parse(unescape(q));
              return { id: q, text: qq.c + "." + qq.f }
          }));
-         Session.set("additionalQueries", prev.additionalQueries);
+         setupQueries(prev.additionalQueries);
      }
 
 

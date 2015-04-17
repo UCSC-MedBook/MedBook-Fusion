@@ -6,6 +6,39 @@ Meteor.publish('studies', function() {
 Meteor.publish('Clinical_Info', function() {
     return Clinical_Info.find({});
 });
+Meteor.publish("aggregatedQueries", function(aggregatedQueries) {
+    var collNames = Object.keys(aggregatedQueries);
+    return collNames.map(function(collName) {
+        var collMetadata = CRFmetadataCollection.findOne({name: collName});
+        // SECURITY  Put additional collection specific checks here
+
+        // CHECK 1:  Must be metadata
+        if (collMetadata == null)
+            throw "No matching metadata";
+
+        var fields = aggregatedQueries[collName];
+
+        // CHECK 2:  Must be fields
+        if (fields == null || fields.length == 0)
+            throw "Need fields in aggregated query";
+
+        // CHECK 3:  All fields must be known to metadata
+        var wrongFields = _.difference(fields, collMetadata. fieldOrder);
+        if (wrongFields.length > 0) 
+            throw "Wrong fields in aggregated query";
+
+        if (!(collName in CRFmetadataCollectionMap))
+            CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
+
+        var mf = { Sample_ID: 1, Patient_ID: 1};
+        fields.map(function(f) { mf[f] = 1; });
+
+
+        var cursor = CRFmetadataCollectionMap[collName].find({}, { fields: mf, sort: mf});
+        console.log("Metadata", collName, "publish", cursor.count());
+        return cursor;
+    });
+});
 
 Meteor.publish('Charts', function() {
     return Charts.find({});
@@ -76,15 +109,4 @@ Meteor.publish('Metadata', function() {
     var cursor =  CRFmetadataCollection.find({}, { sort: {"name":1}});
     console.log("Metadata publish", cursor.count());
     return cursor;
-});
-CRFmetadataCollection.find({}, { fields: { name: 1 }}).forEach(function(c) {
-     /*
-    CRFmetadataCollectionMap[c] = new Meteor.Collection(c);
-
-    Meteor.publish(c, function() {
-        var cursor = CRFmetadataCollection.find({}, { sort: {"name":1}});
-        console.log("Metadata", c, "publish", cursor.count());
-        return cursor;
-    });
-    */
 });
