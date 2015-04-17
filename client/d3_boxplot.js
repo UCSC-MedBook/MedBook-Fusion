@@ -222,7 +222,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
 function wrap(text, width, svg) {
   text.each(function() {
     var text = d3.select(this),
-        lines = text.text().split(/[\n]/),
+        lines = text.text().replace(/_/g, " ").split(/[\n]/),
         lineNumber = 1,
         y = text.attr("y");
 

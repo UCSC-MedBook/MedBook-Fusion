@@ -365,11 +365,11 @@ function setupQueries(additionalQueries ) {
 
                                 if (!(data.Patient_ID in chartData_map_Patient_ID))
                                     chartData_map_Patient_ID[data.Patient_ID] = {};
-                                chartData_map_Patient_ID[data.Patient_ID][collName + "." + fieldName] = datum;
+                                chartData_map_Patient_ID[data.Patient_ID][collName + ":" + fieldName] = datum;
 
                                 if (!(data.Sample_ID in chartData_map_Sample_ID))
                                     chartData_map_Sample_ID[data.Sample_ID] = {};
-                                chartData_map_Sample_ID[data.Sample_ID][collName + "." + fieldName] = datum;
+                                chartData_map_Sample_ID[data.Sample_ID][collName + ":" + fieldName] = datum;
                             }
                         }); // fieldNames map
                    } // added
@@ -462,7 +462,7 @@ Template.Controls.rendered =(function() {
      if (prev.additionalQueries) {
          $additionalQueries.select2("data",  prev.additionalQueries.map(function(q) {
              var qq = JSON.parse(unescape(q));
-             return { id: q, text: qq.c + "." + qq.f }
+             return { id: q, text: qq.c + ":" + qq.f }
          }));
          setupQueries(prev.additionalQueries);
      }
