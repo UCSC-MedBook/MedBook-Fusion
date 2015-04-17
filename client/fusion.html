@@ -1,9 +1,12 @@
 <template name="PivotTable">
-<div class="page-header">
-  <h1>Data Fusion Tool</h1>
-    Data fusion integrates of multiple data and knowledge representing the same real-world object into a consistent,
-    accurate, and useful representation.
-    This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations.
+
+<div class="around-intro">
+    <div class="intro">
+      <h1>Data Fusion Tool</h1>
+        Data fusion integrates of multiple data and knowledge representing the same real-world object into a consistent,
+        accurate, and useful representation.
+        This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations.
+    </div>
 </div>
 
     {{> Controls }}
@@ -14,10 +17,11 @@
 
 <template name="Controls">
     <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title">Select Studies (required)</h3>
+      <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
+
+          <h3 class="panel-title">1. Select Studies (required)</h3>
        </div>
-       <div class="panel-body">
+       <div id="p1" class="panel-body collapse">
          <select id="studies"  multiple="multiple">
             {{#each studies}}
                <option value="{{this.id}}">{{this.name}}</option>
@@ -27,10 +31,10 @@
     </div>
 
     <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title">Select Genes (optional)</h3>
+      <div class="panel-heading" data-toggle="collapse" data-target="#p2">
+          <h3 class="panel-title">2. Select Genes (optional)</h3>
        </div>
-       <div class="panel-body">
+       <div id="p2" class="panel-body collapse">
               <input class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
               <span>
               <button id="clear">Clear Gene List</button>
@@ -46,10 +50,10 @@
     </div>
 
     <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title">Include additional Clinical Report Forms and other data (optional)</h3>
+      <div class="panel-heading"  data-toggle="collapse" data-target="#p3">
+          <h3 class="panel-title">3. Include additional Clinical Report Forms and other data (optional)</h3>
        </div>
-       <div class="panel-body">
+       <div id="p3" class="panel-body collapse">
          <select id="additionalQueries"  multiple="multiple">
             {{{additionalQueries}}}
         </select>
@@ -58,9 +62,9 @@
 
     <div class="panel panel-default">
       <div class="panel-heading">
-          <h3 class="panel-title">Filter to these Patients or Samples (optional)</h3>
+          <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Filter to these Patients or Samples (optional)</h3>
        </div>
-       <div class="panel-body">
+       <div id="p4" class="panel-body collapse">
               <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
         </div>
     </div>

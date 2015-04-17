@@ -295,7 +295,7 @@ function wrap(text, width, svg) {
               console.log("maxX", maxX);
               svgTop.attr("width", X + 100 + maxX); 
           }
-          var maxY = Math.max(PlotHeight, 100 + (legendText.length * 20));
+          var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
           if (!isNaN(maxY) && isFinite(maxY)) {
               console.log("maxY", maxY);
               svgTop.attr("height", maxY); 
