@@ -5,7 +5,9 @@ Meteor.startup(function() {
           // debugger;
           return foo(pivotData, opts);
           }
-    },
+    };
+
+    window.LEGEND_PROPORTION = 0.5;
 
     window.makeGoogleChart = function(chartType, extraOptions) {
       return function(pivotData, opts) {
@@ -91,10 +93,20 @@ Meteor.startup(function() {
           title += " " + opts.localeStrings.by + " " + groupByTitle;
         }
         document.title = title;
+        var windowWidth = $(window).width() * 0.8;
+        var chartWidth  = windowWidth * window.LEGEND_PROPORTION;
+        var legendWidth = windowWidth * (1.0 - window.LEGEND_PROPORTION);
+
         options = {
-          width: $(window).width() / 1.4,
+          width: chartWidth + legendWidth,
           height: $(window).height() / 1.4,
+          chartArea: {
+            left: 20,
+            width: chartWidth },
+          legend: {width: legendWidth },
+
           title: title,
+          
           hAxis: {
             title: hAxisTitle,
             slantedText: numCharsInHAxis > 50

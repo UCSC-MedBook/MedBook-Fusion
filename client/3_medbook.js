@@ -1,11 +1,19 @@
 addMedBookButtons = function (result, groupArray) {
+    var span = $('<span>').appendTo(result);
 
-    var contrastBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Select a contrast between two groups</button>').appendTo(result);
+    var contrastBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Select a contrast between two groups</button>').appendTo(span);
     window.postButton = function () {
         window.medbookpost = { title: document.title };
         $.getScript('/postScript');
     }
-    var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').appendTo(result);
+    var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  appendTo(span);
+    var sliderDiv = $('<span class="sliderContainer">Legend</span>').appendTo(result);
+    var slider = $('<input id="test" value="' + window.LEGEND_PROPORTION * 100+ '" min="10" max="90" class="slider" type="range"/>').appendTo(sliderDiv);
+    slider.change(function() {
+       window.LEGEND_PROPORTION = $(this).val() / 100.0;
+       window.forceRedrawChart();
+    });
+
     var form = $("<form hidden>").appendTo(result);
     contrastBtn.click(function() { 
             form.toggle ();
