@@ -179,7 +179,6 @@ function PivotTableRender(thisTemplate) {
         function drawChart() {
             var pvtRenderer =  $('.pvtRenderer').val()
             var pvtAggregator =  $('.pvtAggregator').val()
-            console.log("pvtRenderer", pvtRenderer, "pvtAggregator", pvtAggregator);
 
             var config = chart ? chart.pivotTableConfig : PivotTableInit;
             var keyUnion = {};  
@@ -355,13 +354,11 @@ function setupQueries(additionalQueries ) {
 
                 CRFmetadataCollectionMap[collName].find().observe( {
                     added: function(data) {
-                        console.log("added called");
                         var fieldNames = aggregatedQueries[collName];
                         fieldNames.map(function(fieldName) {
                             if (fieldName in data) {
                                 var datum = data[fieldName];
                                 var displayFieldName = collName + "/" + fieldName;
-                                console.log("chartData",  displayFieldName, data.Patient_ID, data.Sample_ID);
 
                                 if (!(data.Patient_ID in chartData_map_Patient_ID))
                                     chartData_map_Patient_ID[data.Patient_ID] = {};
@@ -393,6 +390,13 @@ Template.Controls.events({
    'change #samplelist' : function(evt, tmpl) {
        var s = $("#samplelist").val();
        Session.set("samplelist", s);
+       updateChartDocument();
+   },
+
+   'change #genelist' : function(evt, tmpl) {
+       var $genelist = $("#genelist");
+       var before = $genelist.select2("val");
+       Session.set("genelist", before);
        updateChartDocument();
    },
 
