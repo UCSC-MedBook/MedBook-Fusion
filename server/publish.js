@@ -87,7 +87,7 @@ function assure(userId, collaborations)  {
 */
 
 Meteor.publish('GeneExpression', function(studies, genes) {
-    var q = ({studyID:{$in: studies}, gene: {$in: genes}});
+    var q = ({Study_ID:{$in: studies}, gene: {$in: genes}});
     var cursor =  Expression.find(q);
     console.log("Expression publish", q,"returns", cursor.count());
     return cursor;
