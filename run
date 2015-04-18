@@ -1,4 +1,4 @@
 # export NODE_OPTIONS='--debug'
 export MONGO_URL=mongodb://localhost:27017/MedBook
 export ROOT_URL=localhost:10000/fusion/
-meteor  --port 10011
+meteor  --port 20011
