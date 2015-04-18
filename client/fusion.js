@@ -158,14 +158,16 @@ function PivotTableRender(thisTemplate) {
     Tracker.autorun(function(){
          templateContext = { 
             onRefresh: function(config) {
+                return;
                 var prev = Charts.findOne({ userId : Meteor.userId() });
                 var save = { cols: config.cols, rows: config.rows,
                     aggregatorName: config.aggregatorName,
                     rendererName: config.rendererName,
                 };
-                if (prev)
-                    Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
-                else
+                if (prev) {
+                    if (prev.pivotTableConfig == null || !_.isEqual(prev.pivotTableConfig, save))
+                        Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
+                } else
                     Charts.insert({ userId : Meteor.userId(), pivotTableConfig: save});
             }
         }

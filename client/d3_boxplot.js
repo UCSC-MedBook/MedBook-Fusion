@@ -20,9 +20,10 @@ function BoxPlotChartData(pivotData) {
         rowCategoricalVariables.push({ text: value_class, color: value_color_scale(i),
             deciders: 
                 k.map(function(kk) { 
-                        var yy = kk.split(":")
-                        var label = yy[0];
-                        var value = yy[1];
+                        var n = kk.lastIndexOf(":");
+
+                        var label = kk.substr(0,n);
+                        var value = kk.substr(n+1);
                         return function(elem) { return elem[label] == value; }
                     })
         })
