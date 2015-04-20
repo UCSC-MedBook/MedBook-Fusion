@@ -16,6 +16,29 @@ id_text = function(array) {
     return array.map(function(e) { return { id: e, text: e} });
 }
 
+
+/* 
+   Data Processing Pipeline using Session Variables 
+
+    Phase 1
+    studies - studies list from <input id="studies">
+    genelist - gene list from <input id="genelist">
+    samplelist - samplelist list from <input id="samplelist">
+    additionalQueries - additional queries list from <input id="samplelist">
+
+    Phase 2:
+    aggregatedResults - results of find from aggreagatedQueries
+    expressionResults - results of find from expression collection using genelist
+    expressionIsoFormResults - results of find from expression_isofrom using using genelist
+
+    Phase 3:
+    ChartData - Join of aggregatedResults, expressionResults, expressionIsoFormResults 
+
+    Phase 4: drawing the chart
+    RedrawChart()
+
+*/
+
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
 
@@ -24,13 +47,7 @@ Meteor.startup(function() {
 
     window.PivotCommonParams = {
         renderers: renderers,
-        derivedAttributes: {
-            "Age Bin": derivers.bin("age", 10),
-
-
-            // "Abiraterone": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Abiraterone"),
-            // "Enzalutamide": valueIn("treatment_for_mcrpc_prior_to_biopsy", "Enzalutamide"),
-        },
+        derivedAttributes: { "Age Bin": derivers.bin("age", 10), },
         hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
     };
 
@@ -154,134 +171,6 @@ Zclass = function(x) {
 
 
 
-function PivotTableRender(thisTemplate) {
-    Tracker.autorun(function(){
-         templateContext = { 
-            onRefresh: function(config) {
-                return;
-                var prev = Charts.findOne({ userId : Meteor.userId() });
-                var save = { cols: config.cols, rows: config.rows,
-                    aggregatorName: config.aggregatorName,
-                    rendererName: config.rendererName,
-                };
-                if (prev) {
-                    if (prev.pivotTableConfig == null || !_.isEqual(prev.pivotTableConfig, save))
-                        Charts.update({ _id : prev._id }, {$set: {pivotTableConfig: save}});
-                } else
-                    Charts.insert({ userId : Meteor.userId(), pivotTableConfig: save});
-            }
-        }
-        var chartData = Clinical_Info.find().fetch();
-
-        var chart = Charts.findOne({userId: Meteor.userId()});
-
-
-
-// Join the gene expression data into the chartData 
-        function drawChart() {
-            var pvtRenderer =  $('.pvtRenderer').val()
-            var pvtAggregator =  $('.pvtAggregator').val()
-
-            var config = chart ? chart.pivotTableConfig : PivotTableInit;
-            var keyUnion = {};  
-            chartData.map(function(datum) { 
-                if ("Sample_ID" in datum && datum.Sample_ID in chartData_map_Sample_ID) {
-                    $.extend(datum, chartData_map_Sample_ID[ datum.Sample_ID ]);
-                } else if ("Patient_ID" in datum && datum.Patient_ID in chartData_map_Patient_ID)
-                    $.extend(datum, chartData_map_Patient_ID[ datum.Patient_ID ]);
-
-                $.extend(keyUnion, datum);
-            });
-            Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
-            chartData = chartData.map(Transform_Clinical_Info, keyUnion);
-            var final =  $.extend({}, PivotCommonParams, templateContext, config);
-            $(thisTemplate.find(".output")).pivotUI(chartData, final);
-        }
-        window.forceRedrawChart = drawChart;
-
-        var studies = Session.get("studies");
-        var genelist = Session.get("genelist");
-
-
-        if (studies && studies.length > 0 && genelist) {
-            var studies = Session.get("studies");
-            var expr = null, exprIsoform = null;
-
-            if (genelist && genelist.length > 0) {
-                Meteor.subscribe("GeneExpression", studies, genelist);
-                Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
-
-                expr = Expression.find({gene: { $in: genelist}});
-                exprIsoform = ExpressionIsoform.find({gene: { $in: genelist}});
-            }
-
-            var initializiing = true ; // pattern as per http://stackoverflow.com/questions/21355802/meteor-observe-changes-added-callback-on-server-fires-on-all-item
-            var obs = {
-
-                added: function(gene) {
-                    var gs = gene.samples;
-                    var validSampleList = Object.keys(gs).filter(function(k) { 
-                            if (k.match(/^DTB-.*$/) || k.match(/^TCGA-.*/)) { 
-                                var val = gs[k].rsem_quan_log2;
-                                return val != null && !isNaN(val);
-                            }
-                            return false;
-                    });
-                    var f = Session.get("samplelist");
-                    if (f)  {
-                        f = f.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
-                        validSampleList = _.intersection(validSampleList, f);
-                    }
-
-                    var data = validSampleList.map( function(k) { return parseFloat(gs[k].rsem_quan_log2) });
-                    var m = ss.mean(data);
-                    var sd = ss.standard_deviation(data);
-
-                    var cls = {}
-                    validSampleList.map(function(k){
-                        cls[k] = parseFloat(gs[k].rsem_quan_log2)
-                        /*
-                        var z = ss.z_score(parseFloat(gs[k].rsem_quan_log2), m, sd);
-                        cls[k] =  z; // Zclass(z);
-                        */
-                    });
-
-
-
-                    chartData.map(function(sample) {
-                        if (sample.Sample_ID in cls) {
-                            var s = gene.gene;
-
-                            if ('transcript' in gene) {
-                                s += ' ' + gene['transcript'];
-                            } else
-                                s += ' Expr';
-                            
-                            sample[s] = cls[sample.Sample_ID];
-                        }
-                    if (window.TCD) window.clearTimeout(window.TCD);
-                    window.TCD = setTimeout(drawChart, 200);
-                    });
-                 }};
-             if (expr)
-                 expr.observe(obs);
-             if (exprIsoform)
-                 exprIsoform.observe(obs);
-             initializing = false;
-        } else  {
-        }
-    });
-   if (window.TCD) window.clearTimeout(window.TCD);
-   window.TCD = setTimeout(forceRedrawChart, 250);
-       
-
-}
-
-Template.PivotTable.rendered =( function() {
-    PivotTableRender(this);
-})
-
-
 Template.Controls.helpers({
    genesets : function() {
       return GeneSets.find({}, {sort: {"name":1}});
@@ -318,16 +207,16 @@ Template.Controls.helpers({
    }
 })
 
-var aggregatedJoinOn = {}
-var chartData_map_Sample_ID = {};
-var chartData_map_Patient_ID = {};
 
 
-function setupQueries(additionalQueries ) {
+// This will be run inside of a Tracker autorun
+function aggregatedResults() {
+    var additionalQueries = Session.get("additionalQueries");
 
     if (additionalQueries && additionalQueries.length > 0) {
         // aggregate fields 
         var aggregatedQueries = {};
+        var aggregatedJoinOn = {}
         additionalQueries.map(function(query) {
             var query = JSON.parse(unescape(query));
 
@@ -344,64 +233,136 @@ function setupQueries(additionalQueries ) {
                 CRFmetadataCollectionMap[collName] = window[collName];
             else if (!(collName in CRFmetadataCollectionMap || collName in window)) 
                 CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
+        }) // additional queries
+
+        subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn);
             
-        });
-        Meteor.subscribe("aggregatedQueries", aggregatedQueries);
+    } //  if (additionalQueries && additionalQueries.length > 0)
+} // function aggregatedResults()
 
-        Session.set("additionalQueries", additionalQueries);
-        Session.set("aggregatedQueries", aggregatedQueries);
+function subscribe_aggregatedQueries_2(aggregatedQueries, aggregatedJoinOn) {
+    Meteor.subscribe("aggregatedQueries", aggregatedQueries);
 
-        if (aggregatedQueries) {
-            Object.keys(aggregatedQueries).map(function(collName) {
+    var chartData_map_Sample_ID = {};
+    var chartData_map_Patient_ID = {};
+    var timeout = null;
 
-                CRFmetadataCollectionMap[collName].find().observe( {
-                    added: function(data) {
-                        var fieldNames = aggregatedQueries[collName];
-                        fieldNames.map(function(fieldName) {
-                            if (fieldName in data) {
-                                var datum = data[fieldName];
-                                var displayFieldName = collName + ":" + fieldName;
+    Object.keys(aggregatedQueries).map(function(collName) {
+        Tracker.autorun(function() {
+            var cursor = CRFmetadataCollectionMap[collName].find();
+            cursor.observe( {
+                added: function(data) {
+    debugger;
+                    var fieldNames = aggregatedQueries[collName];
+                    fieldNames.map(function(fieldName) {
+                        if (fieldName in data) {
+                            var datum = data[fieldName];
+                            var displayFieldName = collName + ":" + fieldName;
 
-                                if (!(data.Patient_ID in chartData_map_Patient_ID))
-                                    chartData_map_Patient_ID[data.Patient_ID] = {};
-                                chartData_map_Patient_ID[data.Patient_ID][collName + ":" + fieldName] = datum;
+                            if (!(data.Patient_ID in chartData_map_Patient_ID))
+                                chartData_map_Patient_ID[data.Patient_ID] = {};
+                            chartData_map_Patient_ID[data.Patient_ID][collName + ":" + fieldName] = datum;
 
-                                if (!(data.Sample_ID in chartData_map_Sample_ID))
-                                    chartData_map_Sample_ID[data.Sample_ID] = {};
-                                chartData_map_Sample_ID[data.Sample_ID][collName + ":" + fieldName] = datum;
-                            }
-                        }); // fieldNames map
-                   } // added
-               });  // obseve
-            }); // Object.keys(aggregatedQueries)
-        }
-    } // if (additionalQueries && additionalQueries.length > 0)
-} // function setupQueries(additionalQueries ) 
+                            if (!(data.Sample_ID in chartData_map_Sample_ID))
+                                chartData_map_Sample_ID[data.Sample_ID] = {};
+                            chartData_map_Sample_ID[data.Sample_ID][collName + ":" + fieldName] = datum;
+                        }
+                    }); // fieldNames map
+
+                    if (timeout) window.clearTimeout(timeout);
+                    timeout = setTimeout(function(){
+                            Session.set("aggregatedResults", {
+                                    aggregatedJoinOn: aggregatedJoinOn,
+                                    chartData_map_Sample_ID: chartData_map_Sample_ID,
+                                    chartData_map_Patient_ID: chartData_map_Patient_ID,
+                                } );
+                        }, 200); // timeout
+                } // added
+            }); // observe
+         }); //tracker autorun
+    }); // aggregatedQueries keys
+
+}
+
+function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
+    Meteor.subscribe("aggregatedQueries", aggregatedQueries, function onReady() {
+        var chartData_map_Sample_ID = {};
+        var chartData_map_Patient_ID = {};
+        var timeout = null;
+        Object.keys(aggregatedQueries).map(function(collName) {
+                var  cursor = CRFmetadataCollectionMap[collName].find();
+                console.log("agg", collName, cursor.count());
+                cursor.forEach( function(data) {
+                    var fieldNames = aggregatedQueries[collName];
+                    fieldNames.map(function(fieldName) {
+                        if (fieldName in data) {
+                            var datum = data[fieldName];
+                            var displayFieldName = collName + ":" + fieldName;
+
+                            if (!(data.Patient_ID in chartData_map_Patient_ID))
+                                chartData_map_Patient_ID[data.Patient_ID] = {};
+                            chartData_map_Patient_ID[data.Patient_ID][collName + ":" + fieldName] = datum;
+
+                            if (!(data.Sample_ID in chartData_map_Sample_ID))
+                                chartData_map_Sample_ID[data.Sample_ID] = {};
+                            chartData_map_Sample_ID[data.Sample_ID][collName + ":" + fieldName] = datum;
+                        }
+                    }); // fieldNames map
+                    }); //forEach
+            }); // aggregatedQueries keys map
+        debugger;
+            Session.set("aggregatedResults", {
+                aggregatedJoinOn: aggregatedJoinOn,
+                chartData_map_Sample_ID: chartData_map_Sample_ID,
+                chartData_map_Patient_ID: chartData_map_Patient_ID,
+            });
+        }) // Meteor.subscribe
+    }
+
+// The result is run inside of a tracker autorun
+function geneLikeResults(sessionVar, collName, subscriptionName) {
+    return function() {
+        var studies = Session.get("studies");
+        var genelist = Session.get("genelist");
+        var samplelist = Session.get("samplelist");
+
+        if (studies && studies.length > 0 && genelist && genelist.length > 0) {
+
+            Meteor.subscribe(subscriptionName, studies, genelist, 
+                function onReady() {
+                        var docs = window[collName].find({gene: { $in: genelist}}).fetch();
+                        Session.set(sessionVar, docs);
+                    } // onReady()
+                );
+
+        }  // if studies
+    } // return function
+} // function geneLikeResults()
+
+
 
 Template.Controls.events({
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
        Session.set("studies", s);
-       updateChartDocument();
    },
    'change #additionalQueries' : function(evt, tmpl) {
-       var aggregatedQueries = $("#additionalQueries").select2("val");
-       setupQueries(aggregatedQueries);
-       updateChartDocument();
+       var additionalQueries = $("#additionalQueries").select2("val");
+       Session.set("additionalQueries", additionalQueries); // Pipeline Phase 1
    },
    'change #samplelist' : function(evt, tmpl) {
        var s = $("#samplelist").val();
-       Session.set("samplelist", s);
-       updateChartDocument();
+       s = s.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
+       Session.set("samplelist", s); // Pipeline Phase 1
    },
 
    'change #genelist' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        var before = $genelist.select2("val");
-       Session.set("genelist", before);
-       updateChartDocument();
+       Session.set("genelist", before); // Pipeline Phase 1
    },
 
+   // genesets are just a quick way to add genes to the genelist, simlar to above event
    'change #genesets' : function(evt, tmpl) {
        var val = $(evt.target).val();
        var gs = GeneSets.findOne({name: val});
@@ -409,9 +370,8 @@ Template.Controls.events({
            var $genelist = $("#genelist");
            var before = $genelist.select2("val");
            var after = before.concat(gs.members);
-           Session.set("genelist", after);
+           Session.set("genelist", after); // Pipeline Phase 1
            $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
-           updateChartDocument();
        }
    },
 
@@ -419,28 +379,11 @@ Template.Controls.events({
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
        Session.set("genelist", []);
-       updateChartDocument();
-       forceRedrawChart();
-
    }
 })
 
-function updateChartDocument() {
-    var genelist = Session.get("genelist");
-    var studies = Session.get("studies");
-    var additionalQueries = Session.get("additionalQueries");
-    var samplelist = Session.get("samplelist");
+function initializeSpecialJQueryUITypes() {
 
-    if (studies && studies.length > 0 && genelist && genelist.length > 0) {
-        Meteor.subscribe("GeneExpression", studies, genelist);
-        Meteor.subscribe("GeneExpressionIsoform", studies, genelist);
-    }
-    var prev = Charts.findOne({ userId : Meteor.userId() });
-    Charts.update({ _id : prev._id }, {$set: {studies: studies,  additionalQueries: additionalQueries, samplelist: samplelist, genelist: genelist}});
- }
-
-
-Template.Controls.rendered =(function() {
      $("#additionalQueries").select2( {
        placeholder: "Select one or more fields",
        allowClear: true
@@ -450,12 +393,14 @@ Template.Controls.rendered =(function() {
        placeholder: "Select one or more studies",
        allowClear: true
      } );
+}
 
 
-     var prev = Charts.findOne({ userId : Meteor.userId() });
+
+function restoreChartDocument(prev) {
 
      var $samplelist = $("#samplelist");
-     $samplelist.val(prev.samplelist);
+     $samplelist.val(prev.samplelist.join(" "));
      Session.set("samplelist", prev.samplelist);
 
      var $studies = $("#studies");
@@ -470,9 +415,8 @@ Template.Controls.rendered =(function() {
              var qq = JSON.parse(unescape(q));
              return { id: q, text: qq.c + ":" + qq.f }
          }));
-         setupQueries(prev.additionalQueries);
+         Session.set("additionalQueries", prev.additionalQueries); // Pipeline Phase 1
      }
-
 
      var $genelist = $("#genelist");
      $genelist.select2({
@@ -496,13 +440,112 @@ Template.Controls.rendered =(function() {
           },
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
-      });
+     });
+
      if (prev && prev.genelist) {
          $genelist.select2("val", prev.genelist );
      }
      Session.set("genelist", prev.genelist);
-     $genelist.on("change", updateChartDocument)
-     $samplelist.on("change", updateChartDocument)
-     $studies.on("change", updateChartDocument)
-});
+
+};
+
+Template.Controls.rendered = function() {
+     var thisTemplate = this;
+
+     var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     Session.set("ChartDocument", ChartDocument);
+
+     // Phase 1
+     initializeSpecialJQueryUITypes();
+     restoreChartDocument(ChartDocument);
+
+     // Phase 2
+     Tracker.autorun( aggregatedResults );
+     Tracker.autorun( geneLikeResults("Expression", "Expression", "GeneExpression"));
+     Tracker.autorun( geneLikeResults("ExpressionIsoform", "ExpressionIsoform", "GeneExpressionIsoform"));
+
+     // Phase 3 Get all the changed values, save the ChartDocument and join the results
+     Tracker.autorun(function updateChartDocument() {
+
+            // Any (all) of the following change, save them and update ChartData
+            ChartDocument.genelist = Session.get("genelist");
+            ChartDocument.studies = Session.get("studies");
+            ChartDocument.samplelist = Session.get("samplelist");
+            ChartDocument.additionalQueries = Session.get("additionalQueries");
+            ChartDocument.aggregatedResults = Session.get("aggregatedResults");
+
+            var cd = _.clone(ChartDocument);
+            delete cd["_id"];
+            Charts.update({ _id : ChartDocument._id }, {$set: cd});
+
+            debugger;
+            var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
+            var chartData = Clinical_Info.find(q).fetch();
+
+            var chartDataMap = {};
+            chartData.map(function (cd) { chartDataMap[cd.Sample_ID] = cd; });
+
+            if (ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0)
+            ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
+                
+            var domains = [ "Expression", "ExpressionIsoform"];
+            domains.map(function (geneLikeDataDomain) {
+                var gld = Session.get(geneLikeDataDomain);
+                if (gld) {
+                    gld.map(function(geneData) {
+                        var geneName = geneData.gene;
+                        var label = ('transcript' in geneData) 
+                            ? geneName + ' ' + geneData.transcript + ' Expr'
+                            : geneName + ' Expr';
+                        var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
+                        samplelist.map(function (sampleID) {
+                            var f = parseFloat(geneData.samples[sampleID].rsem_quan_log2);
+                            if (!isNaN(f)) {
+                                chartDataMap[sampleID][label] = f;
+                            }
+                        });
+                    });
+                }
+            });
+
+            function Join(datum, joinKey, dataMap) {
+                if (joinKey in datum && datum[joinKey] in dataMap)
+                    $.extend(datum, dataMap[ datum[joinKey] ]);
+            }
+
+            var keyUnion = {};  
+            chartData.map(function(datum) { 
+                if (ChartDocument.aggregatedResults) {
+                    Join(datum, "Sample_ID", ChartDocument.aggregatedResults.chartData_map_Sample_ID);
+                    Join(datum, "Patient_ID", ChartDocument.aggregatedResults.chartData_map_Patient_ID);
+                }
+                $.extend(keyUnion, datum);
+            });
+
+            debugger;
+
+            Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
+            chartData = chartData.map(Transform_Clinical_Info, keyUnion);
+            Session.set("ChartData", chartData);
+
+    });
+
+
+     // Phase 4 repaint
+     Tracker.autorun( function RedrawChart() {
+        var chartData = Session.get("ChartData");
+        templateContext = { 
+            onRefresh: function(config) {
+                var save = { cols: config.cols, rows: config.rows,
+                    aggregatorName: config.aggregatorName,
+                    rendererName: config.rendererName,
+                };
+                ChartDocument.pivotTableConfig =  save;
+            }
+        }
+        var config = ChartDocument ? ChartDocument.pivotTableConfig : PivotTableInit;
+        var final =  $.extend({}, PivotCommonParams, templateContext, config);
+        $(".output").pivotUI(chartData, final);
+    }); // autoRun
+} // 
 
