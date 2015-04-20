@@ -252,7 +252,6 @@ function subscribe_aggregatedQueries_2(aggregatedQueries, aggregatedJoinOn) {
             var cursor = CRFmetadataCollectionMap[collName].find();
             cursor.observe( {
                 added: function(data) {
-    debugger;
                     var fieldNames = aggregatedQueries[collName];
                     fieldNames.map(function(fieldName) {
                         if (fieldName in data) {
@@ -310,7 +309,6 @@ function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
                     }); // fieldNames map
                     }); //forEach
             }); // aggregatedQueries keys map
-        debugger;
             Session.set("aggregatedResults", {
                 aggregatedJoinOn: aggregatedJoinOn,
                 chartData_map_Sample_ID: chartData_map_Sample_ID,
@@ -485,7 +483,6 @@ Template.Controls.rendered = function() {
             var chartDataMap = {};
             chartData.map(function (cd) { chartDataMap[cd.Sample_ID] = cd; });
 
-            if (ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0)
             ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
                 
             var domains = [ "Expression", "ExpressionIsoform"];
@@ -521,8 +518,6 @@ Template.Controls.rendered = function() {
                 }
                 $.extend(keyUnion, datum);
             });
-
-            debugger;
 
             Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
             chartData = chartData.map(Transform_Clinical_Info, keyUnion);
