@@ -2,6 +2,11 @@
 /* MasterLayout: Event Handlers and Helpersss .js*/
 /*****************************************************************************/
 Template.MasterLayout.events({
+    'click .overlay' : function() {
+        $('#overlayContent').children().remove()
+        $('.overlay').addClass("hidden");
+     },
+
     'change #study' : function(event, template) {
         this.currStudy = event.currentTarget.value;
 		var currentRoute = Router.current().route.getName()
@@ -78,3 +83,10 @@ Template.MasterLayout.rendered = function() {
 Template.MasterLayout.destroyed = function() {
 };
 
+Overlay = function(templateName, params) {
+    var $overlay = $( '.overlay' );
+    $overlay.removeClass("hidden");
+    $overlay.show();
+    var $overlayContent = $( '#overlayContent' );
+    UI.insert( UI.renderWithData( Template[templateName], params), $overlayContent.get(0) );
+}

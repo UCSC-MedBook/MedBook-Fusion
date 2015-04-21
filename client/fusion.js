@@ -172,6 +172,11 @@ Zclass = function(x) {
 
 
 Template.Controls.helpers({
+   Count : function(variable) {
+      var v = Session.get(variable);
+      var n = v ? v.length : 0;
+      return n;
+   },
    genesets : function() {
       return GeneSets.find({}, {sort: {"name":1}});
    },
@@ -340,6 +345,12 @@ function geneLikeResults(sessionVar, collName, subscriptionName) {
 
 
 Template.Controls.events({
+   'click .inspect': function(evt, tmpl) {
+        var $link = $(evt.target);
+        var v = $link.data("var");
+        var data = Session.get(v);
+        Overlay("Inspector", { data: data });
+   },
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
        Session.set("studies", s);
@@ -476,12 +487,16 @@ Template.Controls.rendered = function() {
             delete cd["_id"];
             Charts.update({ _id : ChartDocument._id }, {$set: cd});
 
-            debugger;
             var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
             var chartData = Clinical_Info.find(q).fetch();
 
             var chartDataMap = {};
-            chartData.map(function (cd) { chartDataMap[cd.Sample_ID] = cd; });
+            chartData.map(function (cd) { 
+                delete cd["_id"];
+                chartDataMap[cd.Sample_ID] = cd;
+            });
+
+            chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
 
             ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
                 

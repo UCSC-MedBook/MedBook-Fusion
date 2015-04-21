@@ -1118,8 +1118,8 @@ Meteor.startup(function() {
         uiTable = $("<table>").attr("cellpadding", 5);
         rendererControl = $("<td>");
         var controlPanel = $("<div class='dataExplorerControlPanel'>").appendTo(rendererControl);
-        $("<label>Chart Type</label>").appendTo(controlPanel);
-        renderer = $("<select>").addClass('pvtRenderer').appendTo(controlPanel).bind("change", function() {
+        var controlPanel2 = $("<div style='text-align:center;'><label>Chart Type</label></div>").appendTo(controlPanel);
+        renderer = $("<select>").addClass('pvtRenderer').appendTo(controlPanel2).bind("change", function() {
           return refresh();
         });
         $("<br>").appendTo(controlPanel);
