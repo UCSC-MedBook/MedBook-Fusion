@@ -188,13 +188,19 @@ Template.Controls.helpers({
       return {
         rowsPerPage: 10,
         showFilter: false,
-        fields: [
+        fields: [ "id", "description",
+        /*
+           This causes an error in the console log.
+
             { key: 'id' }, 
             {
               key: 'description',
               fn: function (value) { 
-                  return new Spacebars.SafeString(value); }
+                  // return new Spacebars.SafeString(value);
+                  return value;
+              }
             }
+            */
        ],
     };
    },
