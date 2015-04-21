@@ -103,7 +103,7 @@ var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 
-window.makeD3Chart= function(chartType, extraOptions) {
+window.makeD3BoxPlotChart= function(chartType, extraOptions) {
   return function(pivotData, opts) {
         var chvk = BoxPlotChartData(pivotData);
         var n = 9;
@@ -131,6 +131,8 @@ window.makeD3Chart= function(chartType, extraOptions) {
                 displayBoxPlots(plotDataSets, h, v, div, plotWidth, rowCategoricalVariables);
             });
         }
+        var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  
+            appendTo(window.$div);
         return window.$div
     }
 };
