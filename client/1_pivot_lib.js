@@ -25,6 +25,8 @@ Meteor.startup(function() {
      function xor(a,b) { return a || b };
 
      function allNumbers(values) {
+         if (values.length == 0)
+            debugger;
          return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
      }
      function extract(key) {

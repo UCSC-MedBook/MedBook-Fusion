@@ -28,7 +28,13 @@
             {{#each studies}}
                <option value="{{this.id}}">{{this.name}}</option>
             {{/each}}
-        </select>
+         </select>
+         <div>
+
+             {{> reactiveTable showNavigation="auto" fields=["id", "description"]
+                  settings=studiesSelectedSettings class="studiesSelectedTable"
+                  collection=studiesSelected rowsPerPage=20 class="studiesSelectedTable table borderless" }}
+         </div>
        </div>
     </div>
 
@@ -74,7 +80,7 @@
                     <input type="checkbox"> Check me out
               </label>
               <br>
-              <a href="#" class="inspect" data-var="ChartData"> has {{Count "ChartData"}} records.
+              <a href="#" class="inspect" data-var="ChartData"> has {{Count "Clinical_Info"}} records.
               </a>
          </div>
 

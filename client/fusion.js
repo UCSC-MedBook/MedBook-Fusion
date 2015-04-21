@@ -170,13 +170,35 @@ Zclass = function(x) {
 }
 
 
-
 Template.Controls.helpers({
-   Count : function(variable) {
-      var v = Session.get(variable);
-      var n = v ? v.length : 0;
-      return n;
+   Count : function(collName) {
+      var coll = getCollection(collName)
+      return coll.find().count();
    },
+
+   studiesSelected: function() {
+     var studies = Session.get("studies");
+     if (studies && studies.length > 0)
+        return Studies.find({id: {$in: studies }}, {sort: {"name":1}});
+     else
+        return [];
+   },
+
+   studiesSelectedSettings: function () {
+      return {
+        rowsPerPage: 10,
+        showFilter: false,
+        fields: [
+            { key: 'id' }, 
+            {
+              key: 'description',
+              fn: function (value) { 
+                  return new Spacebars.SafeString(value); }
+            }
+       ],
+    };
+   },
+
    genesets : function() {
       return GeneSets.find({}, {sort: {"name":1}});
    },
@@ -211,6 +233,14 @@ Template.Controls.helpers({
        return html;
    }
 })
+
+getCollection = function(collName) {
+    if (collName in window) 
+        CRFmetadataCollectionMap[collName] = window[collName];
+    else if (!(collName in CRFmetadataCollectionMap || collName in window)) 
+        CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
+    return CRFmetadataCollectionMap[collName];
+}
 
 
 
@@ -254,7 +284,7 @@ function subscribe_aggregatedQueries_2(aggregatedQueries, aggregatedJoinOn) {
 
     Object.keys(aggregatedQueries).map(function(collName) {
         Tracker.autorun(function() {
-            var cursor = CRFmetadataCollectionMap[collName].find();
+            var cursor = getCollection(collName).find();
             cursor.observe( {
                 added: function(data) {
                     var fieldNames = aggregatedQueries[collName];
@@ -294,7 +324,7 @@ function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
         var chartData_map_Patient_ID = {};
         var timeout = null;
         Object.keys(aggregatedQueries).map(function(collName) {
-                var  cursor = CRFmetadataCollectionMap[collName].find();
+                var cursor = getCollection(collName).find();
                 console.log("agg", collName, cursor.count());
                 cursor.forEach( function(data) {
                     var fieldNames = aggregatedQueries[collName];
@@ -459,6 +489,9 @@ function restoreChartDocument(prev) {
 };
 
 Template.Controls.rendered = function() {
+     $('.studiesSelectedTable th').hide()
+
+
      var thisTemplate = this;
 
      var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
