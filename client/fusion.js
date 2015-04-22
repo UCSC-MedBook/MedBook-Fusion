@@ -375,6 +375,9 @@ function geneLikeResults(sessionVar, collName, subscriptionName) {
                 );
 
         }  // if studies
+
+        else 
+            Session.set(sessionVar, []);
     } // return function
 } // function geneLikeResults()
 
