@@ -1,0 +1,8 @@
+.slider {
+    width: 300px !important;
+    display: inline !important;
+}
+.sliderContainer {
+    background: white;
+    height: 100px;
+}

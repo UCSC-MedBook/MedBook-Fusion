@@ -25,3 +25,7 @@
   z-index:50;
   background-color: rgba(0,0,0,0.5);
 }
+
+.overlay-dalog {
+  background-color: white;
+}
