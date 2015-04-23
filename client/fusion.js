@@ -235,7 +235,8 @@ Template.Controls.helpers({
         showFilter: false,
         fields: [ "id", "description",
         /*
-           This causes an error in the console log.
+           The description field is in HTML. But this recipe for displaying HTML in reactive table
+           causes an error in the console log.  Need a better recipe.
 
             { key: 'id' }, 
             {
@@ -442,6 +443,7 @@ Template.Controls.events({
               // update
           }
        });
+      Session.set("geneLikeDataDomain", GeneLikeDataDomainsPrototype);
    },
 
    'click .inspect': function(evt, tmpl) {
@@ -513,6 +515,17 @@ function restoreChartDocument(prev) {
 
      if (prev.geneLikeDataDomain) {
          Session.set("geneLikeDataDomain", prev.geneLikeDataDomain);
+
+         GeneLikeDataDomainsPrototype.map(function(newDomain) {
+              prev.geneLikeDataDomain.map(function(prevDomain) {
+                  if (prevDomain.collection == newDomain.collection  && prevDomain.field == newDomain.field ) {
+                      newDomain.state = prevDomain.state;
+                      Session.set(newDomain.checkBoxName, newDomain.state);
+                      $('input[name="' + newDomain.checkBoxName + '"]').prop("checked", newDomain.state);
+
+                  }
+              });
+          });
      } else
          Session.set("geneLikeDataDomain", []);
 
