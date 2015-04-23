@@ -172,21 +172,21 @@ Zclass = function(x) {
 
 GeneLikeDataDomainsPrototype = [
     {
-        label: "Expr",
+        label: "Expression RSEM",
         checkBoxName: "ExprCheckbox",
         dataName: "Expression",
         collection: "Expression",
         subscriptionName: "GeneExpression",
-        field: "RNAseq",
+        field: "rsem_quan_log2",
         state: false,
     },
     {
-        label: "Isoform",
+        label: "Isoform RSEM",
         checkBoxName: "IsoformCheckbox",
         dataName: "ExpressionIsoform",
         collection: "ExpressionIsoform",
         subscriptionName: "GeneExpressionIsoform",
-        field: "RNAseq",
+        field: "rsem_quan_log2",
         state: false,
     },
     /*
@@ -620,7 +620,7 @@ Template.Controls.rendered = function() {
                             : geneName + ' Expr';
                         var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
                         samplelist.map(function (sampleID) {
-                            var f = parseFloat(geneData.samples[sampleID].rsem_quan_log2);
+                            var f = parseFloat(geneData.samples[sampleID][domain.field]);
                             if (!isNaN(f)) {
                                 chartDataMap[sampleID][label] = f;
                             }
