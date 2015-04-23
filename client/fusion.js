@@ -510,8 +510,11 @@ function initializeSpecialJQueryUITypes() {
 function restoreChartDocument(prev) {
 
      var $samplelist = $("#samplelist");
-     $samplelist.val(prev.samplelist.join(" "));
-     Session.set("samplelist", prev.samplelist);
+     if (prev.samplelist) {
+         prev.samplelist = [];
+         $samplelist.val(prev.samplelist.join(" "));
+         Session.set("samplelist", prev.samplelist);
+     }
 
      if (prev.geneLikeDataDomain) {
          Session.set("geneLikeDataDomain", prev.geneLikeDataDomain);
