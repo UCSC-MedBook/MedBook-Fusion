@@ -169,28 +169,36 @@ Zclass = function(x) {
     if (x  < -2)  return "-2z";
 }
 
+
 GeneLikeDataDomainsPrototype = [
     {
         label: "Expr",
-        sessionVar: "ExprCheckbox",
+        checkBoxName: "ExprCheckbox",
+        dataName: "Expression",
         collection: "Expression",
+        subscriptionName: "GeneExpression",
         field: "RNAseq",
         state: false,
     },
     {
         label: "Isoform",
-        sessionVar: "IsoformCheckbox",
+        checkBoxName: "IsoformCheckbox",
+        dataName: "ExpressionIsoform",
         collection: "Isoform",
+        subscriptionName: "GeneExpressionIsoform",
         field: "RNAseq",
         state: false,
     },
+    /*
     {
         label: "Mutations",
-        sessionVar: "MutCheckbox",
+        checkBoxName: "MutCheckbox",
+        dataName: "Mutations",
         collection: "Mutations",
         field: "RNAseq",
         state: false,
     },
+    */
 ];
 
 
@@ -395,8 +403,9 @@ function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
         }) // Meteor.subscribe
     }
 
-// This function  is run inside of a tracker autorun
-function geneLikeResults(checkBoxName, sessionVar, collName, subscriptionName) {
+// This returned function is run inside of a tracker autorun
+function geneLikeResults(checkBoxName, dataName, collName, subscriptionName) {
+    debugger
     return function() {
         var getIt = Session.get(checkBoxName);
         if (getIt) {
@@ -409,14 +418,14 @@ function geneLikeResults(checkBoxName, sessionVar, collName, subscriptionName) {
                 Meteor.subscribe(subscriptionName, studies, genelist, 
                     function onReady() {
                             var docs = window[collName].find({gene: { $in: genelist}}).fetch();
-                            Session.set(sessionVar, docs);
+                            Session.set(dataName, docs);
                         } // onReady()
                     );
 
             }  // if studies
             return
         }
-        Session.set(sessionVar, []);
+        Session.set(dataName, []);
     } // return function
 } // function geneLikeResults()
 
@@ -430,7 +439,7 @@ Template.Controls.events({
        GeneLikeDataDomainsPrototype.map(function(domain) {
            if ( domain.field == field && domain.collection == collection ) {
               domain.state = $checkbox.prop("checked");
-              Session.set(domain.sessionVar, domain.state);
+              Session.set(domain.checkBoxName, domain.state);
               // update
           }
        });
@@ -570,8 +579,10 @@ Template.Controls.rendered = function() {
 
      // Phase 2
      Tracker.autorun( aggregatedResults );
-     Tracker.autorun( geneLikeResults("ExprCheckbox", "Expression", "Expression", "GeneExpression"));
-     Tracker.autorun( geneLikeResults("IsoformCheckbox", "ExpressionIsoform", "ExpressionIsoform", "GeneExpressionIsoform"));
+
+     GeneLikeDataDomainsPrototype.map(function(dataDomain) {
+        Tracker.autorun(geneLikeResults(dataDomain.checkBoxName, dataDomain.dataName, dataDomain.collection, dataDomain.subscriptionName))
+     })
 
      // Phase 3 Get all the changed values, save the ChartDocument and join the results
      Tracker.autorun(function updateChartDocument() {
@@ -601,9 +612,8 @@ Template.Controls.rendered = function() {
 
             ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
                 
-            var domains = [ "Expression", "ExpressionIsoform"];
-            domains.map(function (geneLikeDataDomain) {
-                var gld = Session.get(geneLikeDataDomain);
+            GeneLikeDataDomainsPrototype.map(function(domain) {
+                var gld = Session.get(domain.dataName);
                 if (gld) {
                     gld.map(function(geneData) {
                         var geneName = geneData.gene;
