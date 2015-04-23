@@ -169,11 +169,48 @@ Zclass = function(x) {
     if (x  < -2)  return "-2z";
 }
 
+GeneLikeDataDomainsPrototype = [
+    {
+        label: "Expr",
+        sessionVar: "ExprCheckbox",
+        collection: "Expression",
+        field: "RNAseq",
+        state: false,
+    },
+    {
+        label: "Isoform",
+        sessionVar: "IsoformCheckbox",
+        collection: "Isoform",
+        field: "RNAseq",
+        state: false,
+    },
+    {
+        label: "Mutations",
+        sessionVar: "MutCheckbox",
+        collection: "Mutations",
+        field: "RNAseq",
+        state: false,
+    },
+];
+
 
 Template.Controls.helpers({
    Count : function(collName) {
       var coll = getCollection(collName)
       return coll.find().count();
+   },
+
+   geneLikeDataDomains : function() {
+      var prevGeneLikeDataDomains = Session.get("geneLikeDataDomain");
+      if (prevGeneLikeDataDomains)
+          GeneLikeDataDomainsPrototype.map(function(newDomain) {
+              prevGeneLikeDataDomains.map(function(prevDomain) {
+                  if (prevDomain.collection == newDomain.collection  && prevDomain.field == newDomain.field ) {
+                      newDomain.state = prevDomain.state;
+                  }
+              });
+          });
+      return GeneLikeDataDomainsPrototype;
    },
 
    studiesSelected: function() {
@@ -358,32 +395,47 @@ function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
         }) // Meteor.subscribe
     }
 
-// The result is run inside of a tracker autorun
-function geneLikeResults(sessionVar, collName, subscriptionName) {
+// This function  is run inside of a tracker autorun
+function geneLikeResults(checkBoxName, sessionVar, collName, subscriptionName) {
     return function() {
-        var studies = Session.get("studies");
-        var genelist = Session.get("genelist");
-        var samplelist = Session.get("samplelist");
+        var getIt = Session.get(checkBoxName);
+        if (getIt) {
+            var studies = Session.get("studies");
+            var genelist = Session.get("genelist");
+            var samplelist = Session.get("samplelist");
 
-        if (studies && studies.length > 0 && genelist && genelist.length > 0) {
+            if (studies && studies.length > 0 && genelist && genelist.length > 0) {
 
-            Meteor.subscribe(subscriptionName, studies, genelist, 
-                function onReady() {
-                        var docs = window[collName].find({gene: { $in: genelist}}).fetch();
-                        Session.set(sessionVar, docs);
-                    } // onReady()
-                );
+                Meteor.subscribe(subscriptionName, studies, genelist, 
+                    function onReady() {
+                            var docs = window[collName].find({gene: { $in: genelist}}).fetch();
+                            Session.set(sessionVar, docs);
+                        } // onReady()
+                    );
 
-        }  // if studies
-
-        else 
-            Session.set(sessionVar, []);
+            }  // if studies
+            return
+        }
+        Session.set(sessionVar, []);
     } // return function
 } // function geneLikeResults()
 
 
 
 Template.Controls.events({
+   'change .geneLikeDataDomains' : function(evt, tmpl) {
+       var $checkbox = $(evt.target)
+       var field = $checkbox.data('field');
+       var collection = $checkbox.data('collection');
+       GeneLikeDataDomainsPrototype.map(function(domain) {
+           if ( domain.field == field && domain.collection == collection ) {
+              domain.state = $checkbox.prop("checked");
+              Session.set(domain.sessionVar, domain.state);
+              // update
+          }
+       });
+   },
+
    'click .inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
@@ -451,6 +503,12 @@ function restoreChartDocument(prev) {
      $samplelist.val(prev.samplelist.join(" "));
      Session.set("samplelist", prev.samplelist);
 
+     if (prev.geneLikeDataDomain) {
+         Session.set("geneLikeDataDomain", prev.geneLikeDataDomain);
+     } else
+         Session.set("geneLikeDataDomain", []);
+
+
      var $studies = $("#studies");
      if (prev.studies) {
          $studies.select2("data",  id_text(prev.studies));
@@ -512,8 +570,8 @@ Template.Controls.rendered = function() {
 
      // Phase 2
      Tracker.autorun( aggregatedResults );
-     Tracker.autorun( geneLikeResults("Expression", "Expression", "GeneExpression"));
-     Tracker.autorun( geneLikeResults("ExpressionIsoform", "ExpressionIsoform", "GeneExpressionIsoform"));
+     Tracker.autorun( geneLikeResults("ExprCheckbox", "Expression", "Expression", "GeneExpression"));
+     Tracker.autorun( geneLikeResults("IsoformCheckbox", "ExpressionIsoform", "ExpressionIsoform", "GeneExpressionIsoform"));
 
      // Phase 3 Get all the changed values, save the ChartDocument and join the results
      Tracker.autorun(function updateChartDocument() {
@@ -524,6 +582,7 @@ Template.Controls.rendered = function() {
             ChartDocument.samplelist = Session.get("samplelist");
             ChartDocument.additionalQueries = Session.get("additionalQueries");
             ChartDocument.aggregatedResults = Session.get("aggregatedResults");
+            ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
 
             var cd = _.clone(ChartDocument);
             delete cd["_id"];

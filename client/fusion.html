@@ -40,7 +40,8 @@
 
     <div class="panel panel-default">
       <div class="panel-heading" data-toggle="collapse" data-target="#p2">
-          <h3 class="panel-title">2. Select Genes (optional)</h3>
+          <h3 class="panel-title">2. Select Genes (optional)
+          </h3>
        </div>
        <div id="p2" class="panel-body collapse">
               <input class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
@@ -54,6 +55,7 @@
             </select>
               <button id="clear">All Genes In</button>
               </span>
+        {{>checkBox list=geneLikeDataDomains}}
         </div>
     </div>
 
@@ -83,9 +85,20 @@
               <a href="#" class="inspect" data-var="ChartData"> has {{Count "Clinical_Info"}} records.
               </a>
          </div>
-
     </div>
+</template>
 
+<template name="checkBox">
+    {{#each list}}
+      <span class="checkbox">
+          <label>
+                <input data-field={{this.field}} 
+                data-collection={{this.collection}} 
+                class="geneLikeDataDomains" type="checkbox">{{this.label}}
+          </label>
+          <br>
+      </span>
+    {{/each}}
 </template>
 
 
