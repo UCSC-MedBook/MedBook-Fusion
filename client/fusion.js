@@ -184,7 +184,7 @@ GeneLikeDataDomainsPrototype = [
         label: "Isoform",
         checkBoxName: "IsoformCheckbox",
         dataName: "ExpressionIsoform",
-        collection: "Isoform",
+        collection: "ExpressionIsoform",
         subscriptionName: "GeneExpressionIsoform",
         field: "RNAseq",
         state: false,
@@ -404,28 +404,27 @@ function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
     }
 
 // This returned function is run inside of a tracker autorun
-function geneLikeResults(checkBoxName, dataName, collName, subscriptionName) {
-    debugger
+function geneLikeResults(domain) {
     return function() {
-        var getIt = Session.get(checkBoxName);
-        if (getIt) {
+        var isBoxChecked = Session.get(domain.checkBoxName);
+        if (isBoxChecked) {
             var studies = Session.get("studies");
             var genelist = Session.get("genelist");
             var samplelist = Session.get("samplelist");
 
             if (studies && studies.length > 0 && genelist && genelist.length > 0) {
 
-                Meteor.subscribe(subscriptionName, studies, genelist, 
+                Meteor.subscribe(domain.subscriptionName, studies, genelist, 
                     function onReady() {
-                            var docs = window[collName].find({gene: { $in: genelist}}).fetch();
-                            Session.set(dataName, docs);
+                            var docs = window[domain.collection].find({gene: { $in: genelist}}).fetch();
+                            Session.set(domain.dataName, docs);
                         } // onReady()
                     );
 
             }  // if studies
             return
         }
-        Session.set(dataName, []);
+        Session.set(domain.dataName, []);
     } // return function
 } // function geneLikeResults()
 
@@ -579,9 +578,8 @@ Template.Controls.rendered = function() {
 
      // Phase 2
      Tracker.autorun( aggregatedResults );
-
      GeneLikeDataDomainsPrototype.map(function(dataDomain) {
-        Tracker.autorun(geneLikeResults(dataDomain.checkBoxName, dataDomain.dataName, dataDomain.collection, dataDomain.subscriptionName))
+        Tracker.autorun(geneLikeResults(dataDomain))
      })
 
      // Phase 3 Get all the changed values, save the ChartDocument and join the results
