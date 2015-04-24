@@ -1,4 +1,6 @@
 
+var SubscriptionsWaitingCount = 0;
+     
 function valueIn(field, value) {
     return function(mp) {
         var t =  mp[field];
@@ -371,7 +373,9 @@ function subscribe_aggregatedQueries_2(aggregatedQueries, aggregatedJoinOn) {
 }
 
 function subscribe_aggregatedQueries_1(aggregatedQueries, aggregatedJoinOn) {
+    SubscriptionsWaitingCount++;
     Meteor.subscribe("aggregatedQueries", aggregatedQueries, function onReady() {
+        SubscriptionsWaitingCount--;
         var chartData_map_Sample_ID = {};
         var chartData_map_Patient_ID = {};
         var timeout = null;
@@ -415,8 +419,11 @@ function geneLikeResults(domain) {
 
             if (studies && studies.length > 0 && genelist && genelist.length > 0) {
 
+                SubscriptionsWaitingCount++;
+
                 Meteor.subscribe(domain.subscriptionName, studies, genelist, 
                     function onReady() {
+                            SubscriptionsWaitingCount--;
                             var docs = window[domain.collection].find({gene: { $in: genelist}}).fetch();
                             Session.set(domain.dataName, docs);
                         } // onReady()
@@ -493,6 +500,7 @@ Template.Controls.events({
 })
 
 function initializeSpecialJQueryUITypes() {
+     $('.studiesSelectedTable th').hide()
 
      $("#additionalQueries").select2( {
        placeholder: "Select one or more fields",
@@ -508,8 +516,6 @@ function initializeSpecialJQueryUITypes() {
 
 
 function restoreChartDocument(prev) {
-     debugger;
-
      var $samplelist = $("#samplelist");
      if (prev.samplelist) {
          prev.samplelist = [];
@@ -580,26 +586,19 @@ function restoreChartDocument(prev) {
 
 };
 
-ChartDocument = null;
 
 Template.Controls.rendered = function() {
-     $('.studiesSelectedTable th').hide()
-
-
-     var thisTemplate = this;
-
-     ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
      if (ChartDocument == null) {
          ChartDocument = Charts.insert({}); 
      }
      Session.set("ChartDocument", ChartDocument);
 
-     // Phase 1
+     // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
      initializeSpecialJQueryUITypes();
-
      restoreChartDocument(ChartDocument);
 
-     // Phase 2
+     // Phase 2 subscribe to all the Gene (and Gene-like) subscriptions such as Signature scores
      Tracker.autorun( aggregatedResults );
      GeneLikeDataDomainsPrototype.map(function(dataDomain) {
         Tracker.autorun(geneLikeResults(dataDomain))
@@ -618,6 +617,7 @@ Template.Controls.rendered = function() {
 
             var cd = _.clone(ChartDocument);
             delete cd["_id"];
+            delete cd["pivotTableConfig"];
             Charts.update({ _id : ChartDocument._id }, {$set: cd});
 
             var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
@@ -673,24 +673,32 @@ Template.Controls.rendered = function() {
     });
 
 
-     // Phase 4 repaint
-     Tracker.autorun( function RedrawChart() {
-        var chartData = Session.get("ChartData");
-        templateContext = { 
-            onRefresh: function(config) {
-                var save = { cols: config.cols, rows: config.rows,
-                    aggregatorName: config.aggregatorName,
-                    rendererName: config.rendererName,
-                };
-        debugger;
-                ChartDocument.pivotTableConfig =  save;
-                Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
+     // Phase 4 
+     // Must wait until the subscriptions are in before first repaint, 
+     // otherwise the refresh state will get an imperfect view of the available data
+     var intervalId = setInterval(function repaint() {
+         if (SubscriptionsWaitingCount == 0)
+             clearInterval(intervalId);
+         else 
+             return;
+         Tracker.autorun( function RedrawChart() {
+            var chartData = Session.get("ChartData");
+            templateContext = { 
+                onRefresh: function(config) {
+                    if (SubscriptionsWaitingCount == 0) {
+                        var save = { cols: config.cols, rows: config.rows,
+                            aggregatorName: config.aggregatorName,
+                            rendererName: config.rendererName,
+                        };
+                        ChartDocument.pivotTableConfig =  save;
+                        Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
+                    }
+                }
             }
-        }
-        debugger;
-        var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
-        var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
-        $(".output").pivotUI(chartData, final);
-    }); // autoRun
+            var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
+            var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
+            $(".output").pivotUI(chartData, final);
+        }); // autoRun
+    }, 50);
 } // 
 
