@@ -508,6 +508,7 @@ function initializeSpecialJQueryUITypes() {
 
 
 function restoreChartDocument(prev) {
+     debugger;
 
      var $samplelist = $("#samplelist");
      if (prev.samplelist) {
@@ -579,17 +580,23 @@ function restoreChartDocument(prev) {
 
 };
 
+ChartDocument = null;
+
 Template.Controls.rendered = function() {
      $('.studiesSelectedTable th').hide()
 
 
      var thisTemplate = this;
 
-     var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     if (ChartDocument == null) {
+         ChartDocument = Charts.insert({}); 
+     }
      Session.set("ChartDocument", ChartDocument);
 
      // Phase 1
      initializeSpecialJQueryUITypes();
+
      restoreChartDocument(ChartDocument);
 
      // Phase 2
@@ -605,8 +612,8 @@ Template.Controls.rendered = function() {
             ChartDocument.genelist = Session.get("genelist");
             ChartDocument.studies = Session.get("studies");
             ChartDocument.samplelist = Session.get("samplelist");
-            ChartDocument.additionalQueries = Session.get("additionalQueries");
-            ChartDocument.aggregatedResults = Session.get("aggregatedResults");
+            ChartDocument.additionalQueries  = Session.get("additionalQueries");
+            ChartDocument.aggregatedResults  = Session.get("aggregatedResults");
             ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
 
             var cd = _.clone(ChartDocument);
@@ -675,11 +682,14 @@ Template.Controls.rendered = function() {
                     aggregatorName: config.aggregatorName,
                     rendererName: config.rendererName,
                 };
+        debugger;
                 ChartDocument.pivotTableConfig =  save;
+                Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
             }
         }
-        var config = ChartDocument ? ChartDocument.pivotTableConfig : PivotTableInit;
-        var final =  $.extend({}, PivotCommonParams, templateContext, config);
+        debugger;
+        var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
+        var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
         $(".output").pivotUI(chartData, final);
     }); // autoRun
 } // 
