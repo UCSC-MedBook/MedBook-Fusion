@@ -2,7 +2,7 @@
 /* MasterLayout: Event Handlers and Helpersss .js*/
 /*****************************************************************************/
 Template.MasterLayout.events({
-    'click .overlay' : function() {
+    'click #overlayClose' : function() {
         $('#overlayContent').children().remove()
         $('.overlay').addClass("hidden");
      },

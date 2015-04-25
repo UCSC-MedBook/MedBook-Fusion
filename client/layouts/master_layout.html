@@ -56,12 +56,14 @@
 		{{/if}}
                 <div class="overlay hidden" >
                     <div id="overlayControl">
-                        <div id="overlayContent" 
-                            style="z-index:1002; -moz-opacity: 1.0; opacity:1.0; filter: alpha(opacity=100);display:block; position: absolute; top: 20px; left: 25%; width: 960px; height: 1000px; padding: 16px; border: 1px solid orange; background-color: white; overflow: auto;" class="white_content">'
-                            </div>
+                        <div id="overlayPanel" class="white_content"> 
+                            <a id="overlayClose" class="btn btn-primary btn-lg pull-right" href="#"><i class="fa fa-times"></i></a>
+                            <br>
+                            <div id="overlayContent" class="white_content"> </div>
                         </div>
-                        <button type="button" class="overlayClose" data-dismiss="alert">&times;</button>
                     </div>
+                    <button type="button" class="overlayClose" data-dismiss="alert">&times;</button>
+                </div>
     </div>
 
 </template>
