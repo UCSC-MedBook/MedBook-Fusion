@@ -5,6 +5,19 @@
 body {
     width: 800px;
 }
+.panel, .intro {
+    border-radius: 15px !important;
+}
+
+.panel-heading, .panel-title {
+    background:rgba(245,245,245,0.0) !important;
+    border-bottom-width: 0;
+}
+
+.panel-body .collapse {
+    background:rgba(245,245,245,0.0) !important;
+}
+
 
 .dataExplorerControlPanel {
     margin: 10px;
