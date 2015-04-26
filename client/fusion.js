@@ -36,7 +36,10 @@ id_text = function(array) {
     Phase 3:
     ChartData - Join of aggregatedResults, expressionResults, expressionIsoFormResults 
 
-    Phase 4: drawing the chart
+    Phase 4: 
+    transform the data
+
+    Phase 5: drawing the chart
     RedrawChart()
 
 */
@@ -208,6 +211,15 @@ Template.Controls.helpers({
    Count : function(collName) {
       var coll = getCollection(collName)
       return coll.find().count();
+   },
+   dataFieldNames: function(collName) {
+       var chartDataPre = Session.get("ChartDataPre");
+       if (chartDataPre) {
+           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); })
+                       .reduce( function(res, item) { res = _.union(res, item); return res});
+           return keys.sort();
+       }
+       return [];
    },
 
    geneLikeDataDomains : function() {
@@ -439,6 +451,20 @@ function geneLikeResults(domain) {
 
 
 Template.Controls.events({
+   'change .transform' : function(evt, tmpl) {
+       var transforms = [];
+       $('.transform').map(function(i, e) {
+           if (e.value) 
+               transforms.push( {
+                   op: $(e).data("op"),
+                   field: $(e).data("field"),
+                   precedence: $(e).data("precedence"),
+                   value: $(e).val()
+               });
+        });
+       transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
+       Session.set("Transforms", transforms);
+   },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
        var field = $checkbox.data('field');
@@ -668,12 +694,39 @@ Template.Controls.rendered = function() {
 
             Object.keys(keyUnion).map(function(k) { keyUnion[k] = "unknown"; });
             chartData = chartData.map(Transform_Clinical_Info, keyUnion);
-            Session.set("ChartData", chartData);
+            Session.set("ChartDataPre", chartData);
 
     });
 
+     // phase 4 
+     Tracker.autorun(function transformChartDocument() {
+         var chartDataPre = Session.get("ChartDataPre");
+         var transforms = Session.get("Transforms");
 
-     // Phase 4 
+         if (transforms)
+             chartDataPre.map(function transformer(datum) {
+                 transforms.map(function(transform) {
+
+                     if (transform.field in datum) {
+                        if (transform.op == "bin") {
+                             var dataValue = parseFloat(datum[transform.field]);
+                             var binValue = parseFloat(transform.value);
+                             if (!isNaN(dataValue) && !isNaN(binValue)) {
+                                var flooredValue = Math.floor(dataValue / binValue);
+                                datum[transform.field] = flooredValue * binValue;
+                             }
+                         } else if (transform.op == "rename") {
+                            datum[transform.value] = datum[transform.field];
+                            delete datum[transform.field];
+                         }
+                     } 
+                 });
+             });
+         Session.set("ChartData", chartDataPre);
+     });
+
+
+     // Phase 5 
      // Must wait until the subscriptions are in before first repaint, 
      // otherwise the refresh state will get an imperfect view of the available data
      var intervalId = setInterval(function repaint() {
