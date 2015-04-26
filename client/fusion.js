@@ -499,7 +499,7 @@ Template.Controls.events({
    }
 })
 
-function initializeSpecialJQueryUITypes() {
+function initializeSpecialJQueryElements() {
      $('.studiesSelectedTable th').hide()
 
      $("#additionalQueries").select2( {
@@ -595,7 +595,7 @@ Template.Controls.rendered = function() {
      Session.set("ChartDocument", ChartDocument);
 
      // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
-     initializeSpecialJQueryUITypes();
+     initializeSpecialJQueryElements();
      restoreChartDocument(ChartDocument);
 
      // Phase 2 subscribe to all the Gene (and Gene-like) subscriptions such as Signature scores

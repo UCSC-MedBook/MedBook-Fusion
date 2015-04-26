@@ -194,118 +194,118 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
 
     chart.domain([min, max]);
 
-  var X = margin.leftMost;
+      var X = margin.leftMost;
 
-  var svgTop = d3.select(svgContainer).append("svg").attr("width", ChartWidthMax).attr("height", ChartHeightMax).attr("class", "svgTop")
-  var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
+      var svgTop = d3.select(svgContainer).append("svg").attr("width", ChartWidthMax).attr("height", ChartHeightMax).attr("class", "svgTop")
+      var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
-  var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
-  svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + baseline + " )").call(yAxis);
+      var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
+      svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + baseline + " )").call(yAxis);
 
-  svg = svgBoxPlot
-      .selectAll("svg")
-      .data(plotDataSets)
-      .enter()
-      .append("g")
-         .attr("transform", function() { 
-              var r =  "translate(" +  X + ", " + 0 + ")"
-              X += plotWidth;
-              return r;
-          })
-     .append("svg")
-      .attr("class", "box svgPlot")
-      .attr("width", 40 + width + margin.left + margin.right)
-      .attr("height", 50 + height + margin.bottom + margin.top)
-    .append("g")
-      .attr("transform", function() { 
-              var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
-              return r;
-              });
+      svg = svgBoxPlot
+          .selectAll("svg")
+          .data(plotDataSets)
+          .enter()
+          .append("g")
+             .attr("transform", function() { 
+                  var r =  "translate(" +  X + ", " + 0 + ")"
+                  X += plotWidth;
+                  return r;
+              })
+         .append("svg")
+          .attr("class", "box svgPlot")
+          .attr("width", 40 + width + margin.left + margin.right)
+          .attr("height", 50 + height + margin.bottom + margin.top)
+        .append("g")
+          .attr("transform", function() { 
+                  var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
+                  return r;
+                  });
 
-function wrap(text, width, svg) {
-  text.each(function() {
-    var text = d3.select(this),
-        lines = text.text().replace(/_/g, " ").split(/[\n]/),
-        lineNumber = 1,
-        y = text.attr("y");
+    function wrap(text, width, svg) {
+      text.each(function() {
+        var text = d3.select(this),
+            lines = text.text().replace(/_/g, " ").split(/[\n]/),
+            lineNumber = 1,
+            y = text.attr("y");
 
-    var y = (lineNumber++ * -lineHeight)
-    var line = lines.pop();
-    var tspan = text.text(line).attr("y", y );
+        var y = (lineNumber++ * -lineHeight)
+        var line = lines.pop();
+        var tspan = text.text(line).attr("y", y );
 
-    while ((line = lines.pop()) != null) {
-      y = (lineNumber++ * -lineHeight)
-      tspan = text.append("tspan").attr("x", width/2).attr("y", y).text(line)
-            .attr( 'text-anchor', 'middle' )
-            .attr( 'font-size', "16px" )
-            .attr( 'font-weight', "bold" )
+        while ((line = lines.pop()) != null) {
+          y = (lineNumber++ * -lineHeight)
+          tspan = text.append("tspan").attr("x", width/2).attr("y", y).text(line)
+                .attr( 'text-anchor', 'middle' )
+                .attr( 'font-size', "16px" )
+                .attr( 'font-weight', "bold" )
+        }
+      });
     }
-  });
-}
 
-  var yy = svg.insert("text", "box")
-            .attr( 'x', width/2)
-            .attr( 'y', -20)
-            .attr( 'text-anchor', 'middle' )
-            .attr( 'font-size', "16px" )
-            .attr( 'font-weight', "bold" )
-            .text( function(d) { return d[0] })
-            .call(wrap, plotWidth)
-   
+      var yy = svg.insert("text", "box")
+                .attr( 'x', width/2)
+                .attr( 'y', -20)
+                .attr( 'text-anchor', 'middle' )
+                .attr( 'font-size', "16px" )
+                .attr( 'font-weight', "bold" )
+                .text( function(d) { return d[0] })
+                .call(wrap, plotWidth)
+       
 
-  svg.call(chart);
+      svg.call(chart);
 
-  var gLegend = svgTop
-                  .append("g").attr("transform", 
-                          function() { return "translate(" +  (X+50)  + ", 50)"; })
-                      .append("svg");
+      var gLegend = svgTop
+                      .append("g").attr("transform", 
+                              function() { return "translate(" +  (X+50)  + ", 50)"; })
+                          .append("svg");
 
 
-  var wrap = gLegend.selectAll('g.gLegendItem').data(rowCategoricalVariables)
-  var legend = wrap.enter().append('g').attr('class', 'gLegendItem').append('g')
-  legend.attr("width", 100);
-  legend.attr("height", 20);
-  legend
-      .append("g").attr("x", 20)
-      .append('circle').style("fill", function(a, i) {return a.color })
-      .style('stroke', "#000")
-      .style('stroke-width', 1) .attr('class','gLegendItem-symbol') .attr('r', 5);
+      var wrap = gLegend.selectAll('g.gLegendItem').data(rowCategoricalVariables)
+      var legend = wrap.enter().append('g').attr('class', 'gLegendItem').append('g')
+      legend.attr("width", 100);
+      legend.attr("height", 20);
+      legend
+          .append("g").attr("x", 20)
+          .append('circle').style("fill", function(a, i) {return a.color })
+          .style('stroke', "#000")
+          .style('stroke-width', 1) .attr('class','gLegendItem-symbol') .attr('r', 5);
 
-  legend
-      .append("g")
-      .append('text').attr("x", 15).attr("y", 5)
-      .attr("class", "legendText")
-      .attr("text-anchor", "start")
-      .attr("fill", "black")
-      .text(function(d) { return d.text });
+      legend
+          .append("g")
+          .append('text').attr("x", 15).attr("y", 5)
+          .attr("class", "legendText")
+          .attr("text-anchor", "start")
+          .attr("fill", "black")
+          .text(function(d) { return d.text });
 
-  var g = wrap.select('g');
-  wrap.attr('transform', function(a,i) { return 'translate(' + margin.left + ',' + (margin.top +(i*20)) + ')'});
-  var series = g.selectAll('.gSeries').data(function(d) { return d });
-  var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
-  series.select('circle').style("fill", function(d) { return d.color });
+      var g = wrap.select('g');
+      wrap.attr('transform', function(a,i) { return 'translate(' + margin.left + ',' + (margin.top +(i*20)) + ')'});
+      var series = g.selectAll('.gSeries').data(function(d) { return d });
+      var seriesEnter = series.enter().append('g').attr('class', 'gSeries')
+      series.select('circle').style("fill", function(d) { return d.color });
 
-  svgTop.attr("width", X + 500); // approximate size of legend
-  svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
+      svgTop.attr("width", X + 500); // approximate size of legend
+      svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
 
-  setTimeout(function() {
-      var legendText =  d3.selectAll("text.legendText");
-      if (legendText && legendText.length > 0)
-        legendText = legendText[0];
-      if (legendText && legendText.length > 0) {
-          var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
-          if (!isNaN(maxX) && isFinite(maxX)) {
-              console.log("maxX", maxX);
-              svgTop.attr("width", X + 100 + maxX); 
+      setTimeout(function() {
+          var legendText =  d3.selectAll("text.legendText");
+          if (legendText && legendText.length > 0)
+            legendText = legendText[0];
+          if (legendText && legendText.length > 0) {
+              var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
+              if (!isNaN(maxX) && isFinite(maxX)) {
+                  console.log("maxX", maxX);
+                  svgTop.attr("width", X + 100 + maxX); 
+              }
+              var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
+              if (!isNaN(maxY) && isFinite(maxY)) {
+                  console.log("maxY", maxY);
+                  svgTop.attr("height", maxY); 
+                  gLegend.attr("height", maxY); 
+              }
           }
-          var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
-          if (!isNaN(maxY) && isFinite(maxY)) {
-              console.log("maxY", maxY);
-              svgTop.attr("height", maxY); 
-              gLegend.attr("height", maxY); 
-          }
-      }
-  },200)
+      },200)
 
 };
 

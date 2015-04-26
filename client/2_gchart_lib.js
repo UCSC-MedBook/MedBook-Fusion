@@ -101,7 +101,7 @@ Meteor.startup(function() {
           width: chartWidth + legendWidth,
           height: $(window).height() / 1.4,
           chartArea: {
-            left: 20,
+            left: 120,
             width: chartWidth },
           legend: {width: legendWidth },
 
@@ -161,6 +161,7 @@ Meteor.startup(function() {
 
         wrapper.draw(result[0]);
 
+        /*
         function editChart() {
           var editor;
           editor = new google.visualization.ChartEditor();
@@ -176,6 +177,7 @@ Meteor.startup(function() {
         };
         var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(result);
         editChartBtn.click(editChart);
+        */
         addMedBookButtons(result, groupArray);
         return result;
       };
