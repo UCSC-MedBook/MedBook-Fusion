@@ -26,11 +26,11 @@ Meteor.startup(function() {
 
      function allNumbers(values) {
          if (values.length == 0)
-            debugger;
+            return [];
          return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
      }
      function extract(key) {
-         var v = unique(_.pluck(input, key).filter(function(v) { return v != "N/A" }));
+         var v = unique(_.pluck(input, key)); // .filter(function(v) { return v != "N/A" }));
          return v;
      }
      function unique(values) {
@@ -41,7 +41,6 @@ Meteor.startup(function() {
      }
      var allRowValues = subopts.rows.map(extract)
      var allColValues = subopts.cols.map(extract)
-
      var rowNumbers = allRowValues.map(allNumbers)
      var colNumbers = allColValues.map(allNumbers)
 
@@ -986,7 +985,7 @@ Meteor.startup(function() {
     /*
     Pivot Table core: create PivotData object and call Renderer on it
      */
-    $.fn.pivot = function(input, opts) {
+    $.fn.pivot = function(input, opts, exclusions) {
       var defaults, e, pivotData, result, x;
       defaults = {
         cols: [],
@@ -1007,7 +1006,7 @@ Meteor.startup(function() {
       try {
         pivotData = new PivotData(input, opts);
         try {
-          result = opts.renderer(pivotData, opts.rendererOptions);
+          result = opts.renderer(pivotData, opts.rendererOptions, exclusions);
         } catch (_error) {
           e = _error;
           if (typeof console !== "undefined" && console !== null) {
@@ -1210,6 +1209,9 @@ Meteor.startup(function() {
             checkContainer = $("<div>").addClass("pvtCheckContainer").appendTo(valueList);
             _ref2 = keys // .sort(getSort(opts.sorters, c));
 
+            if (c.startsWith("Reason"))
+                debugger;
+
             for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
               k = _ref2[_k];
               v = axisValues[c][k];
@@ -1385,7 +1387,7 @@ Meteor.startup(function() {
               return true;
             };
             if (preflight(input, subopts))
-                pivotTable.pivot(input, subopts);
+                pivotTable.pivot(input, subopts, exclusions);
 
             pivotUIOptions = $.extend(opts, {
               cols: subopts.cols,

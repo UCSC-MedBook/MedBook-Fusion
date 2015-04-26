@@ -98,7 +98,7 @@ table.pvtTable tr td {
 
 .pvtFilterBox{
     z-index: 100;
-    width: 280px;
+    max-width: 600px;
     border: 1px solid gray;
     background-color: #fff;
     position: absolute;
@@ -112,6 +112,6 @@ table.pvtTable tr td {
     text-align: left;
     overflow: scroll;
     width: 100%;
-    max-height: 200px;
+    max-height: 600px;
 }
 .pvtCheckContainer p{ margin: 5px; }

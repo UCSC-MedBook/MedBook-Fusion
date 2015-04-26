@@ -9,7 +9,7 @@ function cartesianProductOf(array) {
     }, [ [] ]);
 };
 
-function BoxPlotChartData(pivotData) {
+function BoxPlotChartData(pivotData, exclusions) {
     var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
     var rowCategoricalVariables = [];
@@ -37,13 +37,16 @@ function BoxPlotChartData(pivotData) {
     v.map(function(label, nthColumn) {
         if (boxPlot.colNumbers[nthColumn])
             numberVariables.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
-        else 
+        else  {
             columnCategoricalVariables.push(
-                boxPlot.allColValues[nthColumn].map(
+                boxPlot.allColValues[nthColumn]
+                .filter(function(value) { return !(label in exclusions && exclusions[label].indexOf(value) >= 0); })
+                .map(
                   function (value) { 
                       return ({ label: label+":"+value, decide: function(elem) { return elem[label] == value; } });
                 })
             );
+        }
     });;
     columnCategoricalVariables.splice(0 ,0, numberVariables)
     var plots = cartesianProductOf(columnCategoricalVariables);
@@ -104,8 +107,8 @@ var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 
 window.makeD3BoxPlotChart= function(chartType, extraOptions) {
-  return function(pivotData, opts) {
-        var chvk = BoxPlotChartData(pivotData);
+  return function(pivotData, opts, exclusions) {
+        var chvk = BoxPlotChartData(pivotData, exclusions);
         var n = 9;
 
         plotWidth = Math.max(150, ChartWidthMax/ n);

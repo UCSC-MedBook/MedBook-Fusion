@@ -1,7 +1,6 @@
 
 // {{> Quick chartElement="genelist" collection="GeneExpression" fieldName="name" placeHolder="Key word"}}
 Template.Quick.rendered = function() {
-    debugger;
      var $input = $(this.find("input"));
      var previousChart = Charts.findOne({ userId : Meteor.userId() });
      var chartElement = this.data.chartElement;

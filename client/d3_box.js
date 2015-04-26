@@ -232,7 +232,6 @@ d3.box = function() {
 
       sample.forEach(function(formula,i) {
           formula.forEach(function(sample,j) {
-              debugger;
               var x = JitterSeedless(String(d[j]));
               sample.cx.baseVal.value += (x-0.5)*(width*.90); // Robert wants noise!
           });
