@@ -1209,9 +1209,6 @@ Meteor.startup(function() {
             checkContainer = $("<div>").addClass("pvtCheckContainer").appendTo(valueList);
             _ref2 = keys // .sort(getSort(opts.sorters, c));
 
-            if (c.startsWith("Reason"))
-                debugger;
-
             for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
               k = _ref2[_k];
               v = axisValues[c][k];

@@ -232,6 +232,25 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
             lineNumber = 1,
             y = text.attr("y");
 
+        var maxline = plotWidth / 10;
+        var lines2 = [];
+
+        function breakInMiddle(line) {
+          if (line.length < maxline)
+              return lines2.push(line);  // unnecessary
+
+          var words = line.split(" ");
+          if (words.length == 1) 
+              return lines2.push(line); // unbreakable
+
+           breakInMiddle(words.slice(0,Math.floor(words.length/2)).join(" "))
+           breakInMiddle(words.slice(Math.floor(words.length/2)).join(" "));
+        }
+
+        lines.map(breakInMiddle);
+        lines = lines2;
+
+
         var y = (lineNumber++ * -lineHeight)
         var line = lines.pop();
         var tspan = text.text(line).attr("y", y );
@@ -242,6 +261,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                 .attr( 'text-anchor', 'middle' )
                 .attr( 'font-size', "16px" )
                 .attr( 'font-weight', "bold" )
+
         }
       });
     }
