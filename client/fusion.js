@@ -212,15 +212,6 @@ Template.Controls.helpers({
       var coll = getCollection(collName)
       return coll.find().count();
    },
-   dataFieldNames: function(collName) {
-       var chartDataPre = Session.get("ChartDataPre");
-       if (chartDataPre) {
-           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); })
-                       .reduce( function(res, item) { res = _.union(res, item); return res});
-           return keys.sort();
-       }
-       return [];
-   },
 
    geneLikeDataDomains : function() {
       var prevGeneLikeDataDomains = Session.get("geneLikeDataDomain");
@@ -543,6 +534,24 @@ function initializeSpecialJQueryElements() {
 
 function restoreChartDocument(prev) {
      var $samplelist = $("#samplelist");
+
+     var pt = prev.transforms;
+
+     if (pt) {
+         console.log("pt",pt);
+         setTimeout(function() {
+             console.log("pt",pt);
+             $(".transform").map(function(i, elem) {
+                 var $elem = $(elem);
+                 pt.map(function (transform) {
+                    if ( $elem.data("field") == transform.field 
+                        && $elem.data("op") == transform.op )
+                        $elem.val(transform.value);
+                 });
+             });
+         }, 1000);
+     }
+
      if (prev.samplelist) {
          prev.samplelist = [];
          $samplelist.val(prev.samplelist.join(" "));
@@ -612,6 +621,20 @@ function restoreChartDocument(prev) {
 
 };
 
+Template.Transforms.helpers({
+   dataFieldNames: function() {
+       var chartDataPre = Session.get("ChartDataPre");
+       if (chartDataPre) {
+           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); })
+                       .reduce( function(res, item) { res = _.union(res, item); return res});
+           return keys.sort();
+       }
+       return [];
+   },
+});
+
+
+
 
 Template.Controls.rendered = function() {
      var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
@@ -640,6 +663,7 @@ Template.Controls.rendered = function() {
             ChartDocument.additionalQueries  = Session.get("additionalQueries");
             ChartDocument.aggregatedResults  = Session.get("aggregatedResults");
             ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
+            ChartDocument.transforms = Session.get("Transforms");
 
             var cd = _.clone(ChartDocument);
             delete cd["_id"];

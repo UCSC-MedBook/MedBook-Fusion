@@ -3,8 +3,6 @@
 <div class="around-intro">
     <div class="intro">
       <h1>Data Fusion Tool</h1>
-        Data fusion integrates of multiple data and knowledge representing the same real-world object into a consistent,
-        accurate, and useful representation.
         This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations.
     </div>
 </div>
@@ -85,31 +83,38 @@
           <h3 class="panel-title"  data-toggle="collapse" data-target="#p5" >5. Rename, BIN or Transform the data</h3>
        </div>
        <div id="p5" class="panel-body collapse">
-         <table class="table table-striped">
-             {{#each dataFieldNames}}
-             <tr>
-                 <td>
-                        {{this}}&nbsp;
-                 </td>
+            {{> Transforms }}
 
-                 <td>
-                        <span>rename to
-                            <input name="{{this}}" data-op="rename" data-precedence=2 data-field={{this}} class="transform" type="text">
-                        </span>
-                 </td>
-
-                 <td>
-                        <span>Bin it
-                            <input style="width:40px;" name="{{this}}" data-op="bin" data-precedence=1 data-field={{this}} class="transform" type="number">
-                        </span>
-                 </td>
-             </tr>
-             {{/each}}
-         </table>
               <a href="#" class="inspect" data-var="ChartData"> Inspect {{Count "Clinical_Info"}} records.</a>
+
         </div>
     </div>
 </template>
+
+<template name="Transforms">
+ <table class="table table-striped">
+     {{#each dataFieldNames}}
+     <tr>
+         <td>
+                {{this}}&nbsp;
+         </td>
+
+         <td>
+                <span>rename to
+                    <input name="{{this}}" data-op="rename" data-precedence=2 data-field={{this}} class="transform" type="text">
+                </span>
+         </td>
+
+         <td>
+                <span>Bin it
+                    <input style="width:40px;" name="{{this}}" data-op="bin" data-precedence=1 data-field={{this}} class="transform" type="number">
+                </span>
+         </td>
+     </tr>
+     {{/each}}
+  </table>
+ </template>
+
 
 <template name="checkBox">
     {{#each list}}
