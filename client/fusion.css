@@ -7,6 +7,7 @@ body {
 }
 .panel, .intro {
     border-radius: 15px !important;
+    box-shadow: -1px -1px 0 #c0c0c0,1px 1px 0 #c0c0c0,0 5px 15px rgba(0,0,0,0.4);
 }
 
 .panel-heading, .panel-title {

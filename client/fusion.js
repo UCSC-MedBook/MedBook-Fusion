@@ -774,6 +774,7 @@ Template.Controls.rendered = function() {
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
             var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
+            Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
             $(".output").pivotUI(chartData, final);
         }); // autoRun
     }, 50);
