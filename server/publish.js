@@ -87,14 +87,14 @@ function assure(userId, collaborations)  {
 */
 
 Meteor.publish('GeneExpression', function(studies, genes) {
-    var q = ({studyID:{$in: studies}, gene: {$in: genes}});
+    var q = ({Study_ID:{$in: studies}, gene: {$in: genes}});
     var cursor =  Expression.find(q);
     console.log("Expression publish", q,"returns", cursor.count());
     return cursor;
 });
 
 Meteor.publish('GeneExpressionIsoform', function(studies, genes) {
-    var cursor =  ExpressionIsoform.find({studyID:{$in: studies}, gene: {$in: genes}});
+    var cursor =  ExpressionIsoform.find({Study_ID:{$in: studies}, gene: {$in: genes}});
     console.log("ExpressionIsoform publish", studies, genes, cursor.count());
     return cursor;
 });
