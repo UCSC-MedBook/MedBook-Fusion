@@ -1,0 +1,9 @@
+.output td:nth-child(2) {
+    display: none;
+}
+.output td:nth-child(1) {
+    display: none;
+}
+.output tr:nth-child(1) {
+    display: none;
+}
