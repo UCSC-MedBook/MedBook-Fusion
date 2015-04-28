@@ -639,7 +639,9 @@ Template.Transforms.helpers({
 Template.Controls.rendered = function() {
      var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
      if (ChartDocument == null) {
-         ChartDocument = Charts.insert({}); 
+         Charts.insert({}); 
+         ChartDocument = Charts.findOne({ userId : Meteor.userId() });
+         debugger;
      }
      Session.set("ChartDocument", ChartDocument);
 
