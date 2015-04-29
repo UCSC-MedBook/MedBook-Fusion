@@ -194,16 +194,15 @@ GeneLikeDataDomainsPrototype = [
         field: "rsem_quan_log2",
         state: false,
     },
-    /*
     {
         label: "Mutations",
         checkBoxName: "MutCheckbox",
         dataName: "Mutations",
         collection: "Mutations",
-        field: "RNAseq",
+        subscriptionName: "GeneMutations",
+        field: "Variant_Type",
         state: false,
     },
-    */
 ];
 
 
@@ -427,7 +426,11 @@ function geneLikeResults(domain) {
                 Meteor.subscribe(domain.subscriptionName, studies, genelist, 
                     function onReady() {
                             SubscriptionsWaitingCount--;
-                            var docs = window[domain.collection].find({gene: { $in: genelist}}).fetch();
+                            var q = domain.collection == "Mutations" ?
+                                {Hugo_Symbol: { $in: genelist}}
+                                : {gene: { $in: genelist}};
+                            var docs = window[domain.collection].find(q).fetch();
+                            debugger;
                             Session.set(domain.dataName, docs);
                         } // onReady()
                     );
@@ -687,17 +690,31 @@ Template.Controls.rendered = function() {
                 var gld = Session.get(domain.dataName);
                 if (gld) {
                     gld.map(function(geneData) {
-                        var geneName = geneData.gene;
-                        var label = ('transcript' in geneData) 
-                            ? geneName + ' ' + geneData.transcript + ' Expr'
-                            : geneName + ' Expr';
-                        var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
-                        samplelist.map(function (sampleID) {
-                            var f = parseFloat(geneData.samples[sampleID][domain.field]);
-                            if (!isNaN(f)) {
-                                chartDataMap[sampleID][label] = f;
-                            }
-                        });
+
+                        // Mutatons is organized differently than Expression
+
+                        if (geneData.Hugo_Symbol) { 
+                           debugger;
+                            var geneName = geneData.Hugo_Symbol;
+                            var label = geneName + " Mut";
+                            var sampleID = geneData.sample;
+                            chartDataMap[sampleID][label] = geneData.Variant_Type;
+
+                        } else if (geneData.gene) {
+                            var geneName = geneData.gene;
+                            var label = ('transcript' in geneData) 
+                                ? geneName + ' ' + geneData.transcript + ' Expr'
+                                : geneName + ' Expr';
+                            var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
+                            samplelist.map(function (sampleID) {
+                                var f = parseFloat(geneData.samples[sampleID][domain.field]);
+                                if (!isNaN(f)) {
+                                    chartDataMap[sampleID][label] = f;
+                                }
+                            });
+                        }
+
+
                     });
                 }
             });
@@ -779,4 +796,4 @@ Template.Controls.rendered = function() {
         }); // autoRun
     }, 50);
 } // 
-
+M5
