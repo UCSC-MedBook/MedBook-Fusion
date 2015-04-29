@@ -99,16 +99,16 @@ Meteor.publish('GeneExpressionIsoform', function(studies, genes) {
     return cursor;
 });
 
+Meteor.publish('GeneSignatureScores', function(studies, genes) {
+    var cursor =  SignatureScores.find({Study_ID:{$in: studies}, gene: {$in: genes}});
+    console.log("SignatureScores publish", studies, genes, cursor.count());
+    return cursor;
+});
+
 Meteor.publish('GeneMutations', function(studies, genes) {
-    var q = {
-        // Study_ID:{$in: studies},
-        Hugo_Symbol: {$in: genes},
-    };
-    var cursor =  Mutations.find( q,
-        {
-            fields: {"Hugo_Symbol":1, sample: 1, Variant_Type:1 }
-        }
-    );
+    var q = { // Study_ID:{$in: studies},
+            Hugo_Symbol: {$in: genes} };
+    var cursor =  Mutations.find( q, { fields: {"Hugo_Symbol":1, sample: 1, Variant_Type:1 } });
     console.log("Mutations publish", studies, genes, cursor.count());
     return cursor;
 });

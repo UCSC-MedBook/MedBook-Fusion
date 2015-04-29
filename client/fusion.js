@@ -178,6 +178,7 @@ Zclass = function(x) {
 GeneLikeDataDomainsPrototype = [
     {
         label: "Expression RSEM",
+        labelItem: "ExprRSEM",
         checkBoxName: "ExprCheckbox",
         dataName: "Expression",
         collection: "Expression",
@@ -187,6 +188,7 @@ GeneLikeDataDomainsPrototype = [
     },
     {
         label: "Isoform RSEM",
+        labelItem: "IsoformRSEM",
         checkBoxName: "IsoformCheckbox",
         dataName: "ExpressionIsoform",
         collection: "ExpressionIsoform",
@@ -196,11 +198,22 @@ GeneLikeDataDomainsPrototype = [
     },
     {
         label: "Mutations",
+        labelItem: "Mut",
         checkBoxName: "MutCheckbox",
         dataName: "Mutations",
         collection: "Mutations",
         subscriptionName: "GeneMutations",
         field: "Variant_Type",
+        state: false,
+    },
+    {
+        label: "Kinase Pathway Signature (Viper Method)",
+        labelItem: "KinasePatSig",
+        checkBoxName: "ViperSignatureCheckbox",
+        dataName: "ViperSignature",
+        collection: "SignatureScores",
+        subscriptionName: "GeneSignatureScores",
+        field: "kinase_viper",
         state: false,
     },
 ];
@@ -430,7 +443,6 @@ function geneLikeResults(domain) {
                                 {Hugo_Symbol: { $in: genelist}}
                                 : {gene: { $in: genelist}};
                             var docs = window[domain.collection].find(q).fetch();
-                            debugger;
                             Session.set(domain.dataName, docs);
                         } // onReady()
                     );
@@ -686,25 +698,25 @@ Template.Controls.rendered = function() {
 
             ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
                 
+            // Marshall for Join all the Gene line information into the samples into the ChartDataMap table
             GeneLikeDataDomainsPrototype.map(function(domain) {
                 var gld = Session.get(domain.dataName);
                 if (gld) {
                     gld.map(function(geneData) {
 
-                        // Mutatons is organized differently than Expression
+                        // Mutations is organized differently than Expression
 
                         if (geneData.Hugo_Symbol) { 
-                           debugger;
                             var geneName = geneData.Hugo_Symbol;
-                            var label = geneName + " Mut";
+                            var label = geneName + ' ' + domain.labelItem;
                             var sampleID = geneData.sample;
                             chartDataMap[sampleID][label] = geneData.Variant_Type;
 
                         } else if (geneData.gene) {
                             var geneName = geneData.gene;
                             var label = ('transcript' in geneData) 
-                                ? geneName + ' ' + geneData.transcript + ' Expr'
-                                : geneName + ' Expr';
+                                ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
+                                : geneName + ' ' + domain.labelItem
                             var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
                             samplelist.map(function (sampleID) {
                                 var f = parseFloat(geneData.samples[sampleID][domain.field]);
