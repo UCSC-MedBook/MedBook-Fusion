@@ -409,9 +409,12 @@ Meteor.startup(function() {
     aggregators = (function(tpl) {
       return {
         "Count": tpl.count(usFmtInt),
+        /*
         "Count Unique Values": tpl.countUnique(usFmtInt),
         "List Unique Values": tpl.listUnique(", "),
+        */
         "Sum": tpl.sum(usFmt),
+        /*
         "Integer Sum": tpl.sum(usFmtInt),
         "Average": tpl.average(usFmt),
         "Minimum": tpl.min(usFmt),
@@ -425,6 +428,7 @@ Meteor.startup(function() {
         "Count as Fraction of Total": tpl.fractionOf(tpl.count(), "total", usFmtPct),
         "Count as Fraction of Rows": tpl.fractionOf(tpl.count(), "row", usFmtPct),
         "Count as Fraction of Columns": tpl.fractionOf(tpl.count(), "col", usFmtPct)
+        */
       };
     })(aggregatorTemplates);
     renderers = {
@@ -434,6 +438,7 @@ Meteor.startup(function() {
       "Table Barchart": function(pvtData, opts) {
         return $(pivotTableRenderer(pvtData, opts)).barchart();
       },
+      /*
       "Heatmap": function(pvtData, opts) {
         return $(pivotTableRenderer(pvtData, opts)).heatmap();
       },
@@ -443,6 +448,7 @@ Meteor.startup(function() {
       "Col Heatmap": function(pvtData, opts) {
         return $(pivotTableRenderer(pvtData, opts)).heatmap("colheatmap");
       }
+      */
     };
     locales = {
       en: {
