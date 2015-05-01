@@ -9,15 +9,42 @@ function cartesianProductOf(array) {
     }, [ [] ]);
 };
 
+function processStrata(strata, $div) {
+    var keyValue = [];
+    for (var s in strata) {
+        var ss = strata[s];
+        keyValue.push({key: s, value: ss})
+    }
+    Meteor.call("ttest", "pValue", keyValue,
+        function(err,result) {
+            console.log("ttest", result);
+            var $table = $("<table class='table borderless'>").appendTo($div);
+            for (var y = 0; y < result.length; y++) {
+                var row = result[y];
+                var $row = $("<tr>").appendTo($table);
+                for (var x = 0; x < row.length; x++) {
+                    var s = row[x];
+                    var v = parseFloat(s);
+                    if (!isNaN(v)) {
+                        s = v.toPrecision(4);
+                    }
+                    var $column = $("<td>" + s + "</td>").appendTo($row);
+                }
+            }
+        }
+    );
+}
+
 function BoxPlotChartData(pivotData, exclusions) {
     var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
     var rowCategoricalVariables = [];
+    var strata = {}
     
 
     h.map(function(k, i) {
-        var value_class = k.join(",");
-        rowCategoricalVariables.push({ text: value_class, color: value_color_scale(i),
+        var rowLabel = k.join(",");
+        rowCategoricalVariables.push({ text: rowLabel, color: value_color_scale(i),
             deciders: 
                 k.map(function(kk) { 
                         var n = kk.lastIndexOf(":");
@@ -48,12 +75,15 @@ function BoxPlotChartData(pivotData, exclusions) {
             );
         }
     });;
-    columnCategoricalVariables.splice(0 ,0, numberVariables)
-    var plots = cartesianProductOf(columnCategoricalVariables);
+    var allColumnVars = _.clone( columnCategoricalVariables );
+    allColumnVars.splice(0 ,0, numberVariables)
+    var plots = cartesianProductOf(allColumnVars);
     var plotDataSets = plots.map(function(plotPredicates) {
-        var labels = _.pluck(plotPredicates, 'label').join("\n").replace(/:/g, "\n");
+        var labels = _.pluck(plotPredicates, 'label');
+        var columnLabel = labels.join(";")
+        var labelForView = labels.join("\n").replace(/:/g, "\n");
         var points = [];
-        var plot = [labels, points];
+        var plot = [labelForView, points];
 
         pivotData.input.map(function(elem, e) {
             var good = true;
@@ -61,7 +91,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                 if (!plotPredicates[p].decide(elem))
                     good = false;
 
-            var value_class = null;
+            var rowLabel = null;
             var value_color = null;
 
             for (var p = 0; good && p < rowCategoricalVariables.length; p++) {
@@ -73,7 +103,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                     }
                 }
                 if (oneIsGood) {
-                    value_class = rowCategoricalVariables[p].text;
+                    rowLabel = rowCategoricalVariables[p].text;
                     value_color = rowCategoricalVariables[p].color;
                 }
             }
@@ -81,13 +111,29 @@ function BoxPlotChartData(pivotData, exclusions) {
             if (good) {
                 var value = elem[plotPredicates[0].label];
                 var f = parseFloat(value);
+
                 var g = { 
                     Patient: elem.Sample_ID, 
-                    ValueClass: value_class, 
+                    ValueClass: rowLabel,
                     ValueColor: value_color,
-                    Phenotype: value_class ,
+                    Phenotype: rowLabel ,
                     Value: f,
                 };
+                var strataLabel = null;
+                if (columnLabel && rowLabel)
+                    strataLabel = columnLabel + ";" + rowLabel;
+                else if (columnLabel)
+                    strataLabel = columnLabel;
+                else if (rowLabel)
+                    strataLabel = rowLabel;
+
+                if (strataLabel)  {
+                    if (!(strataLabel in strata)) {
+                        strata[strataLabel] = [];
+                    }
+                    strata[strataLabel].push(f);
+                }
+
                 points.push(g);
             }
         });
@@ -95,7 +141,7 @@ function BoxPlotChartData(pivotData, exclusions) {
     });
     h = h.join(",");
     v = v.join(",");
-    return [plotDataSets, h, v, rowCategoricalVariables];
+    return [plotDataSets, h, v, rowCategoricalVariables, strata];
 }
 
 var ChartHeightMax = 2048;
@@ -121,6 +167,11 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         var v = chvk[1];
         var h = chvk[2];
         var rowCategoricalVariables = chvk[3];
+        var strata = chvk[4];
+
+        for (lab in strata) {
+            console.log("strata", lab, strata[lab])
+        }
         
         if (window.$div != null) {
             window.$div.remove();
@@ -134,6 +185,10 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
                 displayBoxPlots(plotDataSets, h, v, div, plotWidth, rowCategoricalVariables);
             });
         }
+        var $pVals = $("<div class='d3boxplot'></div>").appendTo(window.$div);
+
+        processStrata(strata, $pVals);
+
         var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  
             appendTo(window.$div);
         return window.$div
