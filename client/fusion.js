@@ -712,7 +712,8 @@ Template.Controls.rendered = function() {
                             var geneName = geneData.Hugo_Symbol;
                             var label = geneName + ' ' + domain.labelItem;
                             var sampleID = geneData.sample;
-                            chartDataMap[sampleID][label] = geneData.Variant_Type;
+                            if (sampleID in chartDataMap)
+                                chartDataMap[sampleID][label] = geneData.Variant_Type;
 
                         } else if (geneData.gene) {
                             var geneName = geneData.gene;
@@ -723,7 +724,8 @@ Template.Controls.rendered = function() {
                             samplelist.map(function (sampleID) {
                                 var f = parseFloat(geneData.samples[sampleID][domain.field]);
                                 if (!isNaN(f)) {
-                                    chartDataMap[sampleID][label] = f;
+                                    if (sampleID in chartDataMap)
+                                        chartDataMap[sampleID][label] = f;
                                 }
                             });
                         }
