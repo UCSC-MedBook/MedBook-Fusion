@@ -553,6 +553,7 @@ function restoreChartDocument(prev) {
      var pt = prev.transforms;
 
      if (pt) {
+         Session.set("Transforms", pt);
          console.log("pt",pt);
          setTimeout(function() {
              console.log("pt",pt);
