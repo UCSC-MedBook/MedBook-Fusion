@@ -21,9 +21,33 @@ addMedBookButtons = function (result, groupArray) {
             form.toggle ();
     });
 
+    var contrastName = $("<input style='width:100%;' class='dataExplorerControlPanel contrastName'>").appendTo(form);
+
+
     var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(form);
     var header = $("<thead><tr><th>Group</th><th>Samples</th></tr></thead>").appendTo(groupTable);
     var body = $("<tbody>").appendTo(groupTable);
+
+    function setPrototypeName () {
+        var groupName1 = [];
+        var groupName2 = [];
+        body.find("tr").each(function(i, row) {
+            var group = $(row).find("select").val();
+            row = $(row).children();
+            var groupName = $(row[0]).find(".groupName").text();
+            if (group == "group 1") {
+                groupName1.push(groupName);
+            } else if (group == "group 2") {
+                groupName2.push(groupName);
+            }
+        });
+        var g1 = groupName1.join(", ");
+        var g2 = groupName2.join(", ");
+        var cn = g1 + " vs " + g2;
+        cn = cn.replace(/;/g, "");
+        contrastName.val(cn);
+    }
+
     groupArray.map(function(row)  {
        if (row) {
            row.map(function(item) {
@@ -32,6 +56,7 @@ addMedBookButtons = function (result, groupArray) {
                            var tr = $("<tr hidden>").appendTo(body);
                            var td = $("<td><i><span class='groupName'> " + groupName + "</span></i></td>").appendTo(tr);
                            var select = $("<select class='contrastGroup form-control input-sm'>").appendTo(td);
+                           select.change(setPrototypeName);
                            ["no group", "group 1", "group 2"].map(function(f) {
                                $("<option value='"+f+"'>"+f+"</option>").appendTo(select);
                            });
@@ -58,6 +83,7 @@ addMedBookButtons = function (result, groupArray) {
         selected[set].val(set);
         if (next == 3) 
             next = 1;
+        setPrototypeName();
         $('html, body').animate({ scrollTop: selectedRow.offset().top }, 2000);
     }
 
@@ -65,7 +91,6 @@ addMedBookButtons = function (result, groupArray) {
         var studyID = "prad_wcdt";
         var groupName1 = [];
         var groupName2 = [];
-
         var sampleList1 = [];
         var sampleList2 = [];
         body.find("tr").each(function(i, row) {
@@ -74,16 +99,15 @@ addMedBookButtons = function (result, groupArray) {
             var groupName = $(row[0]).find(".groupName").text();
             var samples = $(row[1]).text().split(" ");
             if (group == "group 1") {
-                groupName1.push(groupName);
                 sampleList1 = sampleList1.concat(samples);
+                groupName1.push(groupName);
             } else if (group == "group 2") {
-                groupName2.push(groupName);
                 sampleList2 = sampleList1.concat(samples);
+                groupName2.push(groupName);
             }
         });
         var g1 = groupName1.join(", ");
         var g2 = groupName2.join(", ");
-        var contrast_name = g1 + " vs " + g2;
         sampleList1 = sampleList1.sort();
         sampleList2 = sampleList2.sort();
         if (sampleList1.length == 0 || sampleList2.length == 0)
@@ -96,13 +120,11 @@ addMedBookButtons = function (result, groupArray) {
         } else {
                 collab = []
         }
-        console.log('contrast: '+contrast_name);
-        console.dir('samples for group '+g1+' :'+sampleList1);
-        Contrast.insert({'name':contrast_name,'studyID':studyID,'collaborations': collab,
+        Contrast.insert({'name':contrastName.val(),'studyID':studyID,'collaborations': collab,
                 'group1':g1,'group2':g2,'list1':sampleList1,'list2':sampleList2,  userId: Meteor.userId()}, 
                 function(error, result) { 
                 if (error == null)
-                    alert("Contrast " + contrast_name + " made");
+                    alert("Contrast " + contrastName.val() + " made");
         });
     };
 
