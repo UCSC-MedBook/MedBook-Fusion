@@ -198,36 +198,55 @@ d3.box = function() {
           .style("opacity", 0);
       var ccc;
 
+      var divD = null;
+
+      function bye(d) {
+          if (--d.count <=  0) {
+
+            if (divD == d)
+                div.transition()        
+                    .duration(500)      
+                    .style("opacity", 0);   
+
+            d.ccc.transition()        
+                .duration(1500)      
+                    .attr("r", function(d) { return d.r; })
+                    .style("stroke", "pink")
+                    .style("stroke-width", 1)
+          }
+      }
+
       sample
         .on("mouseover", function(d) {
+            if (d.count == null)
+              d.count = 1;
+            else
+              d.count++
             div.transition()        
                 .duration(200)      
                 .style("display", "block")
                 .style("opacity", .9);      
 
-            var m = d.Patient + "<br/>" + 
+            divD = d;
+            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient 
+                + "'>" + d.Patient + "</a><br/>" + 
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);
             div.html(m)
                 .style("left", (d3.event.pageX + 15) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px");    
-                ccc = d3.selectAll("." + d.Patient.replace("-", ""))
+            d.ccc = d3.selectAll("." + d.Patient.replace("-", ""))
                     .attr("r", function(d) { return 2 *d.r; })
                     .style("stroke", "red")
                     .style("stroke-width", "3")
 
+            $(".tooltip").hover(function() { d.count++; }, function() { bye(d)});
+
             })                  
         .on("mouseout", function(d) {       
-            div.transition()        
-                .duration(500)      
-                .style("opacity", 0);   
-
-            ccc .transition()        
-                .duration(1500)      
-                    .attr("r", function(d) { return d.r; })
-                    .style("stroke", "black")
-                    .style("stroke-width", 1)
-        });
+          setTimeout(function() {bye(d)}, 2000);
+        }
+        );
 
 
       sample.forEach(function(formula,i) {

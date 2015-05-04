@@ -764,9 +764,10 @@ Template.Controls.rendered = function() {
          if (transforms)
              chartDataPre.map(function transformer(datum) {
                  transforms.map(function(transform) {
-
                      if (transform.field in datum) {
                         if (transform.op == "bin") {
+                            if (transform.field == "KDM4B Mut" && datum[transform.field] == "N/A")
+                                debugger;
                              var dataValue = parseFloat(datum[transform.field]);
                              var binValue = parseFloat(transform.value);
                              if (!isNaN(dataValue) && !isNaN(binValue)) {

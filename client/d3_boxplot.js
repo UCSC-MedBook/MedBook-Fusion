@@ -109,14 +109,14 @@ function BoxPlotChartData(pivotData, exclusions) {
             }
 
             if (good) {
-                var value = elem[plotPredicates[0].label];
+                var columnLabel = plotPredicates[0].label;
+                var value = elem[columnLabel];
                 var f = parseFloat(value);
-
                 var g = { 
                     Patient: elem.Sample_ID, 
                     ValueClass: rowLabel,
                     ValueColor: value_color,
-                    Phenotype: rowLabel ,
+                    Phenotype: rowLabel ? rowLabel+","+columnLabel : columnLabel,
                     Value: f,
                 };
                 var strataLabel = null;
