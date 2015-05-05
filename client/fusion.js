@@ -509,7 +509,6 @@ Template.Controls.events({
                     var k = genelist.indexOf(gene);
                     if (k >= 0) {
                         // remove it
-                        debugger;
                         $(elem).removeClass("includeThisGene");
                         genelist.splice(k,1);
                     } else {
@@ -699,7 +698,6 @@ Template.Controls.rendered = function() {
      if (ChartDocument == null) {
          Charts.insert({}); 
          ChartDocument = Charts.findOne({ userId : Meteor.userId() });
-         debugger;
      }
      Session.set("ChartDocument", ChartDocument);
 
@@ -808,8 +806,6 @@ Template.Controls.rendered = function() {
                  transforms.map(function(transform) {
                      if (transform.field in datum) {
                         if (transform.op == "bin") {
-                            if (transform.field == "KDM4B Mut" && datum[transform.field] == "N/A")
-                                debugger;
                              var dataValue = parseFloat(datum[transform.field]);
                              var binValue = parseFloat(transform.value);
                              if (!isNaN(dataValue) && !isNaN(binValue)) {
