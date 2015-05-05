@@ -488,8 +488,18 @@ Template.Controls.events({
    'click .topMutatedGenes': function(evt, tmpl) {
         var $link = $(evt.target);
         Meteor.call("topMutatedGenes", function(err,data) {
-            Overlay("Inspector", { 
+            Overlay("Picker", { 
                 data: data, 
+
+                title: "Top Mutated Genes (click to select)",
+
+
+                reactiveTableFields: function() {
+                   return [
+                    { key: 'Hugo_Symbol', label: 'Gene' },
+                    { key: 'count', label: 'Number of Mutations', sort: 'descending' },
+                   ]
+                },
 
                 renderRow: function(elem, d) {
                     if (d.Hugo_Symbol == null)
@@ -500,6 +510,39 @@ Template.Controls.events({
                         $(elem).addClass("includeThisGene");
                     }
                 },
+
+                selectRow: function(elem, d) {
+                    var gene = d.Hugo_Symbol;
+                    if (gene == null)
+                        return
+                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    $(elem).addClass("includeThisGene");
+                    var k = genelist.indexOf(gene);
+                    if (k < 0) {
+                        // add it
+                        genelist.push(gene)
+                        Session.set("genelist", genelist); // Pipeline Phase 1
+                        var $genelist = $("#genelist");
+                        $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
+                    }
+                },
+
+                clearRow: function(elem, d) {
+                    var gene = d.Hugo_Symbol;
+                    if (gene == null)
+                        return
+                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    $(elem).removeClass("includeThisGene");
+                    var k = genelist.indexOf(gene);
+                    if (k >= 0) {
+                        // remove it
+                        genelist.splice(k,1);
+                        Session.set("genelist", genelist); // Pipeline Phase 1
+                        var $genelist = $("#genelist");
+                        $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
+                    }
+                },
+
 
                 clickRow: function(elem, d) {
                     var gene = d.Hugo_Symbol;
