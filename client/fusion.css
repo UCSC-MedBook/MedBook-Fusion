@@ -42,3 +42,7 @@ body {
    cursor :pointer;
    text-decoration: underline;
 }
+
+.includeThisGene {
+    background: blue;
+}

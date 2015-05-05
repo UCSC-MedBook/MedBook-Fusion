@@ -2,13 +2,19 @@ SafetyFirst = {
   GeneSets: GeneSets,
 }
 Meteor.methods({
-   topGenes: function() {
+   topMutatedGenes: function() {
        var results = Mutations.aggregate(    [
                { $project: { Hugo_Symbol: 1}},
                { $group: { _id: "$Hugo_Symbol", count: { $sum: 1 } } },
                { $sort: {count:-1}}
 
-       ] ).slice(0,10).filter(function(d) { return d.count > 4 })
+           ] );
+       results = results
+           .slice(0,50)
+           .filter(function(d) { return d.count > 4 }) // could be aggregate finalize method
+           .map(function (d) { 
+               d.Hugo_Symbol = d._id;
+               return d;});
 
        return results;
    }

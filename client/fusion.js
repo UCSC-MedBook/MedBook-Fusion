@@ -485,6 +485,48 @@ Template.Controls.events({
       Session.set("geneLikeDataDomain", GeneLikeDataDomainsPrototype);
    },
 
+   'click .topMutatedGenes': function(evt, tmpl) {
+        var $link = $(evt.target);
+        Meteor.call("topMutatedGenes", function(err,data) {
+            Overlay("Inspector", { 
+                data: data, 
+
+                renderRow: function(elem, d) {
+                    if (d.Hugo_Symbol == null)
+                        return;
+                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var k = genelist.indexOf(d.Hugo_Symbol);
+                    if (k >= 0) {
+                        $(elem).addClass("includeThisGene");
+                    }
+                },
+
+                clickRow: function(elem, d) {
+                    var gene = d.Hugo_Symbol;
+                    if (gene == null)
+                        return
+                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var k = genelist.indexOf(gene);
+                    if (k >= 0) {
+                        // remove it
+                        debugger;
+                        $(elem).removeClass("includeThisGene");
+                        genelist.splice(k,1);
+                    } else {
+                        // add it
+                        $(elem).addClass("includeThisGene");
+                        genelist.push(gene)
+                    }
+                    Session.set("genelist", genelist); // Pipeline Phase 1
+
+                    var $genelist = $("#genelist");
+                    $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
+                }
+            });
+        })
+   },
+
+
    'click .inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
