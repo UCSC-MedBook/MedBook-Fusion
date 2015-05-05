@@ -1,6 +1,18 @@
 SafetyFirst = {
   GeneSets: GeneSets,
 }
+Meteor.methods({
+   topGenes: function() {
+       var results = Mutations.aggregate(    [
+               { $project: { Hugo_Symbol: 1}},
+               { $group: { _id: "$Hugo_Symbol", count: { $sum: 1 } } },
+               { $sort: {count:-1}}
+
+       ] ).slice(0,10).filter(function(d) { return d.count > 4 })
+
+       return results;
+   }
+})
 HTTP.methods({
 
     genes: function(data){
