@@ -11,9 +11,24 @@ body {
 }
 
 .panel-heading, .panel-title {
-    background:rgba(245,245,245,0.0) !important;
+    background-color: rgba(245,245,245,0.0) !important;
     border-bottom-width: 0;
 }
+.panel-heading > .panel-title {
+    background: url("fusion/triangle_closed.png") no-repeat right top;
+    background-size: 15px 15px;
+}
+
+.panel-heading[aria-expanded="true"]  > .panel-title {
+    background: url("fusion/triangle_open.png") no-repeat right top;
+    background-size: 15px 15px;
+}
+
+.panel-title[aria-expanded="true"] {
+    background: url("fusion/triangle_open.png") no-repeat right top;
+    background-size: 15px 15px;
+}
+
 
 .panel-body .collapse {
     background:rgba(245,245,245,0.0) !important;
