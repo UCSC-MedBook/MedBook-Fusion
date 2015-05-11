@@ -1,7 +1,16 @@
+
+var spawn = Npm.require('child_process').spawn;
+
 SafetyFirst = {
   GeneSets: GeneSets,
 }
 Meteor.methods({
+    "ttestQuickR" : function(id) {
+        argArray = ["/Users/ted/MedBook/MedBook-Fusion/client/ttest.R", id ];
+        console.log( "ttestQuickR", argArray );
+        spawn("/usr/bin/Rscript", argArray);
+        return "frobulator";
+    },
    topMutatedGenes: function() {
        var results = Mutations.aggregate(    [
                { $project: { Hugo_Symbol: 1}},
@@ -17,8 +26,30 @@ Meteor.methods({
                return d;});
 
        return results;
-   }
-})
+   },
+   muts: function() {
+       var results = Mutations.aggregate(    [
+               { $project: { Hugo_Symbol: 1, sample: 1}},
+               { $group: 
+                   { 
+                        _id: "$Hugo_Symbol",
+                        samples : { $addToSet:  "$sample" }
+                    } 
+                },
+               { $sort: {"samples.length":-1}}
+
+           ] );
+       results = results
+           .slice(0,50)
+           // .filter(function(d) { return d.samples.length > 4 }) // could be aggregate finalize method
+           .map(function (d) { 
+               d.Hugo_Symbol = d._id;
+               return d;});
+
+
+       return results;
+   },
+});
 HTTP.methods({
 
     genes: function(data){

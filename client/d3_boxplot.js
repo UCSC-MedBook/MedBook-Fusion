@@ -8,6 +8,7 @@ function cartesianProductOf(array) {
         }), true);
     }, [ [] ]);
 };
+Meteor.subscribe("QuickR")
 
 function processStrata(strata, $div) {
     var keyValue = [];
@@ -15,6 +16,17 @@ function processStrata(strata, $div) {
         var ss = strata[s];
         keyValue.push({key: s, value: ss})
     }
+    var forTtest = QuickR.insert({input: keyValue});
+    console.log("forTtest", forTtest);
+
+    whendone = function(foo, bar) {
+        value = QuickR.findOne({_id: forTtest});
+        console.log("ttestQuickR", foo, bar, value);
+        debugger;
+    }
+
+    Meteor.call("ttestQuickR", forTtest, whendone);
+    /*
     Meteor.call("ttest", "pValue", keyValue,
         function(err,result) {
             console.log("ttest", result);
@@ -33,6 +45,7 @@ function processStrata(strata, $div) {
             }
         }
     );
+    */
 }
 
 function BoxPlotChartData(pivotData, exclusions) {
