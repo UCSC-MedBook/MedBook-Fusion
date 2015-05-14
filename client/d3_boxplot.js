@@ -22,7 +22,6 @@ function processStrata(strata, $div) {
     whendone = function(foo, bar) {
         value = QuickR.findOne({_id: forTtest});
         console.log("ttestQuickR", foo, bar, value);
-        debugger;
     }
 
     Meteor.call("ttestQuickR", forTtest, whendone);
