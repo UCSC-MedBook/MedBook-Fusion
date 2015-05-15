@@ -18,6 +18,7 @@ function processStrata(strata, $div) {
     Meteor.call("ttest", "pValue", keyValue,
         function(err,result) {
             console.log("ttest", result);
+            debugger;
             var $table = $("<table class='table borderless'>").appendTo($div);
             for (var y = 0; y < result.length; y++) {
                 var row = result[y];
