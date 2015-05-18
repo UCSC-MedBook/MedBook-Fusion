@@ -18,7 +18,6 @@ function processStrata(strata, $div) {
     Meteor.call("ttest", "pValue", keyValue,
         function(err,result) {
             console.log("ttest", result);
-            debugger;
             var $table = $("<table class='table borderless'>").appendTo($div);
             for (var y = 0; y < result.length; y++) {
                 var row = result[y];
@@ -115,6 +114,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                 var f = parseFloat(value);
                 var g = { 
                     Patient: elem.Sample_ID, 
+                    Study_ID: elem.Study_ID, 
                     ValueClass: rowLabel,
                     ValueColor: value_color,
                     Phenotype: rowLabel ? rowLabel+","+columnLabel : columnLabel,
@@ -132,7 +132,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                     if (!(strataLabel in strata)) {
                         strata[strataLabel] = [];
                     }
-                    strata[strataLabel].push(f);
+                    strata[strataLabel].push(g);
                 }
 
                 points.push(g);
