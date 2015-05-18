@@ -126,6 +126,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                 var f = parseFloat(value);
                 var g = { 
                     Patient: elem.Sample_ID, 
+                    Study_ID: elem.Study_ID, 
                     ValueClass: rowLabel,
                     ValueColor: value_color,
                     Phenotype: rowLabel ? rowLabel+","+columnLabel : columnLabel,
@@ -143,7 +144,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                     if (!(strataLabel in strata)) {
                         strata[strataLabel] = [];
                     }
-                    strata[strataLabel].push(f);
+                    strata[strataLabel].push(g);
                 }
 
                 points.push(g);
