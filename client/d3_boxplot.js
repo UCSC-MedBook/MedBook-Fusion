@@ -14,6 +14,7 @@ function processStrata(strata, $div) {
     var keyValue = [];
     for (var s in strata) {
         var ss = strata[s];
+        debugger;
         keyValue.push({key: s, value: ss})
     }
     var forTtest = QuickR.insert({input: keyValue});
