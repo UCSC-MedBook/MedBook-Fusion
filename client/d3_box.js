@@ -228,7 +228,7 @@ d3.box = function() {
                 .style("opacity", .9);      
 
             divD = d;
-            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient 
+            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient + "?Study_ID=" + d.Study_ID
                 + "'>" + d.Patient + "</a><br/>" + 
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);

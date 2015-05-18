@@ -14,6 +14,7 @@ function processStrata(strata, $div) {
     var keyValue = [];
     for (var s in strata) {
         var ss = strata[s];
+        debugger;
         keyValue.push({key: s, value: ss})
     }
     var forTtest = QuickR.insert({input: keyValue});
@@ -22,7 +23,6 @@ function processStrata(strata, $div) {
     whendone = function(foo, bar) {
         value = QuickR.findOne({_id: forTtest});
         console.log("ttestQuickR", foo, bar, value);
-        debugger;
     }
 
     Meteor.call("ttestQuickR", forTtest, whendone);
