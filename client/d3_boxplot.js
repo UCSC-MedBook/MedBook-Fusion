@@ -187,6 +187,7 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         }
         
         if (window.$div != null) {
+
             window.$div.remove();
             window.$div = null;
         }
@@ -198,9 +199,26 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
                 displayBoxPlots(plotDataSets, h, v, div, plotWidth, rowCategoricalVariables);
             });
         }
-        var $pVals = $("<div class='d3boxplot'></div>").appendTo(window.$div);
 
-        processStrata(strata, $pVals);
+
+        var pValueButton = $('<button type="button" onclick="analyzeGroups()" style="margin:10px;" class="btn btn-default">Analyze Groups</button>').appendTo(window.$div);
+        var $pVals = $("<div class='boxplotTable d3boxplot'></div>").appendTo(window.$div);
+
+        window.analyzeGroups = function() {
+            var $table = $("<table class='table borderless'>").appendTo($pVals);
+            Object.keys(strata).sort().map(function(lab){
+
+                debugger;
+
+                var $row = $("<table class='row'>").appendTo($table);
+                $("<input>").attr("type", "checkbox").appendTo("<td>").appendTo($row);
+                $("<td>" + lab + "</td>").appendTo($row);
+            });
+        }
+
+        window.calclatePValues = function() {
+            processStrata(strata, $pVals);
+        }
 
         var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  
             appendTo(window.$div);
