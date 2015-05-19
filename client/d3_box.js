@@ -127,6 +127,7 @@ d3.box = function() {
 
       box.enter().append("rect")
           .attr("class", "box")
+          .attr("fill", "white")
           .attr("x", 0)
           .attr("y", function(d) { 
                   console.log("box d2",d[2]); 

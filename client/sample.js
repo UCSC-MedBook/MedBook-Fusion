@@ -78,6 +78,7 @@ function Transform_Clinical_Info(f) {
     delete f["On_Study_Date"];
     delete f["Off_Study_Date"];
 
+    /*
     var on = f["On_Study_Date"];
     var off = f["OffStudy_Date"];
     if (off == null)
@@ -88,6 +89,7 @@ function Transform_Clinical_Info(f) {
 
     delete f["On_Study_Date"];
     delete f["Off_Study_Date"];
+    */
 
 
     // Make sure that 
@@ -156,10 +158,16 @@ function Transform_Clinical_Info(f) {
     f["treatment_prior_to_biopsy"] = t;
     delete f["treatment_for_mcrpc_prior_to_biopsy"];
 
+    f["timepoint"] = "baseline";
+    if ( f.Sample_ID.match(/^DTB-\d\d\dPro/)) // DTB Hack
+        f["timepoint"] = "progression";
+
+
     Object.keys(f).map(function(k) {
         if (f[k] == null)
            f[k] = "N/A";
     });
+
 
     return f;
 };
@@ -737,7 +745,7 @@ Template.Transforms.helpers({
 
 
 Template.Controls.rendered = function() {
-     var ChartDocument = Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     var ChartDocument =  this.data || Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
      if (ChartDocument == null) {
          Charts.insert({}); 
          ChartDocument = Charts.findOne({ userId : Meteor.userId() });

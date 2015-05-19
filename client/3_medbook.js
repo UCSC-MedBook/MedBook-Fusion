@@ -1,6 +1,11 @@
 
 window.postButton = function () {
-    window.medbookpost = { title: document.title };
+	var doc = Session.get('ChartDocument');
+	delete doc["_id"];
+	delete doc["user_id"];
+	var cloned_id = Charts.insert(doc);
+	var url = Meteor.absoluteUrl('display/'+cloned_id)
+	window.medbookpost = { title: document.title  , url: url }
     $.getScript('/postScript');
 }
 
