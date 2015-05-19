@@ -1,16 +1,24 @@
 
 var spawn = Npm.require('child_process').spawn;
 var fs = Npm.require('fs');
+var Fiber = Npm.require('fibers');
 
 SafetyFirst = {
   GeneSets: GeneSets,
 }
 Meteor.methods({
-    "ttestQuickR" : function(id) {
-        argArray = ["/Users/ted/MedBook/MedBook-Fusion/client/ttest.R", id ];
+    "ttestQuickR" : function(id, whendone) {
+        argArray = ["/data/MedBook/MedBook-Fusion/client/ttest.R", id ];
         console.log( "ttestQuickR", argArray );
-        spawn("/usr/bin/Rscript", argArray);
-        return "frobulator";
+        var shlurp = spawn("/usr/bin/Rscript", argArray);
+		shlurp.on('error', function(error) { console.log('command failed '+error) });
+		shlurp.on('close', function(retcode) {
+				console.log('ttestQuickR ended with code ' + retcode);
+				Fiber(function() {
+					whendone("ttestQuickR returned " + retcode);
+				}).run();  
+		});
+        return "ttestQuickR direct return";
     },
    topMutatedGenes: function() {
        var results = Mutations.aggregate(    [
