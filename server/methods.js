@@ -8,16 +8,32 @@ SafetyFirst = {
 }
 Meteor.methods({
     "ttestQuickR" : function(id, whendone) {
-        argArray = ["/data/MedBook/MedBook-Fusion/client/ttest.R", id ];
-        console.log( "ttestQuickR", argArray );
-        var shlurp = spawn("/usr/bin/Rscript", argArray);
-		shlurp.on('error', function(error) { console.log('command failed '+error) });
-		shlurp.on('close', function(retcode) {
-				console.log('ttestQuickR ended with code ' + retcode);
-				Fiber(function() {
-					whendone("ttestQuickR returned " + retcode);
-				}).run();  
-		});
+		var rdir = process.env.MEDBOOK_R_SCRIPTS;
+		var rscript = ""
+		if (typeof(rdir) !== 'undefined') {
+			rscript = rdir+"/ttest.R";
+		}
+		else {
+			rdir = process.env.PWD + '/server/R' ;
+			rscript = rdir+"/ttest.R";
+		}
+		if (!fs.existsSync(rscript)) {
+		    throw new Error(rscript + " does not exists");
+		}
+		else {
+			argArray = [rscript, id ];
+	        console.log( "ttestQuickR /usr/bin/Rscript ", argArray );
+	        var shlurp = spawn("/usr/bin/Rscript", argArray);
+			shlurp.on('error', function(error) { console.log('command failed '+error) });
+			shlurp.on('close', function(retcode) {
+					console.log('ttestQuickR ended with code ' + retcode);
+					Fiber(function() {
+						whendone("ttestQuickR returned " + retcode);
+					}).run();  
+			});
+		}
+		
+        
         return "ttestQuickR direct return";
     },
    topMutatedGenes: function() {
@@ -257,7 +273,7 @@ Meteor.methods({
 VV = null;
 
 Meteor.startup(function() {
-    console.log("before summarizeVariances");
+    console.log("before summarizeVariances ");
     var d = new Date();
     Meteor.call("summarizeVariances", "Expression", function(err,result) { 
         VV = result;
