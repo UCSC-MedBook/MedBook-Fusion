@@ -128,6 +128,8 @@ d3.box = function() {
       box.enter().append("rect")
           .attr("class", "box")
           .attr("fill", "white")
+		  .style("stroke", "black")      
+		  .style("stroke-width", 2)
           .attr("x", 0)
           .attr("y", function(d) { 
                   console.log("box d2",d[2]); 
