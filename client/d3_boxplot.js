@@ -8,31 +8,52 @@ function cartesianProductOf(array) {
         }), true);
     }, [ [] ]);
 };
+Meteor.subscribe("QuickR")
 
-function processStrata(strata, $div) {
+function processStrata(strata, strataSampleSets, $div) {
     var keyValue = [];
     for (var s in strata) {
-        var ss = strata[s];
-        keyValue.push({key: s, value: ss})
+        var strataData = strata[s];
+        var strataSampleSet = strataSampleSets[s];
+        keyValue.push({key: s, value: strataData, trace: strataSampleSet})
     }
-    Meteor.call("ttest", "pValue", keyValue,
-        function(err,result) {
-            console.log("ttest", result);
+    var forTtest = QuickR.insert({input: keyValue});
+    console.log("forTtest", forTtest);
+
+    whendone = function(foo, bar) {
+        QuickR.find({_id: forTtest}).observe({changed:function(newDoc, oldDoc) {
             var $table = $("<table class='table borderless'>").appendTo($div);
-            for (var y = 0; y < result.length; y++) {
-                var row = result[y];
-                var $row = $("<tr>").appendTo($table);
-                for (var x = 0; x < row.length; x++) {
-                    var s = row[x];
-                    var v = parseFloat(s);
-                    if (!isNaN(v)) {
-                        s = v.toPrecision(4);
+            var strataLabels = Object.keys(strata).sort();
+
+            var $row = $("<tr>").appendTo($table);
+            $("<td>P-Value</td>").appendTo($row);
+            for (var x = 0; x < strataLabels.length; x++) 
+                $column = $("<td>" + strataLabels[x] + "</td>").appendTo($row);
+
+            for (var y = 0; y < strataLabels.length; y++) {
+                $row = $("<tr>").appendTo($table);
+                $column = $("<td>" + strataLabels[y] + "</td>").appendTo($row);
+                for (var x = 0; x < strataLabels.length; x++) {
+                    var s = "";
+                    if (true) {
+                        var lab = strataLabels[y] + "***" + strataLabels[x]
+                        if (!lab in newDoc.output) {
+                            lab = strataLabels[x] + "***" + strataLabels[y]
+                        }
+                        if (lab in newDoc.output) {
+                            var t = newDoc.output[lab];
+                            var v = parseFloat(t);
+                            if (!isNaN(v))
+                                s = v.toPrecision(4);
+                        }
                     }
                     var $column = $("<td>" + s + "</td>").appendTo($row);
                 }
             }
-        }
-    );
+        } });
+    } // whendone
+
+    Meteor.call("ttestQuickR", forTtest, whendone);
 }
 
 function BoxPlotChartData(pivotData, exclusions) {
@@ -40,6 +61,7 @@ function BoxPlotChartData(pivotData, exclusions) {
     var value_color_scale = d3.scale.category10();
     var rowCategoricalVariables = [];
     var strata = {}
+    var strataSampleSets = {}
     
 
     h.map(function(k, i) {
@@ -74,7 +96,7 @@ function BoxPlotChartData(pivotData, exclusions) {
                 })
             );
         }
-    });;
+    });
     var allColumnVars = _.clone( columnCategoricalVariables );
     allColumnVars.splice(0 ,0, numberVariables)
     var plots = cartesianProductOf(allColumnVars);
@@ -109,8 +131,7 @@ function BoxPlotChartData(pivotData, exclusions) {
             }
 
             if (good) {
-                var columnLabel = plotPredicates[0].label;
-                var value = elem[columnLabel];
+                var value = elem[plotPredicates[0].label];
                 var f = parseFloat(value);
                 var g = { 
                     Patient: elem.Sample_ID, 
@@ -131,8 +152,10 @@ function BoxPlotChartData(pivotData, exclusions) {
                 if (strataLabel)  {
                     if (!(strataLabel in strata)) {
                         strata[strataLabel] = [];
+                        strataSampleSets[strataLabel] = [];
                     }
-                    strata[strataLabel].push(g);
+                    strata[strataLabel].push(f);
+                    strataSampleSets[strataLabel].push(g.Patient);
                 }
 
                 points.push(g);
@@ -142,7 +165,7 @@ function BoxPlotChartData(pivotData, exclusions) {
     });
     h = h.join(",");
     v = v.join(",");
-    return [plotDataSets, h, v, rowCategoricalVariables, strata];
+    return [plotDataSets, h, v, rowCategoricalVariables, strata, strataSampleSets];
 }
 
 var ChartHeightMax = 2048;
@@ -169,9 +192,10 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         var h = chvk[2];
         var rowCategoricalVariables = chvk[3];
         var strata = chvk[4];
+        var strataSampleSets = chvk[5];
 
         for (lab in strata) {
-            console.log("strata", lab, strata[lab])
+            console.log("strata", lab, strataSampleSets[lab], strata[lab])
         }
         
         if (window.$div != null) {
@@ -188,7 +212,7 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         }
         var $pVals = $("<div class='d3boxplot'></div>").appendTo(window.$div);
 
-        processStrata(strata, $pVals);
+        processStrata(strata, strataSampleSets, $pVals);
 
         var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  
             appendTo(window.$div);

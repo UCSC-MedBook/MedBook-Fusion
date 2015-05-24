@@ -128,6 +128,8 @@ d3.box = function() {
       box.enter().append("rect")
           .attr("class", "box")
           .attr("fill", "white")
+		  .style("stroke", "black")      
+		  .style("stroke-width", 2)
           .attr("x", 0)
           .attr("y", function(d) { 
                   console.log("box d2",d[2]); 
@@ -229,7 +231,7 @@ d3.box = function() {
                 .style("opacity", .9);      
 
             divD = d;
-            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient 
+            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient + "?Study_ID=" + d.Study_ID
                 + "'>" + d.Patient + "</a><br/>" + 
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);

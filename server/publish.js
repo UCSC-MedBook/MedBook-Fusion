@@ -124,3 +124,22 @@ Meteor.publish('Metadata', function() {
     console.log("Metadata publish", cursor.count());
     return cursor;
 });
+
+QuickR.allow({
+  insert: function (userId, doc) { return userId != null; }, 
+  update: function (userId, doc, fieldNames, modifier) { return userId != null; },
+  remove: function (userId, doc) { return true; }
+});
+
+QuickR.before.insert(function(userId, doc) {
+    doc.userId = userId;
+});
+
+Meteor.publish('QuickR', function() {
+    if (this.userId) {
+        var cursor = QuickR.find({userId: this.userId});
+        console.log("QuickR", this.userId, cursor.count());
+        return cursor;
+    }
+    return null;
+});
