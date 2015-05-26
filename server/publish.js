@@ -138,7 +138,7 @@ QuickR.before.insert(function(userId, doc) {
 Meteor.publish('QuickR', function() {
     if (this.userId) {
         var cursor = QuickR.find({userId: this.userId});
-        console.log("QuickR", this.userId, cursor.count());
+        console.log("publish QuickR for user ", this.userId, "count", cursor.count());
         return cursor;
     }
     return null;

@@ -18,9 +18,13 @@ function processStrata(strata, strataSampleSets, $div) {
         keyValue.push({key: s, value: strataData, trace: strataSampleSet})
     }
     var forTtest = QuickR.insert({input: keyValue});
-    console.log("forTtest", forTtest);
+    console.log("forTtest", forTtest, "QuickR.insert({input:",keyValue,"})");
 
-    whendone = function(foo, bar) {
+    Meteor.call("ttestQuickR", forTtest, function(err, returncode) {
+		if (err)
+			console.log('processStrata: ttestQuickR returns', returncode, 'err',err);
+		else
+			console.log('processStrata: ttestQuickR returns', returncode);	
         QuickR.find({_id: forTtest}).observe({changed:function(newDoc, oldDoc) {
             var $table = $("<table class='table borderless'>").appendTo($div);
             var strataLabels = Object.keys(strata).sort();
@@ -50,10 +54,11 @@ function processStrata(strata, strataSampleSets, $div) {
                     var $column = $("<td>" + s + "</td>").appendTo($row);
                 }
             }
-        } });
-    } // whendone
+        } //QuickR.find
+	  }) //Observe 
+    }) //call testQuickR
 
-    Meteor.call("ttestQuickR", forTtest, whendone);
+
 }
 
 function BoxPlotChartData(pivotData, exclusions) {

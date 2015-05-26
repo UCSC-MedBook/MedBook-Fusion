@@ -745,7 +745,8 @@ Template.Transforms.helpers({
 
 
 Template.Controls.rendered = function() {
-     var ChartDocument =  this.data || Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
+     //var ChartDocument =  this.data || Charts.find( { $query: { userId : Meteor.userId() }, $maxScan: 1 }) // Charts find cannot be inside of a Tracker, else we get a circul
+	 var ChartDocument =  this.data || Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
      if (ChartDocument == null) {
          Charts.insert({}); 
          ChartDocument = Charts.findOne({ userId : Meteor.userId() });
@@ -903,4 +904,4 @@ Template.Controls.rendered = function() {
         }); // autoRun
     }, 50);
 } // 
-M5
+

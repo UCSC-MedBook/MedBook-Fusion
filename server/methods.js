@@ -7,9 +7,10 @@ SafetyFirst = {
   GeneSets: GeneSets,
 }
 Meteor.methods({
-    "ttestQuickR" : function(id, whendone) {
+    "ttestQuickR" : function(id) {
 		var rdir = process.env.MEDBOOK_R_SCRIPTS;
 		var rscript = ""
+		
 		if (typeof(rdir) !== 'undefined') {
 			rscript = rdir+"/ttest.R";
 		}
@@ -26,10 +27,7 @@ Meteor.methods({
 	        var shlurp = spawn("/usr/bin/Rscript", argArray);
 			shlurp.on('error', function(error) { console.log('command failed '+error) });
 			shlurp.on('close', function(retcode) {
-					console.log('ttestQuickR ended with code ' + retcode);
-					Fiber(function() {
-						whendone("ttestQuickR returned " + retcode);
-					}).run();  
+				console.log('ttestQuickR ended with code ' + retcode);
 			});
 		}
 		
@@ -71,14 +69,19 @@ Meteor.methods({
                                     return samples[sampleName].rsem_quan_log2;
                                 });
                 if (data.length > 2) {
-
-                    var variance = ss.variance(data);
-                    var mean = ss.mean(data);
-
-                    collection.update({_id: geneDoc._id}, {$set: {
-                        mean: { rsem_quan_log2: mean},
-                        variance: { rsem_quan_log2: variance}
-                    }});
+					var sum1 = ss.sum(data);
+                    var mean1 = ss.mean(data);
+					if (mean1==NaN) {
+						console.log('WARNING: non numeric data in expresssion2 sum=', sum1)
+					}
+                   var variance = ss.variance(data);
+					//console.log('variance',variance)
+					if (mean1 && variance) {
+                    	collection.update({_id: geneDoc._id}, {$set: {
+                        	mean: { rsem_quan_log2: mean1},
+                        	variance: { rsem_quan_log2: variance}
+                    	}});					
+					}
                 }
                
         });
