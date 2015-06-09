@@ -178,6 +178,7 @@ Meteor.startup(function() {
         var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(result);
         editChartBtn.click(editChart);
         */
+        debugger;
         addMedBookButtons(result, groupArray);
         return result;
       };

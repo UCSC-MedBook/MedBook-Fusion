@@ -44,3 +44,7 @@ div.tooltip {
     border: 0px;      
     border-radius: 8px;           
 }
+
+.boxPlotTable {
+    margin-left: 20px;
+}
