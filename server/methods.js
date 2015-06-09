@@ -7,17 +7,31 @@ SafetyFirst = {
   GeneSets: GeneSets,
 }
 Meteor.methods({
-    "ttestQuickR" : function(id, whendone) {
-        argArray = ["/data/MedBook/MedBook-Fusion/client/ttest.R", id ];
-        console.log( "ttestQuickR", argArray );
-        var shlurp = spawn("/usr/bin/Rscript", argArray);
-		shlurp.on('error', function(error) { console.log('command failed '+error) });
-		shlurp.on('close', function(retcode) {
+    "ttestQuickR" : function(id) {
+		var rdir = process.env.MEDBOOK_R_SCRIPTS;
+		var rscript = ""
+		
+		if (typeof(rdir) !== 'undefined') {
+			rscript = rdir+"/ttest.R";
+		}
+		else {
+			rdir = process.env.PWD + '/server/R' ;
+			rscript = rdir+"/ttest.R";
+		}
+		if (!fs.existsSync(rscript)) {
+		    throw new Error(rscript + " does not exists");
+		}
+		else {
+			argArray = [rscript, id ];
+	        console.log( "ttestQuickR /usr/bin/Rscript ", argArray );
+	        var shlurp = spawn("/usr/bin/Rscript", argArray);
+			shlurp.on('error', function(error) { console.log('command failed '+error) });
+			shlurp.on('close', function(retcode) {
 				console.log('ttestQuickR ended with code ' + retcode);
-				Fiber(function() {
-					whendone("ttestQuickR returned " + retcode);
-				}).run();  
-		});
+			});
+		}
+		
+        
         return "ttestQuickR direct return";
     },
    topMutatedGenes: function() {
@@ -55,14 +69,19 @@ Meteor.methods({
                                     return samples[sampleName].rsem_quan_log2;
                                 });
                 if (data.length > 2) {
-
-                    var variance = ss.variance(data);
-                    var mean = ss.mean(data);
-
-                    collection.update({_id: geneDoc._id}, {$set: {
-                        mean: { rsem_quan_log2: mean},
-                        variance: { rsem_quan_log2: variance}
-                    }});
+					var sum1 = ss.sum(data);
+                    var mean1 = ss.mean(data);
+					if (mean1==NaN) {
+						console.log('WARNING: non numeric data in expresssion2 sum=', sum1)
+					}
+                   var variance = ss.variance(data);
+					//console.log('variance',variance)
+					if (mean1 && variance) {
+                    	collection.update({_id: geneDoc._id}, {$set: {
+                        	mean: { rsem_quan_log2: mean1},
+                        	variance: { rsem_quan_log2: variance}
+                    	}});					
+					}
                 }
                
         });
@@ -257,11 +276,16 @@ Meteor.methods({
 VV = null;
 
 Meteor.startup(function() {
-    console.log("before summarizeVariances");
+    console.log("before summarizeVariances ");
     var d = new Date();
     Meteor.call("summarizeVariances", "Expression", function(err,result) { 
         VV = result;
-        console.log("call summarizeVariances  err =", err, "time=", (new Date() - d)/1000)});
+		if (err) {
+	        console.log("call summarizeVariances  err =", err, "time=", (new Date() - d)/1000)});
+		}
+		else {
+	        console.log("call summarizeVariances ok. time=", (new Date() - d)/1000)});
+		}
 });
 
 
