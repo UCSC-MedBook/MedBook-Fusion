@@ -2,8 +2,8 @@
 
 function ScatterChartData(pivotData, exclusions) {
     var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
-    var h = pivotData.colAttrs;
-    var v = pivotData.rowAttrs;
+    var h = _.clone(pivotData.colAttrs);
+    var v = _.clone(pivotData.rowAttrs);
 
     var xk = Object.keys(exclusions);
     var data = pivotData.input.filter(function(elem) {
