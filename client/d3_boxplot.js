@@ -1,5 +1,5 @@
 
-function cartesianProductOf(array) {
+cartesianProductOf = function(array) {
     return _.reduce(array, function(a, b) {
         return _.flatten(_.map(a, function(x) {
             return _.map(b, function(y) {
