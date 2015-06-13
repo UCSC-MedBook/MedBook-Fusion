@@ -4,6 +4,22 @@ function ScatterChartData(pivotData) {
 
     var data = [];
     var order = [];
+
+    var x = h[0];
+    var y = v[0];
+
+    var rows = [
+           {c:[{v: 12}, {v: 40}, {v:'Allen'}]},
+           {c:[{v: 16}, {v: 45}, {v:'Tom'}]},
+           {c:[{v: 17}, {v: 60}, {v:'Sim'}]}
+          ];
+    var cols = [{id: 'A', label: 'Age', type: 'number'},
+           {id: 'B', label: 'Response', type: 'number'},
+           {id: 'C', label: 'Name', type:'string', p:{role:'tooltip'}} ];
+
+    return [{ cols: cols, rows:  rows }, "foo", "bar"];
+
+    /*
     h.map(function (i) { order.push(i) });
     v.map(function (i) { order.push(i) });
 
@@ -15,6 +31,7 @@ function ScatterChartData(pivotData) {
         var good = true;
         order.map(function(a) {
             var ea = elem[a];
+            debugger;
             if (ea == "N/A")
                 good = false;
             else
@@ -24,9 +41,11 @@ function ScatterChartData(pivotData) {
             rows.push(row);
     });
 
+
     h = h.join(",");
     v = v.join(",");
     return [rows, h, v];
+    */
 }
 
 
@@ -37,11 +56,11 @@ window.makeGoogleScatter = function(chartType, extraOptions) {
             return $("<div>Internal Error: unknown chart type:" + chartType + "</div>");
 
         var rhv =  ScatterChartData(pivotData);
-        var rows = rhv[0];
+        var data = rhv[0];
         var h    = rhv[1];
         var v    = rhv[2];
 
-        var dataTable = google.visualization.arrayToDataTable(rows, true);
+        var dataTable = new google.visualization.DataTable(data, true);
 
         result = $("<div class='ChartWrapper' >").css({
           width: "100%",
