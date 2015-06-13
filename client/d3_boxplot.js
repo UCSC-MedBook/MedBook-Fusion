@@ -56,7 +56,7 @@ function processStrata(strata, strataSampleSets, $div) {
     Meteor.call("ttestQuickR", forTtest, whendone);
 }
 
-function BoxPlotChartData(pivotData, exclusions) {
+BoxPlotChartData = function(pivotData, exclusions) {
     var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
     var rowCategoricalVariables = [];

@@ -15,7 +15,7 @@ Meteor.startup(function() {
 
   function preflight(input, subopts) {
      var chartType = $('.pvtRenderer').val();
-     if (chartType  != "Box Plot")
+     if (chartType  != "Box Plot" && chartType != "Scatter Chart")
         return true;
 
      var analysis = {};
