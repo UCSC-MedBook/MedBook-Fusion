@@ -440,13 +440,13 @@ Meteor.startup(function() {
       };
     })(aggregatorTemplates);
     renderers = {
+      /*
       "Table": function(pvtData, opts) {
         return pivotTableRenderer(pvtData, opts);
       },
       "Table Barchart": function(pvtData, opts) {
         return $(pivotTableRenderer(pvtData, opts)).barchart();
       },
-      /*
       "Heatmap": function(pvtData, opts) {
         return $(pivotTableRenderer(pvtData, opts)).heatmap();
       },

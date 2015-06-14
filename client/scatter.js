@@ -101,7 +101,7 @@ window.makeGoogleScatter = function(chartType, extraOptions) {
 
         var dataTable = new google.visualization.DataTable(data, true);
 
-        result = $("<div class='ChartWrapper' >some text</div>").css({
+        result = $("<div class='ChartWrapper' >").css({
           width: "800px",
           height: "600px"
         });
