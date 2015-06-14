@@ -56,6 +56,14 @@ Meteor.startup(function() {
      input.boxplot.rowsAllNumbers = rowsAllNumbers;
      input.boxplot.colsAllNumbers = colsAllNumbers;
 
+     debugger;
+     if (chartType == "Scatter Chart" && 
+             (subopts.cols.length == 0 || !allNumbers(extract(subopts.cols[0]))
+              ||  subopts.rows.length == 0 || !allNumbers(extract(subopts.rows[0])))) {
+         $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for columns (top) or rows (left size)</h3></div>")
+
+         return false;
+     }
 
      if (chartType  == "Box Plot" && !colsAnyNumbers) {
          $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for columns (top) or rows (left size)</h3></div>")
@@ -476,6 +484,7 @@ Meteor.startup(function() {
     derivers = {
       bin: function(col, binWidth) {
         return function(record) {
+          if (record[col] == "N/A") return "N/A";
           return record[col] - record[col] % binWidth;
         };
       },
