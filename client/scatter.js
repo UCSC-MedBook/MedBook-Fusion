@@ -15,6 +15,7 @@ function ScatterChartData(pivotData, exclusions) {
         }
         return true;
     });
+    Session.set("ChartDataFinal", data);
 
     var x = h.shift();
     var y = v.shift();
@@ -125,6 +126,7 @@ window.makeGoogleScatter = function(chartType, extraOptions) {
 
         wrapper.draw(result[0]);
         l.appendTo(result);
+        addMedBookButtons(result, null);
         return result;
 
       }

@@ -1,3 +1,8 @@
 .Quick {
    width: 400px;
 }
+
+}
+.reactive-table-navigation .form-inline input {
+      width: 65px !important;
+}
