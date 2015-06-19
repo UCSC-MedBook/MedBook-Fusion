@@ -733,9 +733,11 @@ Template.Transforms.helpers({
    dataFieldNames: function() {
        var chartDataPre = Session.get("ChartDataPre");
        if (chartDataPre) {
-           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); })
-                       .reduce( function(res, item) { res = _.union(res, item); return res});
-           return keys.sort();
+           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); });
+           if (keys.length > 0) {
+               keys = keys.reduce( function(res, item) { res = _.union(res, item); return res});
+               return keys.sort();
+           }
        }
        return [];
    },
