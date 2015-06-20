@@ -69,7 +69,7 @@ function ScatterChartData(pivotData, exclusions) {
                     break;
                 }
 
-            row.c.push( {v: 'point { size: 12; shape-type: circle; fill-color: ' + color });
+            row.c.push( {v: 'point { size: 5; shape-type: circle; fill-opacity: 0; stroke-width: 2; stroke-color: ' + color });
             rows.push(row);
         } catch (why) {
         }

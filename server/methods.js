@@ -15,6 +15,7 @@ Meteor.methods({
 		shlurp.on('close', function(retcode) {
 				console.log('ttestQuickR ended with code ' + retcode);
 				Fiber(function() {
+                                    if (whendone)
 					whendone("ttestQuickR returned " + retcode);
 				}).run();  
 		});
@@ -259,12 +260,14 @@ VV = null;
 Meteor.startup(function() {
     console.log("before summarizeVariances");
     var d = new Date();
+    /*
     Meteor.call("summarizeVariances", "Expression", function(err,result) { 
         VV = result;
         if (err)
             console.log("call summarizeVariances  err =", err, "time=", (new Date() - d)/1000);
         else
             console.log("call summarizeVariances  ok time=", (new Date() - d)/1000)});
+            */
 });
 
 
