@@ -206,7 +206,7 @@ Meteor.methods( {
             Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
         });
 
-        console.log("keyUnion", Object.keys(keyUnion));
+        var dataFieldNames =  Object.keys(keyUnion);
 
 
         chartData = chartData.map(Transform_Clinical_Info, keyUnion);
@@ -232,6 +232,6 @@ Meteor.methods( {
             });
           // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
           console.log("renderChartData stopping", (new Date()) - b);
-          return chartData;
+          return { dataFieldNames: dataFieldNames, chartData: chartData};
     } // renderChartData
 });

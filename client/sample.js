@@ -420,11 +420,9 @@ function restoreChartDocument(prev) {
 
 Template.Transforms.helpers({
    dataFieldNames: function() {
-       var chartDataPre = Session.get("ChartDataPre");
-       if (chartDataPre) {
-           var keys = chartDataPre.map( function(cd)  { return Object.keys(cd); })
-                       .reduce( function(res, item) { res = _.union(res, item); return res});
-           return keys.sort();
+       var dataFieldNames = Session.get("dataFieldNames");
+       if (dataFieldNames) {
+           return dataFieldNames.sort();
        }
        return [];
    },
@@ -475,11 +473,13 @@ Template.Controls.rendered = function() {
             var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
 
             // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
-            Meteor.call("renderChartData", ChartDocument, function(err, chartData) {
-                if (err == null && chartData != null)
-                    $(".output").pivotUI(chartData, final);
+            Meteor.call("renderChartData", ChartDocument, function(err, ret) {
+                Session.set("dataFieldNames", ret.dataFieldNames);
+
+                if (err == null && ret.chartData != null)
+                    $(".output").pivotUI(ret.chartData, final);
                 else
-                    console.log("renderChartData", err, chartData)
+                    console.log("renderChartData", err, ret.chartData)
             });
         }); // autoRun
 } // rendered
