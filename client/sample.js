@@ -46,6 +46,7 @@ id_text = function(array) {
 
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
+    Meteor.subscribe("Biopsy_Research");
 
     var derivers = $.pivotUtilities.derivers;
     var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
@@ -781,6 +782,12 @@ Template.Controls.rendered = function() {
 
             var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
             var chartData = Clinical_Info.find(q).fetch();
+            var have = chartData.map(function(ci) { return ci.Sample_ID })
+
+            var missing = Biopsy_Research.find({ Sample_ID: {$nin: have}}, {fields: {Sample_ID:1, Patient_ID:1, Site:1}}).fetch();
+            debugger;
+            chartData = chartData.concat(missing);
+
 
             var chartDataMap = {};
             chartData.map(function (cd) { 
@@ -903,4 +910,3 @@ Template.Controls.rendered = function() {
         }); // autoRun
     }, 50);
 } // 
-M5
