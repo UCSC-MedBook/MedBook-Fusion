@@ -292,7 +292,6 @@ Meteor.startup(function() {
         };
       },
       average: function(formatter) {
-        debugger;
         if (formatter == null) {
           formatter = usFmt;
         }

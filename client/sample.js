@@ -465,8 +465,10 @@ Template.Controls.rendered = function() {
                             rendererName: config.rendererName,
                         };
                         ChartDocument.pivotTableConfig =  save;
-                        // Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
-                        Charts.update({ _id : ChartDocument._id }, {$set: ChartDocument});
+                        var set = _.clone(ChartDocument);
+                        delete set["_id"];
+
+                        Charts.update({ _id : ChartDocument._id }, {$set: set});
                 }
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;

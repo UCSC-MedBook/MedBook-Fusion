@@ -18,7 +18,7 @@ function processStrata(strata, strataSampleSets, $div) {
         keyValue.push({key: s, value: strataData, trace: strataSampleSet})
     }
     var forTtest = QuickR.insert({input: keyValue});
-    console.log("forTtest", forTtest);
+    // console.log("forTtest", forTtest);
 
     whendone = function(foo, bar) {
         QuickR.find({_id: forTtest}).observe({changed:function(newDoc, oldDoc) {
@@ -194,9 +194,11 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         var strata = chvk[4];
         var strataSampleSets = chvk[5];
 
+        /*
         for (lab in strata) {
             console.log("strata", lab, strataSampleSets[lab], strata[lab])
         }
+        */
         
         if (window.$div != null) {
             window.$div.remove();
@@ -398,12 +400,10 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
           if (legendText && legendText.length > 0) {
               var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
               if (!isNaN(maxX) && isFinite(maxX)) {
-                  console.log("maxX", maxX);
                   svgTop.attr("width", X + 100 + maxX); 
               }
               var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
               if (!isNaN(maxY) && isFinite(maxY)) {
-                  console.log("maxY", maxY);
                   svgTop.attr("height", maxY); 
                   gLegend.attr("height", maxY); 
               }
