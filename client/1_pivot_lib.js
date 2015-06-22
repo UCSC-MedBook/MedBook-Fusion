@@ -292,6 +292,7 @@ Meteor.startup(function() {
         };
       },
       average: function(formatter) {
+        debugger;
         if (formatter == null) {
           formatter = usFmt;
         }
@@ -416,12 +417,11 @@ Meteor.startup(function() {
     aggregators = (function(tpl) {
       return {
         "Count": tpl.count(usFmtInt),
+        "Mean": tpl.average(usFmt),
+        "Sum": tpl.sum(usFmt),
         /*
         "Count Unique Values": tpl.countUnique(usFmtInt),
         "List Unique Values": tpl.listUnique(", "),
-        */
-        "Sum": tpl.sum(usFmt),
-        /*
         "Integer Sum": tpl.sum(usFmtInt),
         "Average": tpl.average(usFmt),
         "Minimum": tpl.min(usFmt),

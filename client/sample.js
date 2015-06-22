@@ -1,5 +1,4 @@
 
-var SubscriptionsWaitingCount = 0;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -461,14 +460,13 @@ Template.Controls.rendered = function() {
 
             templateContext = { 
                 onRefresh: function(config) {
-                    if (SubscriptionsWaitingCount == 0) {
                         var save = { cols: config.cols, rows: config.rows,
                             aggregatorName: config.aggregatorName,
                             rendererName: config.rendererName,
                         };
                         ChartDocument.pivotTableConfig =  save;
-                        Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
-                    }
+                        // Charts.update({ _id : ChartDocument._id }, {$set: {pivotTableConfig: save}});
+                        Charts.update({ _id : ChartDocument._id }, {$set: ChartDocument});
                 }
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;

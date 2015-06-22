@@ -105,6 +105,11 @@ function Transform_Clinical_Info(f) {
 
 Meteor.methods( { 
     renderChartData : function(ChartDocument) {
+        var b = new Date();
+        console.log("renderChartData starting");
+        if (ChartDocument.studies == null || ChartDocument.length == 0)
+            return [];
+
         // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
         var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: samplelist}};
         q.Study_ID = {$in:ChartDocument.studies}; 
@@ -119,36 +124,44 @@ Meteor.methods( {
         ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
             
         // Join all the Gene line information into the samples into the ChartDataMap table
-        GeneLikeDataDomainsPrototype.map(function(domain) {
-            var gld = ChartDocument.geneLikeDataDomain;
-            if (gld) {
-                gld.map(function(geneData) {
+        var gld = ChartDocument.geneLikeDataDomain;
+        var gl  = ChartDocument.genelist;
+        if (gld && gl && gld.length > 0 && gl.length > 0)  {
+            gld
+              .filter(function(domain) {return domain.state})
+              .map(function(domain) {
+                var cursor = DomainCollections[domain.collection]
+                    .find({Study_ID:{$in: ChartDocument.studies}, gene: {$in: gl}});
 
-                    // Mutations is organized differently than Expression
+                cursor.forEach(function(geneData) {
+                    // Mutations are organized differently than Expression
                     if (geneData.Hugo_Symbol) { 
                         var geneName = geneData.Hugo_Symbol;
                         var label = geneName + ' ' + domain.labelItem;
                         var sampleID = geneData.sample;
                         if (sampleID in chartDataMap)
                             chartDataMap[sampleID][label] = geneData.Variant_Type;
-
                     } else if (geneData.gene) {
+
                         var geneName = geneData.gene;
                         var label = ('transcript' in geneData) 
                             ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                             : geneName + ' ' + domain.labelItem
                         var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
+
+
                         samplelist.map(function (sampleID) {
                             var f = parseFloat(geneData.samples[sampleID][domain.field]);
                             if (!isNaN(f)) {
-                                if (sampleID in chartDataMap)
+                                if (sampleID in chartDataMap) {
                                     chartDataMap[sampleID][label] = f;
+                                }
                             }
                         });
-                    }
-                });
-            }
-        }); // GeneLikeDataDomainsPrototype.map
+                    } // else if geneData.gene
+                }); //cursor.forEach
+              }); // .map 
+        } // if gld 
 
         function Join(datum, joinKey, dataMap) {
             if (joinKey in datum && datum[joinKey] in dataMap)
@@ -187,6 +200,7 @@ Meteor.methods( {
                  });
             });
           // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
+          console.log("renderChartData stopping", (new Date()) - b);
           return chartData;
     } // renderChartData
 });
