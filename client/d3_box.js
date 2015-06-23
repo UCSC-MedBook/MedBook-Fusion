@@ -185,7 +185,9 @@ d3.box = function() {
           .remove();
 
       // Update samples.
-      var sample = g.selectAll("circle.sample")
+      var gg = g.append("g").attr("class", "gg");
+
+      var sample = gg.selectAll("circle.sample")
           .data(full)
 
       sample.enter().insert("circle", "text")
