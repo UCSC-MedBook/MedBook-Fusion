@@ -194,8 +194,7 @@ Meteor.methods( {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
                          });
-                     else
-                        console.log("addQ", collName, fieldName, doc);
+                     // else console.log("addQ", collName, fieldName, doc);
                 } // else
              }); // forEach
         }); //  ChartDocument.additionalQueries.map
