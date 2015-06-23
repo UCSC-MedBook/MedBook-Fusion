@@ -781,11 +781,11 @@ Template.Controls.rendered = function() {
             Charts.update({ _id : ChartDocument._id }, {$set: cd});
 
             var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
+            q.Study_ID = {$in: ChartDocument.studies};
             var chartData = Clinical_Info.find(q).fetch();
             var have = chartData.map(function(ci) { return ci.Sample_ID })
 
             var missing = Biopsy_Research.find({ Sample_ID: {$nin: have}}, {fields: {Sample_ID:1, Patient_ID:1, Site:1}}).fetch();
-            debugger;
             chartData = chartData.concat(missing);
 
 
