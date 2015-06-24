@@ -8,7 +8,7 @@ SafetyFirst = {
 }
 Meteor.methods({
     "ttestQuickR" : function(id, whendone) {
-        argArray = ["/data/MedBook/MedBook-Fusion/client/ttest.R", id ];
+        argArray = ["/data/MedBook/MedBook-Fusion/public/ttest.R", id ];
         console.log( "ttestQuickR", argArray );
         var shlurp = spawn("/usr/bin/Rscript", argArray);
 		shlurp.on('error', function(error) { console.log('command failed '+error) });

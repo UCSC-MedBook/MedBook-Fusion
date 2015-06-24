@@ -3,6 +3,11 @@ Meteor.publish('studies', function() {
     return Studies.find({});
 });
 
+Meteor.publish('Biopsy_Research', function() {
+    var cursor = Biopsy_Research.find({});
+    console.log("Biopsy_Research publish", cursor.count());
+    return cursor;
+});
 Meteor.publish('Clinical_Info', function() {
     return Clinical_Info.find({});
 });

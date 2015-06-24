@@ -45,6 +45,7 @@ id_text = function(array) {
 
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
+    Meteor.subscribe("Biopsy_Research");
 
     var derivers = $.pivotUtilities.derivers;
     var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
@@ -455,7 +456,6 @@ Template.Controls.rendered = function() {
             ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
             ChartDocument.transforms = Session.get("Transforms");
 
-
             templateContext = { 
                 onRefresh: function(config) {
                         var save = { cols: config.cols, rows: config.rows,
@@ -476,10 +476,10 @@ Template.Controls.rendered = function() {
             Meteor.call("renderChartData", ChartDocument, function(err, ret) {
                 Session.set("dataFieldNames", ret.dataFieldNames);
 
-                if (err == null && ret.chartData != null)
+                if (err == null && ret != null && ret.chartData != null)
                     $(".output").pivotUI(ret.chartData, final);
                 else
-                    console.log("renderChartData", err, ret.chartData)
+                    console.log("renderChartData", err)
             });
         }); // autoRun
-} // rendered
+} // 

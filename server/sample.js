@@ -106,14 +106,17 @@ function Transform_Clinical_Info(f) {
 Meteor.methods( { 
     renderChartData : function(ChartDocument) {
         var b = new Date();
-        console.log("renderChartData starting");
-        if (ChartDocument.studies == null || ChartDocument.length == 0)
-            return [];
+        if (ChartDocument.studies == null || ChartDocument.length == 0) {
+          console.log("No studies selected");
+          return { dataFieldNames: [], chartData: []};
+        }
 
         // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
         var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: samplelist}};
+
         q.Study_ID = {$in:ChartDocument.studies}; 
         var chartData = Clinical_Info.find(q).fetch();
+
 
         var chartDataMap = {};
         var mapPatient_ID_to_Sample_ID = {};
@@ -124,6 +127,7 @@ Meteor.methods( {
         });
         chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
         ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
+
             
         // Join all the Gene like information into the samples into the ChartDataMap table
         var gld = ChartDocument.geneLikeDataDomain;
@@ -156,7 +160,8 @@ Meteor.methods( {
                             var f = parseFloat(geneData.samples[sampleID][domain.field]);
                             if (!isNaN(f)) {
                                 if (sampleID in chartDataMap) {
-                                    chartDataMap[sampleID][label] = f;
+                                    if (f != 0.0)
+                                        chartDataMap[sampleID][label] = f;
                                 }
                             }
                         });
@@ -167,37 +172,40 @@ Meteor.methods( {
 
         var mapPatient_ID_to_Sample_ID = null;
 
-        ChartDocument.additionalQueries.map(function(query) {
-             var query = JSON.parse(unescape(query));
-             var collName = query.c;
-             var fieldName = query.f;
 
-             if (!(collName in CRFmetadataCollectionMap))
-                 CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
+        if (ChartDocument.additionalQueries)
+            ChartDocument.additionalQueries.map(function(query) {
+                 var query = JSON.parse(unescape(query));
+                 var collName = query.c;
+                 var fieldName = query.f;
 
-             var fl = {};
-             fl[fieldName] = 1;
-             CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
-                 if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
-                     chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
-                 } else {
-                    if (mapPatient_ID_to_Sample_ID == null)  {
-                         mapPatient_ID_to_Sample_ID = {};
-                         chartData.map(function(cd) {
-                             if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
-                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
-                             else
-                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
-                         });
-                     }
-                     if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
-                         mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
-                             chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
-                         });
-                     // else console.log("addQ", collName, fieldName, doc);
-                } // else
-             }); // forEach
-        }); //  ChartDocument.additionalQueries.map
+                 if (!(collName in CRFmetadataCollectionMap))
+                     CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
+
+                 var fl = {};
+                 fl[fieldName] = 1;
+                 CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
+                     if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
+                         chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                     } else {
+                        if (mapPatient_ID_to_Sample_ID == null)  {
+                             mapPatient_ID_to_Sample_ID = {};
+                             chartData.map(function(cd) {
+                                 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
+                                     mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
+                                 else
+                                     mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
+                             });
+                         }
+                         if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
+                             mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
+                                 chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                             });
+                         // else console.log("addQ", collName, fieldName, doc);
+                    } // else
+                 }); // forEach
+            }); //  ChartDocument.additionalQueries.map
+
 
 
         var keyUnion = {};  
@@ -230,7 +238,6 @@ Meteor.methods( {
                  });
             });
           // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
-          console.log("renderChartData stopping", (new Date()) - b);
           return { dataFieldNames: dataFieldNames, chartData: chartData};
     } // renderChartData
 });
