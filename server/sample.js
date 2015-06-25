@@ -112,7 +112,7 @@ Meteor.methods( {
         }
 
         // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
-        var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: samplelist}};
+        var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
 
         q.Study_ID = {$in:ChartDocument.studies}; 
         var chartData = Clinical_Info.find(q).fetch();

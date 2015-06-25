@@ -1,20 +1,22 @@
 
 function ConvertToCSV(objArray) {
+    var dataFieldNames = Session.get("dataFieldNames");
     var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
     var str = '';
-    for (var index in array[0]) {
+
+    dataFieldNames.map(function(fieldName) {
         if (str != '') str += '\t'
-        str += index;
-    }
+        str += fieldName;
+    })
     str += "\n";
 
     for (var i = 0; i < array.length; i++) {
         var line = '';
-        for (var index in array[i]) {
-            if (line != '') line += '\t'
 
-            line += array[i][index];
-        }
+        dataFieldNames.map(function(fieldName) {
+            if (line != '') line += '\t'
+            line += array[i][fieldName];
+        });
 
         str += line + '\n';
     }
