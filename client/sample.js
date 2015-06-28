@@ -429,10 +429,13 @@ Template.Transforms.helpers({
    },
 });
 
+st = new Date();
 
+console.log("onstartup");
 
 
 Template.Controls.rendered = function() {
+    console.log("rendered", ((new Date()) - st));
      var ChartDocument =  this.data || Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
      if (ChartDocument == null) {
          Charts.insert({}); 
@@ -473,13 +476,16 @@ Template.Controls.rendered = function() {
             var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
 
             // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
+            console.log("before to call", ((new Date()) - st));
             Meteor.call("renderChartData", ChartDocument, function(err, ret) {
                 Session.set("dataFieldNames", ret.dataFieldNames);
+                console.log("return from call", ((new Date()) - st));
 
                 if (err == null && ret != null && ret.chartData != null)
                     $(".output").pivotUI(ret.chartData, final);
                 else
                     console.log("renderChartData", err)
             });
+            console.log("after call", ((new Date()) - st));
         }); // autoRun
 } // 

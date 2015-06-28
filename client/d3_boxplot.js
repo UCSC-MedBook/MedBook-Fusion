@@ -8,7 +8,7 @@ cartesianProductOf = function(array) {
         }), true);
     }, [ [] ]);
 };
-Meteor.subscribe("QuickR")
+// Meteor.subscribe("QuickR")
 
 function processStrata(strata, strataSampleSets, $div) {
     var keyValue = [];

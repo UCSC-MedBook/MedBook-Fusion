@@ -45,8 +45,17 @@ Meteor.publish("aggregatedQueries", function(aggregatedQueries) {
     });
 });
 
-Meteor.publish('Charts', function() {
-    return Charts.find({});
+Meteor.publish('Chart', function(_id) {
+    var q =  {};
+    if (_id != null)
+        q._id = _id;
+    else if (this.userId != null)
+        q.userId = this.userId;
+    else
+        return [];
+    var cursor = Charts.find(q);
+    console.log("Chart", q, cursor.count());
+    return cursor;
 });
 
 Charts.allow({
@@ -140,6 +149,7 @@ QuickR.before.insert(function(userId, doc) {
     doc.userId = userId;
 });
 
+/*
 Meteor.publish('QuickR', function() {
     if (this.userId) {
         var cursor = QuickR.find({userId: this.userId});
@@ -148,3 +158,4 @@ Meteor.publish('QuickR', function() {
     }
     return null;
 });
+*/
