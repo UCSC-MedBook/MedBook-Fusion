@@ -454,6 +454,9 @@ Template.Controls.rendered = function() {
             ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
             ChartDocument.transforms = Session.get("Transforms");
 
+            if (ChartDocument.studies.length == 0)
+                ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
+                
             templateContext = { 
                 onRefresh: function(config) {
                         if (ChartDocument.post) { // Don't modify an existing post.  Check this on server too.
