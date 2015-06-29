@@ -436,8 +436,7 @@ console.log("onstartup");
 
 Template.Controls.rendered = function() {
     console.log("rendered", ((new Date()) - st));
-     var ChartDocument =  this.data;
-     Session.set("ChartDocument", ChartDocument);
+     window.ChartDocument =  this.data; // SHOULD NOT BE A SESSION VARIABLE ! Users expect one document per window.
 
      // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
      initializeSpecialJQueryElements();
@@ -457,6 +456,10 @@ Template.Controls.rendered = function() {
 
             templateContext = { 
                 onRefresh: function(config) {
+                        if (ChartDocument.post) { // Don't modify an existing post.  Check this on server too.
+                            delete ChartDocument["post"]; 
+                        }
+
                         ChartDocument.pivotTableConfig =  { 
                             cols: config.cols,
                             rows: config.rows,
@@ -464,15 +467,14 @@ Template.Controls.rendered = function() {
                             rendererName: config.rendererName,
                         };
 
-                        var set = _.clone(ChartDocument); // shallow clone is good here
-                        delete set["_id"];  // never do a $set of _id
-                        delete set["copyOnWrite"]; // don't store copy on write in the databse
+                        delete ChartDocument["_id"];
 
-                        if (ChartDocument.copyOnWrite) {
-                            ChartDocument = Charts.insert({$set: set});
-                            ChartDocument.copyOnWrite = false;
-                        } else
-                            Charts.update({ _id : ChartDocument._id }, {$set: set});
+                        var _id = Charts.findOne({ userId: Meteor.userId(), post: { $exists: false}})._id;
+                        if (_id)
+                            Charts.update({ _id : _id }, {$set: ChartDocument});
+                        else
+                            _id = Charts.insert(ChartDocument);
+                        ChartDocument._id = _id;
                 }
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;

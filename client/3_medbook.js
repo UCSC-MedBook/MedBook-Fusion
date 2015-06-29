@@ -30,14 +30,15 @@ window.DownloadButton = function () {
     saveTextAs(ConvertToCSV(data), name);
 }
 
-window.postButton = function () {
-	var doc = Session.get('ChartDocument');
-	delete doc["_id"];
-	delete doc["user_id"];
-	delete doc["userId"];
-	var cloned_id = Charts.insert(doc);
-	var url = Meteor.absoluteUrl('display/'+cloned_id)
-	window.medbookpost = { title: document.title  , url: url }
+window.postButton = function () { 
+    ChartDocument = _.clone(ChartDocument);
+    delete ChartDocument["_id"];
+    delete ChartDocument["post"];
+    delete ChartDocument["userId"];
+    ChartDocument._id = Charts.insert(ChartDocument);
+
+    var url = Meteor.absoluteUrl('display/'+ChartDocument._id);
+    window.medbookpost = { title: document.title  , url: url }
     $.getScript('/postScript');
 }
 
