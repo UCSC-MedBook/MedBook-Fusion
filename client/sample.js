@@ -436,11 +436,7 @@ console.log("onstartup");
 
 Template.Controls.rendered = function() {
     console.log("rendered", ((new Date()) - st));
-     var ChartDocument =  this.data || Charts.findOne({ userId : Meteor.userId() }); // Charts find cannot be inside of a Tracker, else we get a circularity when we update it.
-     if (ChartDocument == null) {
-         Charts.insert({}); 
-         ChartDocument = Charts.findOne({ userId : Meteor.userId() });
-     }
+     var ChartDocument =  this.data;
      Session.set("ChartDocument", ChartDocument);
 
      // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
@@ -461,15 +457,22 @@ Template.Controls.rendered = function() {
 
             templateContext = { 
                 onRefresh: function(config) {
-                        var save = { cols: config.cols, rows: config.rows,
+                        ChartDocument.pivotTableConfig =  { 
+                            cols: config.cols,
+                            rows: config.rows,
                             aggregatorName: config.aggregatorName,
                             rendererName: config.rendererName,
                         };
-                        ChartDocument.pivotTableConfig =  save;
-                        var set = _.clone(ChartDocument);
-                        delete set["_id"];
 
-                        Charts.update({ _id : ChartDocument._id }, {$set: set});
+                        var set = _.clone(ChartDocument); // shallow clone is good here
+                        delete set["_id"];  // never do a $set of _id
+                        delete set["copyOnWrite"]; // don't store copy on write in the databse
+
+                        if (ChartDocument.copyOnWrite) {
+                            ChartDocument = Charts.insert({$set: set});
+                            ChartDocument.copyOnWrite = false;
+                        } else
+                            Charts.update({ _id : ChartDocument._id }, {$set: set});
                 }
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;

@@ -54,6 +54,10 @@ Meteor.publish('Chart', function(_id) {
     else
         return [];
     var cursor = Charts.find(q);
+    if (cursor.count() == 0) {
+        Charts.insert({userId: this.userId}) ;
+        cursor = Charts.find(q);
+    }
     console.log("Chart", q, cursor.count());
     return cursor;
 });
