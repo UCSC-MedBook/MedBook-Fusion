@@ -31,14 +31,13 @@ window.DownloadButton = function () {
 }
 
 window.postButton = function () { 
-    ChartDocument = _.clone(ChartDocument);
-    delete ChartDocument["_id"];
-    delete ChartDocument["post"];
-    delete ChartDocument["userId"];
-    ChartDocument._id = Charts.insert(ChartDocument);
-
-    var url = Meteor.absoluteUrl('display/'+ChartDocument._id);
-    window.medbookpost = { title: document.title  , url: url }
+    var cloned = _.clone(ChartDocument);
+    delete cloned["_id"];
+    delete cloned["userId"];
+    cloned.posted = true;
+    var postedId = Charts.insert(cloned);
+    var url = Meteor.absoluteUrl('display/'+postedId);
+    window.medbookpost = { title: document.title, url: url }
     $.getScript('/postScript');
 }
 

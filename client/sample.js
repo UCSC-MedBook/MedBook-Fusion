@@ -459,10 +459,6 @@ Template.Controls.rendered = function() {
                 
             templateContext = { 
                 onRefresh: function(config) {
-                        if (ChartDocument.post) { // Don't modify an existing post.  Check this on server too.
-                            delete ChartDocument["post"]; 
-                        }
-
                         ChartDocument.pivotTableConfig =  { 
                             cols: config.cols,
                             rows: config.rows,

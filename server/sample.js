@@ -1,5 +1,33 @@
 var extend = Meteor.npmRequire('node.extend');
 
+Meteor.startup( 
+    function CleanupLostCharts() {
+        var posts = new Meteor.Collection("posts");
+        posts.find({url: {$regex:/fusion/}}, {chart:1, url:1}).forEach(function(post) {
+            var url = post.url.split("/")
+            if (url && url.length > 3) { 
+                var _id = url.pop();
+                var chart = Charts.findOne({_id: _id}, {});
+                if (chart)
+                    Charts.update({_id: chart._id}, { $set: { post: true }});
+            }
+        });
+
+        var dupes = Charts.aggregate([
+              { $group: { 
+                  _id: "$userId",
+                  uniqueIds: { $addToSet: "$_id" },
+                  count: { $sum: 1 } 
+              }}, 
+              { $match: { 
+                  count: { $gt: 1 } 
+              }}
+        ]);
+        console.log("dupes", dupes);
+}
+);
+
+
 // The "this" object has to be the default dictonary of all possible keys.
 function Transform_Clinical_Info(f) {
     delete f["_id"];
