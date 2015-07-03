@@ -153,7 +153,6 @@ QuickR.before.insert(function(userId, doc) {
     doc.userId = userId;
 });
 
-/*
 Meteor.publish('QuickR', function() {
     if (this.userId) {
         var cursor = QuickR.find({userId: this.userId});
@@ -162,4 +161,3 @@ Meteor.publish('QuickR', function() {
     }
     return null;
 });
-*/

@@ -41,10 +41,10 @@ Meteor.methods({
    summarizeVariances: function(collName) {
         var start = new Date();
         var collection = global[collName];
-        var exp_curs = collection.find({variance : { $exists: 0}});
+        var exp_curs = collection.find({variance : { $exists: 0}}, {limit: 10});
         var n = 0;
         exp_curs.forEach(function(geneDoc) {
-                if ((n++ % 1000) == 0)
+                // if ((n++ % 1000) == 0)
                    console.log("summarizeVariances", geneDoc.gene, n);
                 var samples = geneDoc.samples;
                 var data = Object.keys(samples)
@@ -258,7 +258,6 @@ Meteor.methods({
 VV = null;
 
 Meteor.startup(function() {
-    console.log("before summarizeVariances");
     var d = new Date();
     /*
     Meteor.call("summarizeVariances", "Expression", function(err,result) { 

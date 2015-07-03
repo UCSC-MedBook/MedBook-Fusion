@@ -459,6 +459,7 @@ Template.Controls.rendered = function() {
                 
             templateContext = { 
                 onRefresh: function(config) {
+                        debugger;
                         ChartDocument.pivotTableConfig =  { 
                             cols: config.cols,
                             rows: config.rows,
@@ -467,13 +468,16 @@ Template.Controls.rendered = function() {
                         };
 
                         delete ChartDocument["_id"];
+                        delete ChartDocument["post"];
 
-                        var _id = Charts.findOne({ userId: Meteor.userId(), post: { $exists: false}})._id;
-                        if (_id)
-                            Charts.update({ _id : _id }, {$set: ChartDocument});
-                        else
-                            _id = Charts.insert(ChartDocument);
-                        ChartDocument._id = _id;
+                        var prev = Charts.findOne({ userId: Meteor.userId(), post: { $exists: false}});
+                        if (prev) {
+                            Charts.update({ _id : prev._id }, {$set: ChartDocument});
+                            ChartDocument._id = prev._id;
+                        } else  {
+                            var _id = Charts.insert(ChartDocument);
+                            ChartDocument._id = _id;
+                        }
                 }
             }
             var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
