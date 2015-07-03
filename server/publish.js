@@ -46,18 +46,33 @@ Meteor.publish("aggregatedQueries", function(aggregatedQueries) {
 });
 
 Meteor.publish('Chart', function(_id) {
-    var q =  {};
-    if (_id != null)
-        q._id = _id;
-    else if (this.userId != null)
-        q.userId = this.userId;
-    else
+    var q;
+    if (_id != null) {
+        q = { $or: 
+            [
+                {
+                    _id: _id
+                },
+                {
+                    userId: this.userId,
+                    post: {$exists: 0}
+                }
+            ]
+        };
+    } else if (this.userId != null) {
+        q = {
+                userId: this.userId,
+                post: {$exists: 0}
+            };
+    } else
         return [];
+
     var cursor = Charts.find(q);
     if (cursor.count() == 0) {
         Charts.insert({userId: this.userId}) ;
         cursor = Charts.find(q);
     }
+
     console.log("Chart", q, cursor.count());
     return cursor;
 });

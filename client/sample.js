@@ -434,9 +434,16 @@ st = new Date();
 console.log("onstartup");
 
 
-Template.Controls.rendered = function() {
+var firstTime = true;
+
+
+Template.registerHelper( "ChartDocumentRender", function() {
+    if (!firstTime)
+       return
+    firstTime = false;
+
     console.log("rendered", ((new Date()) - st));
-     window.ChartDocument =  this.data; // SHOULD NOT BE A SESSION VARIABLE ! Users expect one document per window.
+     window.ChartDocument = Template.currentData(); 
 
      // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
      initializeSpecialJQueryElements();
@@ -454,12 +461,11 @@ Template.Controls.rendered = function() {
             ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
             ChartDocument.transforms = Session.get("Transforms");
 
-            if (ChartDocument.studies.length == 0)
+            if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
                 ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
                 
             templateContext = { 
                 onRefresh: function(config) {
-                        debugger;
                         ChartDocument.pivotTableConfig =  { 
                             cols: config.cols,
                             rows: config.rows,
@@ -496,4 +502,4 @@ Template.Controls.rendered = function() {
             });
             console.log("after call", ((new Date()) - st));
         }); // autoRun
-} // 
+});
