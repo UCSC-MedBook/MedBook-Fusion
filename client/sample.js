@@ -438,20 +438,18 @@ console.log("onstartup");
 
 var firstTime = true;
 
-Template.Controls.rendered = initializeSpecialJQueryElements;
-
-
-Template.registerHelper( "ChartDocumentRender", function() {
-    if (!firstTime)
+Template.Controls.rendered = function() {
+     if (!firstTime)
        return
-    firstTime = false;
+     firstTime = false;
 
-    console.log("rendered", ((new Date()) - st));
+     initializeSpecialJQueryElements()
+     console.log("rendered", ((new Date()) - st));
      window.ChartDocument = Template.currentData(); 
 
      restoreChartDocument(ChartDocument);
 
-     // Tracker.autorun(function updateChartDocument() {
+     Tracker.autorun(function updateChartDocument() {
 
             // Any (all) of the following change, save them and update ChartData
             ChartDocument.genelist = Session.get("genelist");
@@ -502,5 +500,5 @@ Template.registerHelper( "ChartDocumentRender", function() {
                     console.log("renderChartData", err)
             });
             console.log("after call", ((new Date()) - st));
-        // }); // autoRun
-});
+        }); // autoRun
+};
