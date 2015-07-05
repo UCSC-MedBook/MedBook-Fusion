@@ -329,6 +329,7 @@ function initializeSpecialJQueryElements() {
      var $genelist = $("#genelist");
      $genelist.select2({
           initSelection : function (element, callback) {
+            var prev = ChartDocument;
             if (prev && prev.genelist)
                 callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
           },
