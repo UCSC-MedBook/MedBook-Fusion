@@ -168,10 +168,10 @@ QuickR.before.insert(function(userId, doc) {
     doc.userId = userId;
 });
 
-Meteor.publish('QuickR', function() {
+Meteor.publish('QuickR', function(_id) {
     if (this.userId) {
-        var cursor = QuickR.find({userId: this.userId});
-        console.log("QuickR", this.userId, cursor.count());
+        var cursor = QuickR.find({_id:_id});
+        console.log("QuickR", this.userId, _id,  cursor.count());
         return cursor;
     }
     return null;

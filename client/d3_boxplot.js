@@ -19,8 +19,10 @@ function processStrata(strata, strataSampleSets, $div) {
     }
     var forTtest = QuickR.insert({input: keyValue});
     // console.log("forTtest", forTtest);
+    var sub = Meteor.subscribe("QuickR", forTtest);
 
     whendone = function(foo, bar) {
+        debugger;
         QuickR.find({_id: forTtest}).observe({changed:function(newDoc, oldDoc) {
             var $table = $("<table class='table borderless'>").appendTo($div);
             var strataLabels = Object.keys(strata).sort();

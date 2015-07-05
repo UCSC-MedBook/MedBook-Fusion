@@ -325,6 +325,31 @@ function initializeSpecialJQueryElements() {
        placeholder: "Select one or more studies",
        allowClear: true
      } );
+
+     var $genelist = $("#genelist");
+     $genelist.select2({
+          initSelection : function (element, callback) {
+            if (prev && prev.genelist)
+                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
+          },
+          multiple: true,
+          ajax: {
+            url: "/fusion/genes",
+            dataType: 'json',
+            delay: 250,
+            data: function (term) {
+              var qp = {
+                q: term.toUpperCase()
+              };
+              return qp;
+            },
+            results: function (data, page, query) { return { results: data.items }; },
+            cache: true
+          },
+          escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
+          minimumInputLength: 2,
+     });
+
 }
 
 
@@ -389,29 +414,6 @@ function restoreChartDocument(prev) {
      }
 
      var $genelist = $("#genelist");
-     $genelist.select2({
-          initSelection : function (element, callback) {
-            if (prev && prev.genelist)
-                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
-          },
-          multiple: true,
-          ajax: {
-            url: "/fusion/genes",
-            dataType: 'json',
-            delay: 250,
-            data: function (term) {
-              var qp = {
-                q: term
-              };
-              return qp;
-            },
-            results: function (data, page, query) { return { results: data.items }; },
-            cache: true
-          },
-          escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
-          minimumInputLength: 2,
-     });
-
      if (prev && prev.genelist) {
          $genelist.select2("val", prev.genelist );
      }
@@ -436,6 +438,8 @@ console.log("onstartup");
 
 var firstTime = true;
 
+Template.Controls.rendered = initializeSpecialJQueryElements;
+
 
 Template.registerHelper( "ChartDocumentRender", function() {
     if (!firstTime)
@@ -445,12 +449,9 @@ Template.registerHelper( "ChartDocumentRender", function() {
     console.log("rendered", ((new Date()) - st));
      window.ChartDocument = Template.currentData(); 
 
-     // Phase 1 initialze the state ofthe GUI and initialize (or restore the previous) ChartDocument
-     initializeSpecialJQueryElements();
      restoreChartDocument(ChartDocument);
 
-     // Phase 3 Get all the changed values, save the ChartDocument and join the results
-     Tracker.autorun(function updateChartDocument() {
+     // Tracker.autorun(function updateChartDocument() {
 
             // Any (all) of the following change, save them and update ChartData
             ChartDocument.genelist = Session.get("genelist");
@@ -501,5 +502,5 @@ Template.registerHelper( "ChartDocumentRender", function() {
                     console.log("renderChartData", err)
             });
             console.log("after call", ((new Date()) - st));
-        }); // autoRun
+        // }); // autoRun
 });

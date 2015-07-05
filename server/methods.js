@@ -11,14 +11,14 @@ Meteor.methods({
         argArray = ["/data/MedBook/MedBook-Fusion/public/ttest.R", id ];
         console.log( "ttestQuickR", argArray );
         var shlurp = spawn("/usr/bin/Rscript", argArray);
-		shlurp.on('error', function(error) { console.log('command failed '+error) });
-		shlurp.on('close', function(retcode) {
-				console.log('ttestQuickR ended with code ' + retcode);
-				Fiber(function() {
-                                    if (whendone)
-					whendone("ttestQuickR returned " + retcode);
-				}).run();  
-		});
+        shlurp.on('error', function(error) { console.log('command failed '+error) });
+        shlurp.on('close', function(retcode) {
+            console.log('ttestQuickR ended with code ' + retcode);
+            Fiber(function() {
+                if (whendone)
+                    whendone("ttestQuickR returned " + retcode);
+            }).run();  
+        });
         return "ttestQuickR direct return";
     },
    topMutatedGenes: function() {
