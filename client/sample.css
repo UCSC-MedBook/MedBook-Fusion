@@ -52,6 +52,10 @@ body {
    width: 400px;
 }
 
+.select2-input {
+   min-width: 400px;
+}
+
 .inspect {
    cursor :pointer;
    text-decoration: underline;

@@ -181,6 +181,7 @@ Meteor.methods( {
                         var label = ('transcript' in geneData) 
                             ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                             : geneName + ' ' + domain.labelItem
+                        label = label.replace(/\./g,"_");
                         var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
 
 
@@ -265,7 +266,7 @@ Meteor.methods( {
                      } 
                  });
             });
-          // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
+          Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
           return { dataFieldNames: dataFieldNames, chartData: chartData};
     } // renderChartData
 });

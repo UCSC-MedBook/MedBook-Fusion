@@ -40,7 +40,7 @@
           </h3>
        </div>
        <div id="p2" class="panel-body collapse">
-              <input class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+           <input value="{{genelist}}" class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
               <span>
               <button id="clear">Clear Gene List</button>
             <select id="genesets">
@@ -123,6 +123,7 @@
           <label>
                 <input name="{{this.checkBoxName}}" data-field={{this.field}} 
                 data-collection={{this.collection}} 
+                {{checked}}
                 class="geneLikeDataDomains" type="checkbox">{{this.label}}
           </label>
           <br>

@@ -123,6 +123,11 @@ getCollection = function(collName) {
 }
 
 
+Template.checkBox.helpers({
+    'checked' : function() {
+        return this.state ? "checked" : "";
+    }
+});
 
 
 Template.Controls.events({
@@ -147,11 +152,10 @@ Template.Controls.events({
        GeneLikeDataDomainsPrototype.map(function(domain) {
            if ( domain.field == field && domain.collection == collection ) {
               domain.state = $checkbox.prop("checked");
-              Session.set(domain.checkBoxName, domain.state);
               // update
           }
        });
-      Session.set("geneLikeDataDomain", GeneLikeDataDomainsPrototype);
+      UpdateCurrentChart("geneLikeDataDomain", GeneLikeDataDomainsPrototype);
    },
 
    'click .topMutatedGenes': function(evt, tmpl) {
@@ -284,7 +288,7 @@ Template.Controls.events({
    }
 })
 
-function initializeSpecialJQueryElements() {
+function initializeSpecialJQueryElements(document) {
      $('.studiesSelectedTable th').hide()
 
      $("#additionalQueries").select2( {
@@ -300,7 +304,7 @@ function initializeSpecialJQueryElements() {
      var $genelist = $("#genelist");
      $genelist.select2({
           initSelection : function (element, callback) {
-            var prev = ChartDocument;
+            var prev = document;
             if (prev && prev.genelist)
                 callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
           },
@@ -352,17 +356,30 @@ UpdateCurrentChart = function(name, value) {
     x[name] = value;
     var u =  {};
     u[name] = value;
-    Chart.update({_id: x._id}, {$set: u});
+    Charts.update({_id: x._id}, {$set: u});
 }
 
-renderChart = function() {
-        // Any (all) of the following change, save them and update ChartData
 
-        /*
-        if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
-            ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
-        */
-        var cc = CurrentChart();
+renderChart = function() {
+    initializeSpecialJQueryElements(this.data)
+    var _id = CurrentChart("_id");
+    var watch = Charts.find({_id: _id});
+    var cc = watch.fetch()[0];
+
+    RefreshChart = function(id, fields) {
+        // short circuit unnecessary updates
+        if (fields == null) return
+        if (fields != true) {
+            var f = Object.keys(fields);
+            if (f.length == 1 && f[0] == "updatedAt")
+                return;
+            if (f.length == 2 && _.isEqual(f.sort(), [ "pivotTableConfig", "updatedAt"])
+                && _.isEqual(cc.pivotTableConfig,  fields.pivotTableConfig))
+                return
+
+            $.extend(cc, fields);
+        }
+
         templateContext = { 
             onRefresh: function(config) {
                 cc.pivotTableConfig = { 
@@ -375,18 +392,40 @@ renderChart = function() {
             }
         }
 
-        var savedConfig = CurrentChart().pivotTableConfig ? CurrentChart().pivotTableConfig : PivotTableInit;
-        var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
+        var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  cc.pivotTableConfig || PivotTableInit);
 
-        Meteor.call("renderChartData", CurrentChart(), function(err, ret) {
+
+        if (fields != true && ('chartData' in fields || 'pivotTableConfig' in fields)) {
+            $(".output").pivotUI(cc.chartData, pivotConf, true);
+            return;
+        }
+
+        Meteor.call("renderChartData", cc, function(err, ret) {
             // Session.set("dataFieldNames", ret.dataFieldNames);
             console.log("return from call", ((new Date()) - st));
-
             if (err == null && ret != null && ret.chartData != null)
-                $(".output").pivotUI(ret.chartData, final);
+                $(".output").pivotUI(ret.chartData, pivotConf, true);
             else
                 console.log("renderChartData", err)
         });
-};
+
+        initializeSpecialJQueryElements(cc)
+
+
+    } // refreshChart
+
+    /*
+    if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
+        ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
+    */
+
+    RefreshChart(_id, true);
+
+    watch.observeChanges({
+        changed: RefreshChart
+    }); // watch.observeChanges
+} // renderChart;
+
+
 
 Template.Controls.rendered = renderChart;
