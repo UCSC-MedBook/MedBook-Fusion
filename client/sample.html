@@ -10,9 +10,6 @@
 
     {{> Controls }}
 
-    <div style="display: inline-block;" class="dataExplorerControlPanel">
-        <div class="output" style="margin: 30px;"></div>
-    </div>
 </template>
 
 
@@ -78,7 +75,6 @@
        </div>
        <div id="p4" class="panel-body collapse">
               <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
-              <a href="#" class="inspect" data-var="ChartData"> Inspect {{Count "Clinical_Info"}} records.</a>
         </div>
     </div>
 
@@ -88,10 +84,11 @@
        </div>
        <div id="p5" class="panel-body collapse">
             {{> Transforms }}
-
-              <a href="#" class="inspect" data-var="ChartData"> Inspect {{Count "Clinical_Info"}} records.</a>
-
         </div>
+    </div>
+
+    <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="output" style="margin: 30px;"></div>
     </div>
 </template>
 
@@ -117,7 +114,6 @@
      </tr>
      {{/each}}
   </table>
-  {{ChartDocumentRender}}
  </template>
 
 
@@ -132,6 +128,8 @@
           <br>
       </span>
     {{/each}}
+
+  {{renderChart}}
 </template>
 
 

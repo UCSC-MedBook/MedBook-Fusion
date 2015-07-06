@@ -18,31 +18,6 @@ id_text = function(array) {
 }
 
 
-/* 
-   Data Processing Pipeline using Session Variables 
-
-    Phase 1
-    studies - studies list from <input id="studies">
-    genelist - gene list from <input id="genelist">
-    samplelist - samplelist list from <input id="samplelist">
-    additionalQueries - additional queries list from <input id="samplelist">
-
-    Phase 2:
-    aggregatedResults - results of find from aggreagatedQueries
-    expressionResults - results of find from expression collection using genelist
-    expressionIsoFormResults - results of find from expression_isofrom using using genelist
-
-    Phase 3:
-    ChartData - Join of aggregatedResults, expressionResults, expressionIsoFormResults 
-
-    Phase 4: 
-    transform the data
-
-    Phase 5: drawing the chart
-    RedrawChart()
-
-*/
-
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
     Meteor.subscribe("Biopsy_Research");
@@ -60,13 +35,8 @@ Meteor.startup(function() {
 
 
 Template.Controls.helpers({
-   Count : function(collName) {
-      var coll = getCollection(collName)
-      return coll.find().count();
-   },
-
    geneLikeDataDomains : function() {
-      var prevGeneLikeDataDomains = Session.get("geneLikeDataDomain");
+      var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
       if (prevGeneLikeDataDomains)
           GeneLikeDataDomainsPrototype.map(function(newDomain) {
               prevGeneLikeDataDomains.map(function(prevDomain) {
@@ -79,7 +49,8 @@ Template.Controls.helpers({
    },
 
    studiesSelected: function() {
-     var studies = Session.get("studies");
+    
+     var studies = CurrentChart("studies");
      if (studies && studies.length > 0)
         return Studies.find({id: {$in: studies }}, {sort: {"name":1}});
      else
@@ -167,7 +138,7 @@ Template.Controls.events({
                });
         });
        transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
-       Session.set("Transforms", transforms);
+       UpdateCurrentChart("Transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
@@ -202,7 +173,7 @@ Template.Controls.events({
                 renderRow: function(elem, d) {
                     if (d.Hugo_Symbol == null)
                         return;
-                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
                     var k = genelist.indexOf(d.Hugo_Symbol);
                     if (k >= 0) {
                         $(elem).addClass("includeThisGene");
@@ -213,13 +184,13 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
                     $(elem).addClass("includeThisGene");
                     var k = genelist.indexOf(gene);
                     if (k < 0) {
                         // add it
                         genelist.push(gene)
-                        Session.set("genelist", genelist); // Pipeline Phase 1
+                        UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
                         var $genelist = $("#genelist");
                         $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
                     }
@@ -229,13 +200,13 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
                     $(elem).removeClass("includeThisGene");
                     var k = genelist.indexOf(gene);
                     if (k >= 0) {
                         // remove it
                         genelist.splice(k,1);
-                        Session.set("genelist", genelist); // Pipeline Phase 1
+                        UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
                         var $genelist = $("#genelist");
                         $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
                     }
@@ -246,7 +217,7 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = Session.get("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
                     var k = genelist.indexOf(gene);
                     if (k >= 0) {
                         // remove it
@@ -257,7 +228,7 @@ Template.Controls.events({
                         $(elem).addClass("includeThisGene");
                         genelist.push(gene)
                     }
-                    Session.set("genelist", genelist); // Pipeline Phase 1
+                    UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
 
                     var $genelist = $("#genelist");
                     $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
@@ -270,27 +241,27 @@ Template.Controls.events({
    'click .inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
-        var data = Session.get(v);
+        var data = CurrentChart(v);
         Overlay("Inspector", { data: data });
    },
    'change #studies' : function(evt, tmpl) {
        var s = $("#studies").select2("val");
-       Session.set("studies", s);
+       UpdateCurrentChart("studies", s);
    },
    'change #additionalQueries' : function(evt, tmpl) {
        var additionalQueries = $("#additionalQueries").select2("val");
-       Session.set("additionalQueries", additionalQueries); // Pipeline Phase 1
+       UpdateCurrentChart("additionalQueries", additionalQueries); // Pipeline Phase 1
    },
    'change #samplelist' : function(evt, tmpl) {
        var s = $("#samplelist").val();
        s = s.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
-       Session.set("samplelist", s); // Pipeline Phase 1
+       UpdateCurrentChart("samplelist", s); // Pipeline Phase 1
    },
 
    'change #genelist' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        var before = $genelist.select2("val");
-       Session.set("genelist", before); // Pipeline Phase 1
+       UpdateCurrentChart("genelist", before); // Pipeline Phase 1
    },
 
    // genesets are just a quick way to add genes to the genelist, simlar to above event
@@ -301,7 +272,7 @@ Template.Controls.events({
            var $genelist = $("#genelist");
            var before = $genelist.select2("val");
            var after = before.concat(gs.members);
-           Session.set("genelist", after); // Pipeline Phase 1
+           UpdateCurrentChart("genelist", after); // Pipeline Phase 1
            $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
        }
    },
@@ -309,7 +280,7 @@ Template.Controls.events({
    'click #clear' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
-       Session.set("genelist", []);
+       UpdateCurrentChart("genelist", []);
    }
 })
 
@@ -354,77 +325,9 @@ function initializeSpecialJQueryElements() {
 }
 
 
-
-function restoreChartDocument(prev) {
-     var $samplelist = $("#samplelist");
-
-     var pt = prev.transforms;
-
-     if (pt) {
-         Session.set("Transforms", pt);
-         console.log("pt",pt);
-         setTimeout(function() {
-             console.log("pt",pt);
-             $(".transform").map(function(i, elem) {
-                 var $elem = $(elem);
-                 pt.map(function (transform) {
-                    if ( $elem.data("field") == transform.field 
-                        && $elem.data("op") == transform.op )
-                        $elem.val(transform.value);
-                 });
-             });
-         }, 1000);
-     }
-
-     if (prev.samplelist) {
-         prev.samplelist = [];
-         $samplelist.val(prev.samplelist.join(" "));
-         Session.set("samplelist", prev.samplelist);
-     }
-
-     if (prev.geneLikeDataDomain) {
-         Session.set("geneLikeDataDomain", prev.geneLikeDataDomain);
-
-         GeneLikeDataDomainsPrototype.map(function(newDomain) {
-              prev.geneLikeDataDomain.map(function(prevDomain) {
-                  if (prevDomain.collection == newDomain.collection  && prevDomain.field == newDomain.field ) {
-                      newDomain.state = prevDomain.state;
-                      Session.set(newDomain.checkBoxName, newDomain.state);
-                      $('input[name="' + newDomain.checkBoxName + '"]').prop("checked", newDomain.state);
-
-                  }
-              });
-          });
-     } else
-         Session.set("geneLikeDataDomain", []);
-
-
-     var $studies = $("#studies");
-     if (prev.studies) {
-         $studies.select2("data",  id_text(prev.studies));
-         Session.set("studies", prev.studies);
-     }
-
-     var $additionalQueries = $("#additionalQueries");
-     if (prev.additionalQueries) {
-         $additionalQueries.select2("data",  prev.additionalQueries.map(function(q) {
-             var qq = JSON.parse(unescape(q));
-             return { id: q, text: qq.c + ":" + qq.f }
-         }));
-         Session.set("additionalQueries", prev.additionalQueries); // Pipeline Phase 1
-     }
-
-     var $genelist = $("#genelist");
-     if (prev && prev.genelist) {
-         $genelist.select2("val", prev.genelist );
-     }
-     Session.set("genelist", prev.genelist);
-
-};
-
 Template.Transforms.helpers({
    dataFieldNames: function() {
-       var dataFieldNames = Session.get("dataFieldNames");
+       var dataFieldNames = CurrentChart("dataFieldNames");
        if (dataFieldNames) {
            return dataFieldNames.sort();
        }
@@ -436,70 +339,54 @@ st = new Date();
 
 console.log("onstartup");
 
+CurrentChart = function(name) {
+    var x = Template.currentData();
+    if (name)
+        return x[name];
+    else
+        return x;
+}
 
-var firstTime = true;
+UpdateCurrentChart = function(name, value) {
+    var x = Template.currentData();
+    x[name] = value;
+    var u =  {};
+    u[name] = value;
+    Chart.update({_id: x._id}, {$set: u});
+}
 
-Template.Controls.rendered = function() {
-     if (!firstTime)
-       return
-     firstTime = false;
+renderChart = function() {
+        // Any (all) of the following change, save them and update ChartData
 
-     initializeSpecialJQueryElements()
-     console.log("rendered", ((new Date()) - st));
-     window.ChartDocument = Template.currentData(); 
-
-     restoreChartDocument(ChartDocument);
-
-     Tracker.autorun(function updateChartDocument() {
-
-            // Any (all) of the following change, save them and update ChartData
-            ChartDocument.genelist = Session.get("genelist");
-            ChartDocument.studies = Session.get("studies");
-            ChartDocument.samplelist = Session.get("samplelist");
-            ChartDocument.additionalQueries  = Session.get("additionalQueries");
-            ChartDocument.aggregatedResults  = Session.get("aggregatedResults");
-            ChartDocument.geneLikeDataDomain = Session.get("geneLikeDataDomain");
-            ChartDocument.transforms = Session.get("Transforms");
-
-            if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
-                ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
-                
-            templateContext = { 
-                onRefresh: function(config) {
-                        ChartDocument.pivotTableConfig =  { 
-                            cols: config.cols,
-                            rows: config.rows,
-                            aggregatorName: config.aggregatorName,
-                            rendererName: config.rendererName,
-                        };
-
-                        delete ChartDocument["_id"];
-                        delete ChartDocument["post"];
-
-                        var prev = Charts.findOne({ userId: Meteor.userId(), post: { $exists: false}});
-                        if (prev) {
-                            Charts.update({ _id : prev._id }, {$set: ChartDocument});
-                            ChartDocument._id = prev._id;
-                        } else  {
-                            var _id = Charts.insert(ChartDocument);
-                            ChartDocument._id = _id;
-                        }
-                }
+        /*
+        if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
+            ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
+        */
+        var cc = CurrentChart();
+        templateContext = { 
+            onRefresh: function(config) {
+                cc.pivotTableConfig = { 
+                    cols: config.cols,
+                    rows: config.rows,
+                    aggregatorName: config.aggregatorName,
+                    rendererName: config.rendererName,
+                };
+                Charts.update(cc._id, { $set: {pivotTableConfig: cc.pivotTableConfig}});
             }
-            var savedConfig = ChartDocument.pivotTableConfig ? ChartDocument.pivotTableConfig : PivotTableInit;
-            var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
+        }
 
-            // Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
-            console.log("before to call", ((new Date()) - st));
-            Meteor.call("renderChartData", ChartDocument, function(err, ret) {
-                Session.set("dataFieldNames", ret.dataFieldNames);
-                console.log("return from call", ((new Date()) - st));
+        var savedConfig = CurrentChart().pivotTableConfig ? CurrentChart().pivotTableConfig : PivotTableInit;
+        var final =  $.extend({}, PivotCommonParams, templateContext, savedConfig);
 
-                if (err == null && ret != null && ret.chartData != null)
-                    $(".output").pivotUI(ret.chartData, final);
-                else
-                    console.log("renderChartData", err)
-            });
-            console.log("after call", ((new Date()) - st));
-        }); // autoRun
+        Meteor.call("renderChartData", CurrentChart(), function(err, ret) {
+            // Session.set("dataFieldNames", ret.dataFieldNames);
+            console.log("return from call", ((new Date()) - st));
+
+            if (err == null && ret != null && ret.chartData != null)
+                $(".output").pivotUI(ret.chartData, final);
+            else
+                console.log("renderChartData", err)
+        });
 };
+
+Template.Controls.rendered = renderChart;
