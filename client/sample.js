@@ -114,15 +114,6 @@ Template.Controls.helpers({
    }
 })
 
-getCollection = function(collName) {
-    if (collName in window) 
-        CRFmetadataCollectionMap[collName] = window[collName];
-    else if (!(collName in CRFmetadataCollectionMap || collName in window)) 
-        CRFmetadataCollectionMap[collName] = new Meteor.Collection(collName);
-    return CRFmetadataCollectionMap[collName];
-}
-
-
 Template.checkBox.helpers({
     'checked' : function() {
         return this.state ? "checked" : "";

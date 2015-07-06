@@ -130,6 +130,11 @@ function Transform_Clinical_Info(f) {
     return f;
 };
 
+var collectionCache = {};
+
+Meteor.startup(function() {
+    collectionCache.Clinical_Info = new Meteor.Collection("Clinical_Info");
+});
 
 Meteor.methods( { 
     renderChartData : function(ChartDocument) {
@@ -143,7 +148,7 @@ Meteor.methods( {
         var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
 
         q.Study_ID = {$in:ChartDocument.studies}; 
-        var chartData = Clinical_Info.find(q).fetch();
+        var chartData = collectionCache.Clinical_Info.find(q).fetch();
 
 
         var chartDataMap = {};
@@ -208,12 +213,12 @@ Meteor.methods( {
                  var collName = query.c;
                  var fieldName = query.f;
 
-                 if (!(collName in CRFmetadataCollectionMap))
-                     CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
+                 if (!(collName in collectionCache))
+                     collectionCache[collName]  = new Meteor.Collection(collName);
 
                  var fl = {};
                  fl[fieldName] = 1;
-                 CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
+                 collectionCache[collName].find({}, fl).forEach(function(doc) {
                      if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                          chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
                      } else {
