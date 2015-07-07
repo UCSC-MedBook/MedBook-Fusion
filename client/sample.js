@@ -352,7 +352,6 @@ UpdateCurrentChart = function(name, value) {
 
 
 renderChart = function() {
-    initializeSpecialJQueryElements(this.data)
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
     var cc = watch.fetch()[0];
@@ -370,6 +369,7 @@ renderChart = function() {
 
             $.extend(cc, fields);
         }
+        initializeSpecialJQueryElements(cc)
 
         templateContext = { 
             onRefresh: function(config) {
@@ -387,24 +387,6 @@ renderChart = function() {
 
 
         $(".output").pivotUI(cc.chartData, pivotConf, true);
-        /*
-        if (fields != true && ('chartData' in fields || 'pivotTableConfig' in fields)) {
-            $(".output").pivotUI(cc.chartData, pivotConf, true);
-            return;
-        }
-
-        Meteor.call("renderChartData", cc, cc.studies, function(err, ret) {
-            // Session.set("dataFieldNames", ret.dataFieldNames);
-            console.log("return from call", ((new Date()) - st));
-            if (err == null && ret != null && ret.chartData != null)
-                $(".output").pivotUI(ret.chartData, pivotConf, true);
-            else
-                console.log("renderChartData", err)
-        });
-
-        initializeSpecialJQueryElements(cc)
-        */
-
 
     } // refreshChart
 
