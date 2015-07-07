@@ -166,15 +166,20 @@ Meteor.startup(function() {
         var gld = ChartDocument.geneLikeDataDomain;
         var gl  = ChartDocument.genelist;
         if (gld && gl && gld.length > 0 && gl.length > 0)  {
+
             gld
               .filter(function(domain) {return domain.state})
               .map(function(domain) {
-                var cursor = DomainCollections[domain.collection]
-                    .find({Study_ID:{$in: ChartDocument.studies}, gene: {$in: gl}});
+                var query = {Study_ID:{$in: ChartDocument.studies}};
+                query[domain.queryField || "gene"] = {$in: gl};
+
+                var cursor = DomainCollections[domain.collection].find(query);
+                console.log("GeneLikeDomain", domain.collection, query, cursor.count());
 
                 cursor.forEach(function(geneData) {
                     // Mutations are organized differently than Expression
                     if (geneData.Hugo_Symbol) { 
+                        console.log("muts", geneData);
                         var geneName = geneData.Hugo_Symbol;
                         var label = geneName + ' ' + domain.labelItem;
                         var sampleID = geneData.sample;
