@@ -354,7 +354,7 @@ UpdateCurrentChart = function(name, value) {
 renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
-    var cc = watch.fetch()[0];
+    var currentChart = watch.fetch()[0];
 
     RefreshChart = function(id, fields) {
         // short circuit unnecessary updates
@@ -364,29 +364,30 @@ renderChart = function() {
             if (f.length == 1 && f[0] == "updatedAt")
                 return;
             if (f.length == 2 && _.isEqual(f.sort(), [ "pivotTableConfig", "updatedAt"])
-                && _.isEqual(cc.pivotTableConfig,  fields.pivotTableConfig))
+                && _.isEqual(currentChart.pivotTableConfig,  fields.pivotTableConfig))
                 return
 
-            $.extend(cc, fields);
+            $.extend(currentChart, fields); // VERY IMPORTNT
         }
-        initializeSpecialJQueryElements(cc)
+        Session.set("CurrentChart", currentChart);
+        initializeSpecialJQueryElements(currentChart)
 
         templateContext = { 
             onRefresh: function(config) {
-                cc.pivotTableConfig = { 
+                currentChart.pivotTableConfig = { 
                     cols: config.cols,
                     rows: config.rows,
                     aggregatorName: config.aggregatorName,
                     rendererName: config.rendererName,
                 };
-                Charts.update(cc._id, { $set: {pivotTableConfig: cc.pivotTableConfig}});
+                Charts.update(currentChart._id, { $set: {pivotTableConfig: currentChart.pivotTableConfig}});
             }
         }
 
-        var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  cc.pivotTableConfig || PivotTableInit);
+        var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
 
 
-        $(".output").pivotUI(cc.chartData, pivotConf, true);
+        $(".output").pivotUI(currentChart.chartData, pivotConf, true);
 
     } // refreshChart
 

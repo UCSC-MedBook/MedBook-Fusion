@@ -277,8 +277,12 @@ Meteor.startup(function() {
                  });
             });
           console.log("renderChartData", chartData.length);
-          Charts.direct.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
-          // return { dataFieldNames: dataFieldNames, chartData: chartData};
+          Charts.direct.update({ _id : ChartDocument._id }, 
+              {$set: 
+                  {
+                    dataFieldNames: dataFieldNames,
+                    chartData: chartData
+                   }});
     } // renderChartData
-);
+  );// chart.after.update
 });

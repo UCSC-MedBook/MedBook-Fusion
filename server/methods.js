@@ -22,15 +22,24 @@ Meteor.methods({
         return "ttestQuickR direct return";
     },
    topMutatedGenes: function() {
+       console.log("starting topMu");
        var results = Mutations.aggregate(    [
-               { $project: { Hugo_Symbol: 1}},
-               { $group: { _id: "$Hugo_Symbol", count: { $sum: 1 } } },
-               { $sort: {count:-1}}
+               { $match: 
+                   { $or: [ 
+                        {"MA_FImpact":"medium"},
+                        {"MA_FImpact":"high"},
+                    ]}},
+               { $project: { sample:1, Hugo_Symbol: 1}},
+               { $group: { _id: "$Hugo_Symbol", coll: { $addToSet: "$sample" } }},
+               { $project: { gene: "$_id", coll: "$coll", count: {$size: "$coll" }}},
+               { $match: {count: { $gt: 4}}},
+               { $sort: {count:-1}},
 
            ] );
+       console.log("results", results[0], results[1]);
        results = results
            .slice(0,50)
-           .filter(function(d) { return d.count > 4 }) // could be aggregate finalize method
+           .filter(function(d) { return d.count > 7 }) // could be aggregate finalize method
            .map(function (d) { 
                d.Hugo_Symbol = d._id;
                return d;});
@@ -99,7 +108,7 @@ Meteor.methods({
                     } }
                 }
             },
-            // {$out triggers an  out of stack space bug 
+            // $out triggers an  out of stack space bug 
         ]);
         results = results[0];
         results.summary = results._id.summary;
@@ -307,4 +316,8 @@ HTTP.methods({
             items:items
         });
     },
+});
+
+Meteor.startup(function() {
+    console.log("topMutatedGenes", Meteor.call("topMutatedGenes").length);
 });
