@@ -386,12 +386,14 @@ renderChart = function() {
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  cc.pivotTableConfig || PivotTableInit);
 
 
+        $(".output").pivotUI(cc.chartData, pivotConf, true);
+        /*
         if (fields != true && ('chartData' in fields || 'pivotTableConfig' in fields)) {
             $(".output").pivotUI(cc.chartData, pivotConf, true);
             return;
         }
 
-        Meteor.call("renderChartData", cc, function(err, ret) {
+        Meteor.call("renderChartData", cc, cc.studies, function(err, ret) {
             // Session.set("dataFieldNames", ret.dataFieldNames);
             console.log("return from call", ((new Date()) - st));
             if (err == null && ret != null && ret.chartData != null)
@@ -401,6 +403,7 @@ renderChart = function() {
         });
 
         initializeSpecialJQueryElements(cc)
+        */
 
 
     } // refreshChart

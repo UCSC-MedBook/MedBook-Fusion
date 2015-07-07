@@ -27,7 +27,7 @@ Meteor.publish('Chart', function(_id) {
 
     var cursor = Charts.find(q);
     if (cursor.count() == 0) {
-        Charts.insert({userId: this.userId}) ;
+        Charts.insert({userId: this.userId, chartData: []}) ;
         cursor = Charts.find(q);
     }
 

@@ -238,7 +238,12 @@ the specific language governing permissions and limitations under the Apache Lic
     }
 
     function focus($el) {
-        if ($el[0] === document.activeElement) return;
+        try {
+            if ($el[0] === document.activeElement) return;
+        } catch (err) {
+            return;
+        }
+            
 
         /* set the focus in a 0 timeout - that way the focus is set after the processing
             of the current event has finished - which seems like the only reliable way

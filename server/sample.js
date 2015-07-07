@@ -134,10 +134,10 @@ var collectionCache = {};
 
 Meteor.startup(function() {
     collectionCache.Clinical_Info = new Meteor.Collection("Clinical_Info");
-});
 
-Meteor.methods( { 
-    renderChartData : function(ChartDocument) {
+    Charts.after.update(function(userId, ChartDocument, fieldNames) {
+
+
         var b = new Date();
         if (ChartDocument.studies == null || ChartDocument.length == 0) {
           console.log("No studies selected");
@@ -271,7 +271,9 @@ Meteor.methods( {
                      } 
                  });
             });
-          Charts.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
-          return { dataFieldNames: dataFieldNames, chartData: chartData};
+          console.log("renderChartData", chartData.length);
+          Charts.direct.update({ _id : ChartDocument._id }, {$set: {chartData: chartData}});
+          // return { dataFieldNames: dataFieldNames, chartData: chartData};
     } // renderChartData
+);
 });
