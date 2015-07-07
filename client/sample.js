@@ -283,7 +283,7 @@ function initializeSpecialJQueryElements(document) {
      $('.studiesSelectedTable th').hide()
 
      $("#additionalQueries").select2( {
-       placeholder: "Select one or more fields",
+       placeholder: "type in diease or study name",
        allowClear: true
      } );
 
