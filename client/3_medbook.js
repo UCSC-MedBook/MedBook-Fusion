@@ -1,37 +1,10 @@
 
-function ConvertToCSV(data) {
-    var keys = Session.get("ChartDataFinalKeys");
-
-    var array = typeof data != 'object' ? JSON.parse(data) : data;
-    var str = '';
-
-    keys.map(function(key) {
-        if (str != '') str += '\t'
-        str += key;
-    })
-    str += "\n";
-
-    for (var i = 0; i < array.length; i++) {
-        var line = '';
-
-        keys.map(function(key) {
-            var obj = array[i];
-            if (key in obj) {
-                if (line != '') line += '\t'
-                line += obj[key];
-            }
-        });
-
-        str += line + '\n';
-    }
-
-    return str;
-}
 window.DownloadButton = function () {
     var data = Session.get('ChartDataFinal');
     var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
+    var keys = Session.get("ChartDataFinalKeys");
 
-    saveTextAs(ConvertToCSV(data), name);
+    saveTextAs(ConvertToTSV(data, keys), name);
 }
 
 window.postButton = function () { 
