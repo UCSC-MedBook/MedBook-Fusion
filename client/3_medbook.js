@@ -1,21 +1,25 @@
 
-function ConvertToCSV(objArray) {
-    var dataFieldNames = Session.get("dataFieldNames");
-    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+function ConvertToCSV(data) {
+    var keys = Session.get("ChartDataFinalKeys");
+
+    var array = typeof data != 'object' ? JSON.parse(data) : data;
     var str = '';
 
-    dataFieldNames.map(function(fieldName) {
+    keys.map(function(key) {
         if (str != '') str += '\t'
-        str += fieldName;
+        str += key;
     })
     str += "\n";
 
     for (var i = 0; i < array.length; i++) {
         var line = '';
 
-        dataFieldNames.map(function(fieldName) {
-            if (line != '') line += '\t'
-            line += array[i][fieldName];
+        keys.map(function(key) {
+            var obj = array[i];
+            if (key in obj) {
+                if (line != '') line += '\t'
+                line += obj[key];
+            }
         });
 
         str += line + '\n';
@@ -25,7 +29,7 @@ function ConvertToCSV(objArray) {
 }
 window.DownloadButton = function () {
     var data = Session.get('ChartDataFinal');
-    var name = Session.get('studies').join(" ") + "_" + data.length + ".txt";
+    var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
 
     saveTextAs(ConvertToCSV(data), name);
 }

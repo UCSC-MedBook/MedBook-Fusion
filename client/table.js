@@ -14,14 +14,15 @@ function TableData(pivotData, exclusions) {
     });
     Session.set("ChartDataFinal", data);
 
-    var attrs = pivotData.colAttrs.concat(pivotData.rowAttrs);
+    var keys = pivotData.colAttrs.concat(pivotData.rowAttrs);
+    Session.set("ChartDataFinalKeys", ["Patient_ID", "Sample_ID"].concat(keys));
 
     return data.map(function(elem) { 
         var s =  { } ;
         s.Patient_ID = elem.Patient_ID;
         if ("Sample_ID" in elem)
             s.Sample_ID = elem.Sample_ID;
-        attrs.map(function(key) {  s[key] = elem[key]; });
+        keys.map(function(key) {  s[key] = elem[key]; });
         return s;
     });
 }

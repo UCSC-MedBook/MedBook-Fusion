@@ -253,7 +253,7 @@ Meteor.startup(function() {
         });
 
         var dataFieldNames =  Object.keys(keyUnion);
-
+        var selectedFieldNames = _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null);
 
         chartData = chartData.map(Transform_Clinical_Info, keyUnion);
 
@@ -281,6 +281,7 @@ Meteor.startup(function() {
               {$set: 
                   {
                     dataFieldNames: dataFieldNames,
+                    selectedFieldNames: selectedFieldNames,
                     chartData: chartData
                    }});
     } // renderChartData

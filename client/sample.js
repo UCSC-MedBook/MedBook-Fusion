@@ -385,8 +385,6 @@ renderChart = function() {
         }
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
-
-
         $(".output").pivotUI(currentChart.chartData, pivotConf, true);
 
     } // refreshChart
