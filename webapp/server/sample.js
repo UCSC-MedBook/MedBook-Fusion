@@ -182,7 +182,6 @@ Meteor.startup(function() {
                 cursor.forEach(function(geneData) {
                     // Mutations are organized differently than Expression
                     if (geneData.Hugo_Symbol) { 
-                        console.log("muts", geneData);
                         var geneName = geneData.Hugo_Symbol;
                         var label = geneName + ' ' + domain.labelItem;
                         var sampleID = geneData.sample;

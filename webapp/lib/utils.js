@@ -3,7 +3,6 @@ ConvertToTSV = function (data, keys) {
     var array = typeof data != 'object' ? JSON.parse(data) : data;
     var str = '';
 
-    console.log("keys", keys);
     keys.map(function(key) {
         if (str != '') str += '\t'
         str += key;

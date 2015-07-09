@@ -8,7 +8,6 @@ SafetyFirst = {
 }
 
 topMutatedGenes = function() {
-   console.log("starting topMu");
    var results = Mutations.aggregate(  [
            // { $match: {$not: {sample: {$regex: "LNCAP.*" }}}},
            { $match: 
@@ -61,12 +60,10 @@ summarizeVariances = function(collName) {
 dipsc = function(id) {
    Meteor.call("topMutatedGenes",
        function(err, topMuts) {
-           console.log("ret", topMuts);
            var chart = Charts.findOne({_id: id}, {fields: {chartData:1, selectedFieldNames:1}});
            var selectedFieldNames = chart.selectedFieldNames;
            selectedFieldNames.unshift("Sample_ID");
            topMuts.map(function whenDone(mut) {
-               console.log("mut.gene");
                var field = mut.gene + "_MUT";
                selectedFieldNames.push(field);
                var geneMap = {};
@@ -76,7 +73,7 @@ dipsc = function(id) {
                chart.chartData.map(function(patient)  {
                    patient[field] = patient.Sample_ID in geneMap ? 1 : 0;
                });
-           }); // topMuts
+           }); /// topMuts
            var phenotype = ConvertToTSV(chart.chartData.slice(0,3), selectedFieldNames);
            phenotype = phenotype.replace(/N\/A/g, "");
            fs.writeFile("phenotype.tab", phenotype);
@@ -122,12 +119,15 @@ Meteor.methods({
 
     "ttestQuickR" : function(id, whendone) {
         argArray = [process.env.MEDBOOK_SCRIPTS + "ttest.R", id ];
-        console.log( "ttestQuickR", argArray );
         var shlurp = spawn("/usr/bin/Rscript", argArray);
-        shlurp.on('error', function(error) { console.log('command failed '+error) });
+        var cmd = "/usr/bin/Rscript " +  argArray.join(" ");
+
+        var start = new Date();
+        console.log( "ttestQuickR running ", cmd );
+        shlurp.on('error', function(error) { console.log(cmd + 'command failed '+error) });
         shlurp.on('close', function(retcode) {
-            console.log('ttestQuickR ended with code ' + retcode);
             Fiber(function() {
+                console.log('ttestQuick', cmd, "done with code", retcode, new Date() - start);
                 if (whendone)
                     whendone("ttestQuickR returned " + retcode);
             }).run();  
@@ -158,7 +158,6 @@ Meteor.methods({
         console.log('exp count' , exp_curs.count())
 
     
-       console.log("muts 1")
        var muts = Mutations.aggregate(    [
                { $project: { Hugo_Symbol: 1, sample: 1, MA_FImpact:1}},
                { $match: {MA_FImpact: {$in: ["high","medium", "low"]}}},
@@ -175,7 +174,6 @@ Meteor.methods({
        var patientMap = {};
        var patientList = [];
        var allKeys = {};
-       console.log("muts 2")
        muts
            .filter(function(d) { return d.samples.length >= 7 }) // could be aggregate finalize method
            .map(function (d) { 
@@ -197,7 +195,6 @@ Meteor.methods({
                });
            });
        // negative case
-       console.log("muts -1")
        Object.keys(allKeys).map(function(geneId) {
             patientList.map(function(patient) {
                var key = geneId + " Mut";
