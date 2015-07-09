@@ -13,17 +13,20 @@ Meteor.startup(
             }
         });
 
-        var dupes = Charts.aggregate([
+        var multipleDefaultPosts = Charts.aggregate([
+              { $match: { post: {$exists: 0}}},
+
               { $group: { 
                   _id: "$userId",
                   uniqueIds: { $addToSet: "$_id" },
                   count: { $sum: 1 } 
               }}, 
+
               { $match: { 
                   count: { $gt: 1 } 
               }}
         ]);
-        console.log("dupes", dupes);
+        console.log("multipleDefaultPosts", multipleDefaultPosts);
 }
 );
 

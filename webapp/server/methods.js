@@ -6,7 +6,120 @@ var Fiber = Npm.require('fibers');
 SafetyFirst = {
   GeneSets: GeneSets,
 }
+
+topMutatedGenes = function() {
+   console.log("starting topMu");
+   var results = Mutations.aggregate(  [
+           // { $match: {$not: {sample: {$regex: "LNCAP.*" }}}},
+           { $match: 
+               { $or: [ 
+                    {"MA_FImpact":"medium"},
+                    {"MA_FImpact":"high"},
+                ]}},
+           { $project: { sample:1, Hugo_Symbol: 1}},
+           { $group: { _id: "$Hugo_Symbol", coll: { $addToSet: "$sample" } }},
+           { $project: { gene: "$_id", coll: "$coll", count: {$size: "$coll" }}},
+           { $match: {count: { $gt: 4}}},
+           { $sort: {count:-1}},
+
+       ] );
+   return results;
+};
+
+summarizeVariances = function(collName) {
+    var start = new Date();
+    var collection = global[collName];
+    var exp_curs = collection.find({variance : { $exists: 0}}, {limit: 10});
+    var n = 0;
+    exp_curs.forEach(function(geneDoc) {
+            // if ((n++ % 1000) == 0)
+               console.log("summarizeVariances", geneDoc.gene, n);
+            var samples = geneDoc.samples;
+            var data = Object.keys(samples)
+            if (geneDoc.Study_ID == "prad_wcdt")
+                data = data.filter(function(sampleName) {
+                                    return sampleName.match(/^DTB/);
+                                });
+            data = data .map(function(sampleName) {
+                                return samples[sampleName].rsem_quan_log2;
+                            });
+            if (data.length > 2) {
+
+                var variance = ss.variance(data);
+                var mean = ss.mean(data);
+
+                collection.update({_id: geneDoc._id}, {$set: {
+                    mean: { rsem_quan_log2: mean},
+                    variance: { rsem_quan_log2: variance}
+                }});
+            }
+           
+    });
+};
+
+
+dipsc = function(id) {
+   Meteor.call("topMutatedGenes",
+       function(err, topMuts) {
+           console.log("ret", topMuts);
+           var chart = Charts.findOne({_id: id}, {fields: {chartData:1, selectedFieldNames:1}});
+           var selectedFieldNames = chart.selectedFieldNames;
+           selectedFieldNames.unshift("Sample_ID");
+           topMuts.map(function whenDone(mut) {
+               console.log("mut.gene");
+               var field = mut.gene + "_MUT";
+               selectedFieldNames.push(field);
+               var geneMap = {};
+               mut.coll.map(function(sample) {
+                   geneMap[sample] = true;
+               });
+               chart.chartData.map(function(patient)  {
+                   patient[field] = patient.Sample_ID in geneMap ? 1 : 0;
+               });
+           }); // topMuts
+           var phenotype = ConvertToTSV(chart.chartData.slice(0,3), selectedFieldNames);
+           phenotype = phenotype.replace(/N\/A/g, "");
+           fs.writeFile("phenotype.tab", phenotype);
+
+           var data = [];
+           Expression.find({ "Study_ID" : "prad_wcdt" }, 
+               {fields: {"gene":1, "samples":1, "variance":1},
+                limit: 100,
+                sort: { "variance.rsem_quan_log2" : -1} })
+           .forEach(function (e) { 
+
+               var row = e.samples;
+               var newRow = {};
+               Object.keys(row)
+                   .filter(function(Sample_ID) { return Sample_ID.match(/DTB-.*/) != null; })
+                   .map(function(Sample_ID) { newRow[Sample_ID] = row[Sample_ID].rsem_quan_log2 })
+               newRow.gene = e.gene;
+               if (e.variance) {
+                   data.push(newRow);
+               }
+           });
+
+           var keys = Object.keys(data[0]).sort();
+           var g = keys.indexOf("gene"); // move gene to front
+           keys.splice(g, 1);
+           keys.unshift("gene"); 
+
+           var expr = ConvertToTSV(data, keys);
+           fs.writeFile("expr.tab", expr);
+       } 
+   ); // call
+};
+
+
+Meteor.startup(function() {
+    Meteor.call("dipsc", "yCLdYGyozBcKFzHfs");
+});
+
 Meteor.methods({
+   dipsc : dipsc,
+
+   topMutatedGenes: topMutatedGenes,
+
     "ttestQuickR" : function(id, whendone) {
         argArray = ["/data/MedBook/MedBook-Fusion/public/ttest.R", id ];
         console.log( "ttestQuickR", argArray );
@@ -21,136 +134,8 @@ Meteor.methods({
         });
         return "ttestQuickR direct return";
     },
-   topMutatedGenes: function() {
-       console.log("starting topMu");
-       var results = Mutations.aggregate(    [
-               { $match: 
-                   { $or: [ 
-                        {"MA_FImpact":"medium"},
-                        {"MA_FImpact":"high"},
-                    ]}},
-               { $project: { sample:1, Hugo_Symbol: 1}},
-               { $group: { _id: "$Hugo_Symbol", coll: { $addToSet: "$sample" } }},
-               { $project: { gene: "$_id", coll: "$coll", count: {$size: "$coll" }}},
-               { $match: {count: { $gt: 4}}},
-               { $sort: {count:-1}},
 
-           ] );
-       console.log("results", results[0], results[1]);
-       results = results
-           .slice(0,50)
-           .filter(function(d) { return d.count > 7 }) // could be aggregate finalize method
-           .map(function (d) { 
-               d.Hugo_Symbol = d._id;
-               return d;});
-
-       return results;
-   },
-
-   summarizeVariances: function(collName) {
-        var start = new Date();
-        var collection = global[collName];
-        var exp_curs = collection.find({variance : { $exists: 0}}, {limit: 10});
-        var n = 0;
-        exp_curs.forEach(function(geneDoc) {
-                // if ((n++ % 1000) == 0)
-                   console.log("summarizeVariances", geneDoc.gene, n);
-                var samples = geneDoc.samples;
-                var data = Object.keys(samples)
-                if (geneDoc.Study_ID == "prad_wcdt")
-                    data = data.filter(function(sampleName) {
-                                        return sampleName.match(/^DTB/);
-                                    });
-                data = data .map(function(sampleName) {
-                                    return samples[sampleName].rsem_quan_log2;
-                                });
-                if (data.length > 2) {
-
-                    var variance = ss.variance(data);
-                    var mean = ss.mean(data);
-
-                    collection.update({_id: geneDoc._id}, {$set: {
-                        mean: { rsem_quan_log2: mean},
-                        variance: { rsem_quan_log2: variance}
-                    }});
-                }
-               
-        });
-
-
-        results = Expression.aggregate([
-            {
-            $group: {
-                    _id: {  gene: "$gene" },
-                    variances: {
-                        $addToSet: {
-                            Study_ID: "$Study_ID",
-                            Variance: "$variance",
-                        }
-                    }
-                }
-            },
-            {
-                $match: {
-                    'variances.1': {$exists: true}
-                }
-            },
-
-            {
-            $group: {
-                    _id: {  summary: "variances", date: new Date() },
-                    max: { $max: "$variances"},
-                    min: { $min: "$variances"},
-                    count: { $sum: 1},
-                    data: { $push: {
-                        gene: "$_id",
-                        variances: "$variances",
-                    } }
-                }
-            },
-            // $out triggers an  out of stack space bug 
-        ]);
-        results = results[0];
-        results.summary = results._id.summary;
-        results.date = results._id.date;
-        results._id = results.summary + results.date.toString()
-
-        geneMap = {};
-        results.data.map(function(elem) {
-            var vv = {}
-            elem.variances.map(function(v) {
-                vv[v.Study_ID] = v.Variance;
-            });
-            var g = elem.gene.gene.replace(/\./g, "_");
-            geneMap[g] = {
-                "variances" : vv
-            }
-        });
-
-        var muts = Mutations.aggregate(    [
-               { $project: { Hugo_Symbol: 1}},
-               { $group: { _id: {gene: "$Hugo_Symbol"}, count: { $sum: 1 } } },
-               { $sort: {count:-1}}
-           ]);
-        muts.forEach(function(mut) {
-            var g = mut._id.gene.replace(/\./g, "_");
-            geneMap[g] =  { mutations: { "prad_wcdt": mut.count} };
-        });
-
-        var summary = {
-            date: new Date(),
-            properties: {"variances": Object.keys(geneMap).length },
-            data: geneMap
-        };
-
-
-
-        Summaries.remove({});
-        Summaries.insert(summary);
-
-        return results;
-
-    },
+   summarizeVariances: summarizeVariances,
 
    muts: function() {
         var expfile = path.join(workDir, 'expdata.tab')
@@ -264,19 +249,7 @@ Meteor.methods({
    },
 });
 
-VV = null;
 
-Meteor.startup(function() {
-    var d = new Date();
-    /*
-    Meteor.call("summarizeVariances", "Expression", function(err,result) { 
-        VV = result;
-        if (err)
-            console.log("call summarizeVariances  err =", err, "time=", (new Date() - d)/1000);
-        else
-            console.log("call summarizeVariances  ok time=", (new Date() - d)/1000)});
-            */
-});
 
 
 HTTP.methods({
@@ -316,8 +289,4 @@ HTTP.methods({
             items:items
         });
     },
-});
-
-Meteor.startup(function() {
-    console.log("topMutatedGenes", Meteor.call("topMutatedGenes").length);
 });
