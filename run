@@ -1,5 +1,7 @@
 # export NODE_OPTIONS='--debug'
 cd webapp
+export MEDBOOK_SCRIPTS /data/MedBook/MedBook-Fusion3/scripts/
+export MEDBOOK_WORKSPACE /data/MedBook/MedBook-Fusion3/workspace/
 export MONGO_URL=mongodb://localhost:27017/MedBook
 export ROOT_URL=http://localhost/fusion/
 export ROOT_URL_PATH_PREFIX=fusion
