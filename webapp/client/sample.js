@@ -357,6 +357,7 @@ renderChart = function() {
     var currentChart = watch.fetch()[0];
 
     RefreshChart = function(id, fields) {
+        console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
         if (fields != true) {
@@ -368,6 +369,9 @@ renderChart = function() {
                 return
 
             $.extend(currentChart, fields); // VERY IMPORTNT
+
+            if (f.length == 2 && _.isEqual(f.sort(), [ "selectedFieldNames", "updatedAt"]))
+                return
         }
         Session.set("CurrentChart", currentChart);
         initializeSpecialJQueryElements(currentChart)
