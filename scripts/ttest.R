@@ -11,11 +11,14 @@ data <- mongo.bson.to.list(mongo.findOne(conn, coll, id));
 #Calc
 n = length(data$input);
 output <- list();
+MINLENGTH = 2;
 for (i in 1:(n-1))
     for (j in (i+1):n) {
-        pVal = t.test(data$input[[i]]$value, data$input[[j]]$value)$p.value;
-        key = paste( data$input[[i]]$key, "***", data$input[[j]]$key, sep="");
-        output[key] = pVal;
+        if (length(data$input[[i]]$value) > MINLENGTH && length(data$input[[j]]$value) > MINLENGTH) {
+            pVal = t.test(data$input[[i]]$value, data$input[[j]]$value)$p.value;
+            key = paste( data$input[[i]]$key, "***", data$input[[j]]$key, sep="");
+            output[key] = pVal;
+        }
     }
 
 
