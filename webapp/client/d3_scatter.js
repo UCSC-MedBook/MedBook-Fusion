@@ -63,25 +63,29 @@ window.makeD3Scatter = function(chartType, extraOptions) {
             if (isNaN(xx)) return;
             if (isNaN(yy)) return;
 
-            var row = [];
-            row.push(xx)
-            row.push(yy)
+            var sample = {x: xx, y: yy, Study_ID: elem.Study_ID, Patient_ID: elem.Patient_ID};
+            sample[0] = xx;
+            sample[1] = yy;
 
             if (maxX < xx) maxX = xx;
             if (maxY < yy) maxY = yy;
             if (minX > xx) minX = xx;
             if (minY > yy) minY = yy;
 
-            var s = elem.Sample_ID || elem.Patient_ID;
+            sample.label = elem.Sample_ID || elem.Patient_ID;
+
+            var text = "";
             function f(e) { 
                 var ee = elem[e];
                 var ff = parseFloat(ee);
                 ee = isNaN(ff) ? ee : ff.toPrecision(4);
-                s += "\n" + e + "=" + ee;
+                text += "\n" + e + "=" + ee;
             };
+            f(x);
+            f(y);
             h.map(f);
             v.map(f);
-            row.push({v: s});
+            sample.text = text;
 
             var  color = null;
             for (var i = 0; i < predicates.length; i++) 
@@ -91,12 +95,12 @@ window.makeD3Scatter = function(chartType, extraOptions) {
                     color = colors[i];
                     break;
                 }
+            sample.fill = color;
 
-            row.push( { size: 5, shape: "circle", "fill-opacity": 0, "stroke-width": 2, "fill":  color });
-            rows.push(row);
+
+            rows.push(sample);
         } catch (why) {
         }
-
     });
 
 
@@ -149,6 +153,28 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
     .text(v);
         
 
+    var div = d3.select("body").append("div")   
+      .attr("class", "tooltip")               
+      .style("opacity", 0);
+    var ccc;
+
+    var divD = null;
+
+    function bye(d) {
+      if (--d.count <=  0) {
+
+        if (divD == d)
+            div.transition()        
+                .duration(500)      
+                .style("opacity", 0);   
+
+        d.ccc.transition()        
+            .duration(1500)      
+                .attr("r", function(d) { return d.r; })
+                .style("stroke", "pink")
+                .style("stroke-width", 1)
+      }
+    }
     function dots(z) {
          var dots = svg.selectAll(".dot")
           .data(z)
@@ -156,14 +182,45 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
           dots.enter().append("circle")
                .attr("class", "dot")
                .attr("r", 7)
-            .attr("cx", function(d) { return x_scale(d[0]); })
-            .attr("cy", function(d) { return y_scale(d[1]); })
-            .attr("fill", function(d) { return d[3].fill; });
+            .attr("cx", function(d) { return x_scale(d.x); })
+            .attr("cy", function(d) { return y_scale(d.y); })
+            .attr("fill", function(d) { return d.fill; })
+
+        .on("mouseover", function(d) {
+            if (d.count == null)
+              d.count = 1;
+            else
+              d.count++
+            div.transition()        
+                .duration(200)      
+                .style("display", "block")
+                .style("opacity", .9);      
+
+            divD = d;
+            debugger;
+            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient_ID + "?Study_ID=" + d.Study_ID
+                + "'>" + d.label + "</a><br/>" + d.text;
+            div.html(m)
+                .style("left", (d3.event.pageX + 15) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px");    
+            d.ccc = d3.selectAll("." + d.Patient.replace("-", ""))
+                    .attr("r", function(d) { return 2 *d.r; })
+                    .style("stroke", "red")
+                    .style("stroke-width", "3")
+
+            $(".tooltip").hover(function() { d.count++; }, function() { bye(d)});
+
+            })                  
+        .on("mouseout", function(d) {       
+          setTimeout(function() {bye(d)}, 2000);
+        }
+        );
 
           dots.exit().remove();
     }
     dots(z);
 
+    debugger;
     var reg = regression('linear', z);
     var a = reg.equation[0];
     var b = reg.equation[1];
