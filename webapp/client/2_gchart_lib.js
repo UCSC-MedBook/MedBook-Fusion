@@ -184,7 +184,8 @@ Meteor.startup(function() {
     };
     $.pivotUtilities.gchart_renderers = {
       "Box Plot": makeD3BoxPlotChart("BoxPlot"),
-      "Scatter Chart": makeGoogleScatter("ScatterChart"),
+      "Google Scatter Chart": makeGoogleScatter("ScatterChart"),
+      "D3 Scatter Chart": makeD3Scatter("ScatterChart"),
       "Table": makeReactiveTable("Reactive Table"),
       /*
       "Pie Chart": makeGoogleChart2("PieChart"),
