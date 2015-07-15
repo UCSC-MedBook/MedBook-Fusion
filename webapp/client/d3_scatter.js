@@ -127,11 +127,11 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
     var xAxis = d3.svg.axis().scale(x_scale).ticks(5).orient("bottom");
     var yAxis = d3.svg.axis().scale(y_scale).ticks(5).orient("left");
 
-    var svg = d3.select("#viz").append("svg").attr("id", "vizsvg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");   
+        var svg = d3.select("#viz").append("svg").attr("id", "vizsvg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");   
 
     svg.append("g").attr("class", "axis").call(yAxis);
     svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")") .call(xAxis);
@@ -237,5 +237,35 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
        .attr("y2", y_scale(y2));
 
     d3.select("#stat").text(reg.stat);
+
+    svg.selectAll("line.horizontalGrid").data(y_scale.ticks(5)).enter()
+        .append("line") .attr(
+            {
+                "class":"horizontalGrid",
+                "x1" : margin.right,
+                "x2" : width,
+                "y1" : function(d){ return y_scale(d);},
+                "y2" : function(d){ return y_scale(d);},
+                "fill" : "none",
+                "opacity" : 0.3,
+                "stroke" : "gray",
+                "stroke-width" : "2px"
+            });
+
+
+    svg.selectAll("line.verticalGrid").data(x_scale.ticks(5)).enter()
+        .append("line") .attr(
+            {
+                "class":"verticalGrid",
+                "y1" : margin.top,
+                "y2" : height,
+                "x1" : function(d){ return x_scale(d);},
+                "x2" : function(d){ return x_scale(d);},
+                "fill" : "none",
+                "opacity" : 0.3,
+                "stroke" : "gray",
+                "stroke-width" : "2px"
+            });
+
 }
 
