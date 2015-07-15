@@ -7,7 +7,7 @@ window.makeD3Scatter = function(chartType, extraOptions) {
 
     var wrapper = $("<div id='wrapper' >").css({ width: "800px", height: "600px" });
     var viz = $("<div id='viz' >").css({ "margin-top": "20px", width: "800px", height: "600px" }).appendTo(wrapper);
-    $("<div id='stat' class='stat'>" title='two-tail P-value').css({ width: "100%", height: "50" }).appendTo(wrapper);
+    $("<div id='stat' class='stat'title='two-tail P-value'>" ).css({ width: "100%", height: "50" }).appendTo(wrapper);
 
     var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
     var h = _.clone(pivotData.colAttrs);
@@ -36,7 +36,7 @@ window.makeD3Scatter = function(chartType, extraOptions) {
 
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
-    var legend = $('<div class="legend" style="float:right;">');
+    var legend = $('<div class="legend" style="float:right;margin-right:20px;">').appendTo(wrapper);
     predicates.map(function(p, i) {
         var line = $("<div>").appendTo(legend);
         $("<div style='display:inline-block;'>").css({
@@ -92,7 +92,7 @@ window.makeD3Scatter = function(chartType, extraOptions) {
                     break;
                 }
 
-            row.push( { size: 5, shape: "circle", "fill-opacity": 0, "stroke-width": 2, "stroke-color":  color });
+            row.push( { size: 5, shape: "circle", "fill-opacity": 0, "stroke-width": 2, "fill":  color });
             rows.push(row);
         } catch (why) {
         }
@@ -155,12 +155,10 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
 
           dots.enter().append("circle")
                .attr("class", "dot")
-                 .attr("r", 5)
-
-          dots.transition()
-            .duration(1000)
+               .attr("r", 7)
             .attr("cx", function(d) { return x_scale(d[0]); })
-            .attr("cy", function(d) { return y_scale(d[1]); });
+            .attr("cy", function(d) { return y_scale(d[1]); })
+            .attr("fill", function(d) { return d[3].fill; });
 
           dots.exit().remove();
     }
