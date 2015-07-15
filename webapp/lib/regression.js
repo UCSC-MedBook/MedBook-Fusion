@@ -72,7 +72,7 @@
                     alert("Warning: R is " +  r  + " Corr is" +  correlation + " may be a problem" );
 
 
-                var stat = "R = " + r.toPrecision(3) + "  P-value = " + r_p_value.toPrecision(3);
+                var stat = "R = " + r.toPrecision(3) + "  P-value = " + r_p_value.toPrecision(3) + " N = " + xx.length;
 
                 return { stat: stat, correlation: correlation, equation: [gradient, intercept], points: results, string: string};
             },

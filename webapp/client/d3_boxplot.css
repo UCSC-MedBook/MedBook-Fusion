@@ -38,7 +38,8 @@ div.tooltip {
     text-align: center;           
     width: 220px;                  
     min-height: 68px;                 
-    margin: 5px;
+    margin: 10px;
+    height: auto;
     padding: 2px;             
     font: 18px sans-serif;        
     background: lightsteelblue;   
