@@ -14,6 +14,8 @@ var rnd = seed / 233280;
 return min + rnd * (max - min);
 }
 
+SuppressRollover = false;
+
 // Inspired by http://informationandvisualization.de/blog/box-plot
 d3.box = function() {
   var width = 1,
@@ -198,18 +200,22 @@ d3.box = function() {
           .style("opacity", 0.2)
           .style("fill", function(d) { return d.ValueColor });
 
-      var div = d3.select("body").append("div")   
+      var toolTip = d3.select("body").append("div")   
           .attr("class", "tooltip")               
           .style("opacity", 0);
       var ccc;
 
-      var divD = null;
+      var highlightedSample = null;
+
+      window.clearToolTip = function() {
+          toolTip.style("opacity", 0);   
+      };
 
       function bye(d) {
           if (--d.count <=  0) {
 
-            if (divD == d)
-                div.transition()        
+            if (highlightedSample == d)
+                toolTip.transition()        
                     .duration(500)      
                     .style("opacity", 0);   
 
@@ -219,25 +225,28 @@ d3.box = function() {
                     .style("stroke", "pink")
                     .style("stroke-width", 1)
           }
-      }
+      };
 
       sample
         .on("mouseover", function(d) {
+            if (SuppressRollover)
+               return;
+
             if (d.count == null)
               d.count = 1;
             else
               d.count++
-            div.transition()        
+            toolTip.transition()        
                 .duration(200)      
                 .style("display", "block")
                 .style("opacity", .9);      
 
-            divD = d;
+            highlightedSample = d;
             var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient + "?Study_ID=" + d.Study_ID
                 + "'>" + d.Patient + "</a><br/>" + 
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);
-            div.html(m)
+            toolTip.html(m)
                 .style("left", (d3.event.pageX + 15) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px");    
             d.ccc = d3.selectAll("." + d.Patient.replace("-", ""))
@@ -249,7 +258,9 @@ d3.box = function() {
 
             })                  
         .on("mouseout", function(d) {       
-          setTimeout(function() {bye(d)}, 2000);
+            if (SuppressRollover)
+               return;
+          setTimeout(function() {bye(d)}, 1000);
         }
         );
 

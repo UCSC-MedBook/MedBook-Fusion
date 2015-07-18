@@ -288,7 +288,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
       var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
       svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + baseline + " )").call(yAxis);
 
-      svg = svgBoxPlot
+      var nestedSVG = svgBoxPlot
           .selectAll("svg")
           .data(plotDataSets)
           .enter()
@@ -298,7 +298,9 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                   X += plotWidth;
                   return r;
               })
-         .append("svg")
+         .append("svg");
+
+       var nestedG = nestedSVG
           .attr("class", "box svgPlot")
           .attr("width", 40 + width + margin.left + margin.right)
           .attr("height", 50 + height + margin.bottom + margin.top)
@@ -307,6 +309,12 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                   var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
                   return r;
                   });
+       var backdrop = nestedG.append("rect").attr({ "class": "backdrop", x : 0, y: 0, 
+               width: plotWidth,
+               height: PlotHeight,
+               fill: "green" });
+
+
 
     function wrap(text, width, svg) {
       text.each(function() {
@@ -349,7 +357,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
       });
     }
 
-      var yy = svg.insert("text", "box")
+      var yy = nestedG.insert("text", "box")
                 .attr( 'x', width/2)
                 .attr( 'y', -20)
                 .attr( 'text-anchor', 'middle' )
@@ -359,7 +367,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                 .call(wrap, plotWidth)
        
 
-      svg.call(chart);
+      nestedG.call(chart);
 
       var gLegend = svgTop
                       .append("g").attr("transform", 
@@ -393,6 +401,8 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
 
       svgTop.attr("width", X + 500); // approximate size of legend
       svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
+
+      makeSelectableBoxPlot(svgTop, nestedSVG);
 
       setTimeout(function() {
           var legendText =  d3.selectAll("text.legendText");
