@@ -310,10 +310,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                   return r;
                   });
        var backdrop = nestedG.append("rect").attr({ "class": "backdrop", x : 0, y: 0, 
-               width: plotWidth,
-               height: PlotHeight,
-               fill: "green" });
-
+               width: plotWidth, height: PlotHeight});
 
 
     function wrap(text, width, svg) {
@@ -402,7 +399,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
       svgTop.attr("width", X + 500); // approximate size of legend
       svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
 
-      makeSelectableBoxPlot(svgTop, nestedSVG);
+      makeSelectableBoxPlot(backdrop);
 
       setTimeout(function() {
           var legendText =  d3.selectAll("text.legendText");

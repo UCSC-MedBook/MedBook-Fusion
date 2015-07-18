@@ -654,7 +654,11 @@
       if (typeof name === "string") {                                                                                  // 646
         var node = this.node();                                                                                        // 647
         name = d3.ns.qualify(name);                                                                                    // 648
-        return name.local ? node.getAttributeNS(name.space, name.local) : node.getAttribute(name);                     // 649
+        try {
+            return name.local ? node.getAttributeNS(name.space, name.local) : node.getAttribute(name);                     // 649
+        } catch (err) {
+            debugger;
+        }
       }                                                                                                                // 650
       for (value in name) this.each(d3_selection_attr(value, name[value]));                                            // 651
       return this;                                                                                                     // 652
@@ -670,7 +674,7 @@
       this.removeAttributeNS(name.space, name.local);                                                                  // 662
     }                                                                                                                  // 663
     function attrConstant() {                                                                                          // 664
-      this.setAttribute(name, value);                                                                                  // 665
+          this.setAttribute(name, value);                                                                                  // 665
     }                                                                                                                  // 666
     function attrConstantNS() {                                                                                        // 667
       this.setAttributeNS(name.space, name.local, value);                                                              // 668
