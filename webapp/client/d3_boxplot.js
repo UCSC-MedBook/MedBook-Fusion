@@ -309,8 +309,8 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                   var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
                   return r;
                   });
-       var backdrop = nestedG.append("rect").attr({ "class": "backdrop", x :  margin.left, y: margin.top, 
-               width: width - margin.right - margin.left, height: PlotHeight});
+       var backdrop = nestedG.append("rect").attr({ "class": "backdrop", x :  0, y: 0, 
+               width: width, height: height});
        backdrop.style("fill", "transprent");
        // backdrop.style("fill-opacity", "0.5");
 
