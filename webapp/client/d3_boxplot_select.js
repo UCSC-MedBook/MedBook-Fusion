@@ -6,8 +6,10 @@ makeSelectableBoxPlot = function(backdrops) {
 
   backdrops .each( function( ) {
     var backdrop = d3.select(this);
-    var width = backdrop.attr("width");
-    var x = backdrop.attr("x");
+    var backdrop_width = backdrop.attr("width");
+    var backdrop_x = backdrop.attr("x");
+    var backdrop_y = backdrop.attr("y");
+    var backdrop_height = backdrop.attr("height");
 
     var gNode = this.parentElement;
     while (gNode.tagName != "g")
@@ -17,18 +19,98 @@ makeSelectableBoxPlot = function(backdrops) {
     while (svg.tagName != "svg")
         svg = svg.parentElement;
 
-    function mouseup() {
+    tip = d3.tip()
+      .attr('class', 'd3-tip')
+      .html(function(d) { return "d3 top"; });
+
+    function transformSelectionIntoGroup() {
+        // remove selection frame
+        // d3.selectAll( "rect.selection").remove();
+        //
+        var group = d3.select(svg).selectAll('.selection')
+            .on("mousedown", null)
+            .on("mouseup", null)
+            .on("mouseout", null)
+            .classed({ "selection": false, "group": true});
+
+        function resizeHandle(side) {
+            function handle_y() {
+                if (side == 'n') return group.style("y");
+                if (side == 's') return group.style("y") + group.style("height");
+            }
+
+            var resizeHandle = d3.select(gNode).append("rect").style(
+                    { x: group.style("x"), y: handle_y(),
+                      width: backdrop_width, height: 10, 
+                    fill: "transparent", "fill-opacity": 0.5}) ;
+
+            resizeHandle.on("mouseover", function() {
+                    d3.event.stopPropagation();
+                    d3.select("body").style("cursor", side + "-resize");
+                });
+
+            resizeHandle.on("mouseout", function() {
+                    d3.event.stopPropagation();
+                    d3.select("body").style("cursor", "pointer");
+                });
+
+            resizeHandle.on("mousedown", function() {
+                    d3.event.stopPropagation();
+                    var resizeScrim = d3.select(gNode).append("rect").style(
+                        { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
+                        fill: "rgb(144,168,250)", "fill-opacity": 0.5}) ;
+
+                    resizeScrim.on("mouseup", function() { d3.event.stopPropagation(); resizeScrim.remove() });
+                    resizeScrim.on("mouseout", function() { d3.event.stopPropagation(); resizeScrim.remove() });
+                    resizeScrim.on("mousemove", function() {
+                            d3.event.stopPropagation();
+                            var y = d3.mouse(gNode)[1];
+                            var y0 = parseInt(group.attr('y'));
+                            var height = parseInt(group.attr('height')) - (y - y0);
+
+                            if (side == 'n') {
+                                debugger;
+                                group.attr('y', y);
+                                group.attr('height', height);
+                            }
+                            resizeHandle.style('y', handle_y());
+                        });
+                });
+
+            return resizeHandle;
+        }
+
+
+        resizeHandle('n');
+
+        group.on("mouseover", function hover() {
+            tip.show();
+        });
+
+        group.on("mouseout", function hover() {
+            tip.hide();
+        });
+
+    }
+
+    function mouseout() {
+        d3.event.stopPropagation();
         var selection = d3.select(".selection");
         if (selection.empty())
             return;
+        if(  d3.event.relatedTarget && d3.event.relatedTarget.tagName=='HTML') 
+            transformSelectionIntoGroup();
+    }
 
-           // remove selection frame
-        d3.selectAll( "rect.selection").remove();
-
-            // remove temporary selection marker class
-        d3.selectAll('.selection').classed( "selection", false);
+    function mouseup() {
+        d3.event.stopPropagation();
+        var selection = d3.select(".selection");
+        if (selection.empty())
+            return;
+        transformSelectionIntoGroup();
     };
     function mousemove() {
+        d3.event.stopPropagation();
         var selection = d3.select(".selection");
         if (selection.empty())
             return;
@@ -50,9 +132,9 @@ makeSelectableBoxPlot = function(backdrops) {
 
 
         var rectangle = {
-            x       : x, // parseInt( selection.attr( "x"), 10),
+            x       : backdrop_x, // parseInt( selection.attr( "x"), 10),
             y       : y1,
-            width   : width, // parseInt( selection.attr( "width"), 10),
+            width   : backdrop_width, // parseInt( selection.attr( "width"), 10),
             height  : y2 - y1,
         };
 
@@ -80,6 +162,8 @@ makeSelectableBoxPlot = function(backdrops) {
 
     backdrop.on( "mousedown", function() {
 
+        d3.event.stopPropagation();
+
         window.SuppressRollover = true;
         clearToolTip();
         if( !d3.event.ctrlKey) {
@@ -90,31 +174,23 @@ makeSelectableBoxPlot = function(backdrops) {
         var rect = d3.select(gNode).append("rect")
           .attr({
             class   : "selection",
-            x       : x,
+            x       : backdrop_x,
             y       : p[1],
-            width   : width,
+            width   : backdrop_width,
             height  : 0
         })
         .on( "mousemove", mousemove)
-        .on( "mouseup", mouseup);
+        .on( "mouseup", mouseup)
+        .on( "mouseout", mouseout);
 
         rect.startX = p[0];
         window.startY = p[1];
+
+    rect.call(tip);
+
     })
     .on( "mousemove", mousemove)
     .on( "mouseup", mouseup)
-    .on( "mouseout", function() {
-        var selection = d3.select(".selection");
-        if (selection.empty())
-            return;
-
-        if(  d3.event.relatedTarget && d3.event.relatedTarget.tagName=='HTML') {
-                // remove selection frame
-            d3.selectAll( "rect.selection").remove();
-
-            // remove temporary selection marker class
-            d3.selectAll( '.selection').classed( "selection", false);
-        }
-    });
+    .on( "mouseout", mouseout);
  }) // each
 }
