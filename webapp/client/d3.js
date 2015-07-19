@@ -674,6 +674,8 @@
       this.removeAttributeNS(name.space, name.local);                                                                  // 662
     }                                                                                                                  // 663
     function attrConstant() {                                                                                          // 664
+        if (name == "y" && isNaN(value))
+            debugger;
           this.setAttribute(name, value);                                                                                  // 665
     }                                                                                                                  // 666
     function attrConstantNS() {                                                                                        // 667

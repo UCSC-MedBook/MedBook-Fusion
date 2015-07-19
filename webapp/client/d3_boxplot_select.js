@@ -45,24 +45,41 @@ makeSelectableBoxPlot = function(backdrops) {
                       width: backdrop_width, height: 10, 
                     fill: "orange", "fill-opacity": 0.5}) ;
 
+            resizeHandle.on("mouseout", function() {
+                    d3.select("body").style("cursor", "pointer");
+            });
             resizeHandle.on("mouseover", function() {
-                    d3.event.stopPropagation();
                     d3.select("body").style("cursor", side + "-resize");
+                    if (!group.inMotion)
+                        return;
+                    d3.event.stopPropagation();
                 });
 
-            resizeHandle.on("mouseout", function() {
+            resizeHandle.on("mouseup", function() {
+                    if (group.inMotion)
+                        group.inMotion = false;
                     d3.event.stopPropagation();
                     d3.select("body").style("cursor", "pointer");
                 });
 
             resizeHandle.on("mousedown", function() {
                     d3.event.stopPropagation();
+                    group.inMotion = true;
+
                     var resizeScrim = d3.select(gNode).append("rect").style(
                         { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
                         fill: "transparent", "fill-opacity": 0}) ;
 
-                    resizeScrim.on("mouseup", function() { d3.event.stopPropagation(); resizeScrim.remove() });
-                    resizeScrim.on("mouseout", function() { d3.event.stopPropagation(); resizeScrim.remove() });
+                    resizeScrim.on("mouseup", function() { 
+                        group.inMotion = false;
+                        d3.event.stopPropagation(); 
+                        resizeScrim.remove() 
+                    });
+                    resizeScrim.on("mouseout", function() { 
+                        group.inMotion = false;
+                        d3.event.stopPropagation();
+                        resizeScrim.remove();
+                    });
                     resizeScrim.on("mousemove", function() {
                             d3.event.stopPropagation();
                             var y = d3.mouse(gNode)[1];
