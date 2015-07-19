@@ -35,14 +35,15 @@ makeSelectableBoxPlot = function(backdrops) {
 
         function resizeHandle(side) {
             function handle_y() {
-                if (side == 'n') return group.style("y");
-                if (side == 's') return group.style("y") + group.style("height");
+                if (window.NOW) debugger;
+                if (side == 'n') return parseInt(group.attr("y"));
+                if (side == 's') return parseInt(group.attr("y")) + parseInt(group.attr("height"));
             }
 
             var resizeHandle = d3.select(gNode).append("rect").style(
                     { x: group.style("x"), y: handle_y(),
                       width: backdrop_width, height: 10, 
-                    fill: "transparent", "fill-opacity": 0.5}) ;
+                    fill: "orange", "fill-opacity": 0.5}) ;
 
             resizeHandle.on("mouseover", function() {
                     d3.event.stopPropagation();
@@ -58,22 +59,27 @@ makeSelectableBoxPlot = function(backdrops) {
                     d3.event.stopPropagation();
                     var resizeScrim = d3.select(gNode).append("rect").style(
                         { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
-                        fill: "rgb(144,168,250)", "fill-opacity": 0.5}) ;
+                        fill: "transparent", "fill-opacity": 0}) ;
 
                     resizeScrim.on("mouseup", function() { d3.event.stopPropagation(); resizeScrim.remove() });
                     resizeScrim.on("mouseout", function() { d3.event.stopPropagation(); resizeScrim.remove() });
                     resizeScrim.on("mousemove", function() {
                             d3.event.stopPropagation();
                             var y = d3.mouse(gNode)[1];
-                            var y0 = parseInt(group.attr('y'));
-                            var height = parseInt(group.attr('height')) - (y - y0);
+
+                            var y0 = handle_y();
 
                             if (side == 'n') {
-                                debugger;
                                 group.attr('y', y);
+                                var height = Math.max(10, parseInt(group.attr('height')) - (y - y0));
+                                group.attr('height', height);
+                            } else if (side == 's') {
+                                var height = Math.max(10, parseInt(group.attr('height')) - (y0 - y));
                                 group.attr('height', height);
                             }
-                            resizeHandle.style('y', handle_y());
+
+                            window.NOW = true;
+                            resizeHandle.style('y', handle_y() +"px");
                         });
                 });
 
@@ -82,6 +88,7 @@ makeSelectableBoxPlot = function(backdrops) {
 
 
         resizeHandle('n');
+        resizeHandle('s');
 
         group.on("mouseover", function hover() {
             tip.show();
