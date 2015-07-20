@@ -279,6 +279,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
 
     window.yRange = d3.scale.linear().range([0, height]).domain([max, min]);
 
+
     var chart = d3.box()
         .whiskers(iqr(1.5))
         .width(width)

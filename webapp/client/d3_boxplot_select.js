@@ -23,6 +23,128 @@ makeSelectableBoxPlot = function(backdrops) {
     while (svg.tagName != "svg")
         svg = svg.parentElement;
 
+    function resizeHandle(group, side, which) {
+        var self = this;
+
+        this.set_north = function(y) {
+            var y0 = handle_y();
+            group.attr('y', y);
+            var height = Math.max(10, parseFloat(group.attr('height')) - (y - y0));
+            group.attr('height', height);
+            this.resizeHandleRect.style('y', handle_y() +"px");
+
+            if (this.north && y < parseFloat(this.north.resizeHandleRect.style("y")))
+                this.north.set_south(y);
+        }
+        this.set_south = function(y) {
+            var y0 = handle_y();
+            var height = Math.max(10, parseFloat(group.attr('height')) - (y0 - y));
+            group.attr('height', height);
+            this.resizeHandleRect.style('y', handle_y() +"px");
+
+            if (this.south && y >  parseFloat(this.south.resizeHandleRect.style("y")))
+                this.south.set_north(y);
+        }
+
+        function handle_y() {
+            if (side == 'n') return parseFloat(group.attr("y"));
+            if (side == 's') return parseFloat(group.attr("y")) + parseFloat(group.attr("height"));
+        }
+
+        this.resizeHandleRect = d3.select(gNode).append("rect").style(
+                { x: group.style("x"), y: handle_y(), width: backdrop_width, height: 10, 
+                fill: "orange", "fill-opacity": 0.5}) ;
+
+        this.tip = d3.tip().attr('class', 'd3-tip')
+        this.tip.direction('e');
+        this.resizeHandleRect.call(this.tip)
+
+
+        this.resizeHandleRect.on("mouseout", function() {
+                d3.select("body").style("cursor", "pointer");
+        });
+        this.resizeHandleRect.on("mouseover", function() {
+                d3.select("body").style("cursor", side + "-resize");
+                if (!group.inMotion)
+                    return;
+                d3.event.stopPropagation();
+            });
+
+        this.resizeHandleRect.on("mouseup", function() {
+                if (group.inMotion)
+                    group.inMotion = false;
+                d3.event.stopPropagation();
+                d3.select("body").style("cursor", "pointer");
+            });
+
+        this.resizeHandleRect.on("mousedown", function() {
+                d3.event.stopPropagation();
+                group.inMotion = true;
+
+                // Here is the big trick. We put an invisible scrim over the entire area, so that all events are directed here.
+                var resizeScrim = d3.select(gNode).append("rect").style(
+                    { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
+                    fill: "transparent", "fill-opacity": 0}) ;
+
+                resizeScrim.on("mouseup", function() { 
+                    group.inMotion = false;
+                    d3.event.stopPropagation(); 
+                    resizeScrim.remove() 
+                });
+                resizeScrim.on("mouseout", function() { 
+                    group.inMotion = false;
+                    d3.event.stopPropagation();
+                    resizeScrim.remove();
+                });
+                resizeScrim.on("mousemove", function() {
+                        d3.event.stopPropagation();
+                        var y = d3.mouse(gNode)[1];
+                        var yR = window.yRange.invert(y);
+                        debugger;
+                        var c = self.tip.attr("class");
+                        self.tip.html( " value = " + yR.toPrecision(3));
+                        self.tip.show();
+                        setTimeout(function() { self.tip.hide() }, 2000);
+
+                        if (side == 'n')
+                            self.set_north(y);
+                        else if (side == 's')
+                            self.set_south(y);
+
+                    });
+            });
+    } // resizeHandle
+
+    var hiGroup = d3.select(gNode).append("rect")
+      .attr({
+        class   : "selection",
+        x       : backdrop_x,
+        y       : 0,
+        width   : backdrop_width,
+        height  : backdrop_height/2
+    }).style("fill", "red");
+
+    var lowGroup = d3.select(gNode).append("rect")
+      .attr({
+        class   : "selection",
+        x       : backdrop_x,
+        y       : backdrop_height/2,
+        width   : backdrop_width,
+        height  : backdrop_height/2
+    }).style("fill", "blue");
+
+
+    var hiNorth = new resizeHandle(hiGroup, 'n', 'hi');
+    var hiSouth = new resizeHandle(hiGroup, 's', 'hi');
+    var lowNorth = new resizeHandle(lowGroup, 'n', 'low');
+    var lowSouth = new resizeHandle(lowGroup, 's', 'low');
+
+    hiSouth.south = lowNorth;
+    lowNorth.north = hiSouth;
+
+    return;
+
+
 
      var updateSelectedNodes = function (rect, tip) {
         var rect_x = parseFloat(rect.attr("x"));
@@ -49,197 +171,5 @@ makeSelectableBoxPlot = function(backdrops) {
         window.currentContrastTable.addToTable("Group1", data);
      }
 
-    function transformSelectionIntoGroup() {
-        // remove selection frame
-        // d3.selectAll( "rect.selection").remove();
-        //
-        var group = d3.select(svg).select('.selection')
-            .on("mousedown", null)
-            .on("mouseup", null)
-            .on("mouseout", null)
-            .classed({ "selection": false, "group": true});
-
-
-
-        var tip = d3.tip()
-          .attr('class', 'd3-tip')
-          .html(function(d) { return "d3 top"; });
-        group.call(tip);
-
-        updateSelectedNodes(group, tip)
-
-        function resizeHandle(side) {
-            function handle_y() {
-                if (side == 'n') return parseInt(group.attr("y"));
-                if (side == 's') return parseInt(group.attr("y")) + parseInt(group.attr("height"));
-            }
-
-            var resizeHandle = d3.select(gNode).append("rect").style(
-                    { x: group.style("x"), y: handle_y(),
-                      width: backdrop_width, height: 10, 
-                    fill: "orange", "fill-opacity": 0.5}) ;
-
-            resizeHandle.on("mouseout", function() {
-                    d3.select("body").style("cursor", "pointer");
-            });
-            resizeHandle.on("mouseover", function() {
-                    d3.select("body").style("cursor", side + "-resize");
-                    if (!group.inMotion)
-                        return;
-                    d3.event.stopPropagation();
-                });
-
-            resizeHandle.on("mouseup", function() {
-                    if (group.inMotion)
-                        group.inMotion = false;
-                    d3.event.stopPropagation();
-                    d3.select("body").style("cursor", "pointer");
-                });
-
-            resizeHandle.on("mousedown", function() {
-                    d3.event.stopPropagation();
-                    group.inMotion = true;
-
-                    // Here is the big trick. We put an invisible scrim over the entire area, so that all events are directed here.
-                    var resizeScrim = d3.select(gNode).append("rect").style(
-                        { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
-                        fill: "transparent", "fill-opacity": 0}) ;
-
-                    resizeScrim.on("mouseup", function() { 
-                        group.inMotion = false;
-                        d3.event.stopPropagation(); 
-                        resizeScrim.remove() 
-                    });
-                    resizeScrim.on("mouseout", function() { 
-                        group.inMotion = false;
-                        d3.event.stopPropagation();
-                        resizeScrim.remove();
-                    });
-                    resizeScrim.on("mousemove", function() {
-                            d3.event.stopPropagation();
-                            var y = d3.mouse(gNode)[1];
-
-                            var y0 = handle_y();
-
-                            if (side == 'n') {
-                                group.attr('y', y);
-                                var height = Math.max(10, parseInt(group.attr('height')) - (y - y0));
-                                group.attr('height', height);
-                            } else if (side == 's') {
-                                var height = Math.max(10, parseInt(group.attr('height')) - (y0 - y));
-                                group.attr('height', height);
-                            }
-
-                            resizeHandle.style('y', handle_y() +"px");
-                        });
-                });
-
-            return resizeHandle;
-        }
-
-
-        resizeHandle('n');
-        resizeHandle('s');
-
-        group.on("mouseover", function hover() {
-            tip.show();
-        });
-
-        group.on("mouseout", function hover() {
-            setTimeout(function() {
-                tip.hide();
-            }, 5000);
-        });
-
-    }
-
-    function backdrop_mouseout() {
-        d3.event.stopPropagation();
-        var selection = d3.select(".selection");
-        if (selection.empty())
-            return;
-        if(  d3.event.relatedTarget && d3.event.relatedTarget.tagName=='HTML') 
-            transformSelectionIntoGroup();
-    }
-
-    function backdrop_mouseup() {
-        d3.event.stopPropagation();
-        window.SuppressRollover = false;
-
-        var selection = d3.select(".selection");
-        if (selection.empty())
-            return;
-        transformSelectionIntoGroup();
-    };
-    function backdrop_mousemove() {
-        d3.event.stopPropagation();
-        var selection = d3.select(".selection");
-        if (selection.empty())
-            return;
-
-        var p = d3.mouse(gNode);
-        var py = p[1],
-            y1 = parseInt( selection.attr( "y"), 10),
-            y2 = y1 + parseInt( selection.attr( "height"), 10);
-
-
-        if (py < window.startY) {
-            y1 = py;
-            y2 = window.startY;
-        } else {
-            y1 = window.startY;
-            y2 = py;
-        }
-
-
-
-        var rectangle = {
-            x       : backdrop_x, // parseInt( selection.attr( "x"), 10),
-            y       : y1,
-            width   : backdrop_width, // parseInt( selection.attr( "width"), 10),
-            height  : y2 - y1,
-        };
-
-       
-
-
-        selection.attr(rectangle);
-
-        // deselect all temporary selected state objects
-        d3.selectAll('.selected').classed( "selected", false);
-    }
-
-    backdrop.on( "mousedown", function() {
-
-        d3.event.stopPropagation();
-
-        window.SuppressRollover = true;
-        clearToolTip(); // this is the  boxplot sample info tooltip
-
-        if( !d3.event.ctrlKey) {
-            d3.selectAll( 'g.selected').classed( "selected", false);
-        }
-        var p = d3.mouse(gNode);
-
-        var rect = d3.select(gNode).append("rect")
-          .attr({
-            class   : "selection",
-            x       : backdrop_x,
-            y       : p[1],
-            width   : backdrop_width,
-            height  : 0
-        })
-        .on( "mousemove", backdrop_mousemove)
-        .on( "mouseup", backdrop_mouseup)
-        .on( "mouseout", backdrop_mouseout);
-
-        rect.startX = p[0];
-        window.startY = p[1];
-
-
     })
-    .on( "mousemove", backdrop_mousemove)
-    .on( "mouseup", backdrop_mouseup)
-    .on( "mouseout", backdrop_mouseout);
- }) // each
 }

@@ -16,6 +16,13 @@ rect.group {
     fill-opacity    : 0.5;
 }
 
+.d3-tip {
+    border: 1px;
+    border-color: black;
+    background: yellow;
+    font-size: 14px;
+}
+
 g.selectable circle {
     stroke  : gray;
     cursor  : pointer;
