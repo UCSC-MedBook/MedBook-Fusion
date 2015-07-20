@@ -360,13 +360,17 @@ renderChart = function() {
         console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
+
+        var f = null;
+
         if (fields != true) {
-            var f = Object.keys(fields);
+            f = Object.keys(fields);
             if (f.length == 1 && f[0] == "updatedAt")
                 return;
             if (f.length == 2 && _.isEqual(f.sort(), [ "pivotTableConfig", "updatedAt"])
                 && _.isEqual(currentChart.pivotTableConfig,  fields.pivotTableConfig))
                 return
+
 
             $.extend(currentChart, fields); // VERY IMPORTNT
 
@@ -374,6 +378,10 @@ renderChart = function() {
                 return
         }
         Session.set("CurrentChart", currentChart);
+
+        if (f && f.length == 2 && _.isEqual(f.sort(), [ "contrast", "updatedAt"]))
+            return
+
         initializeSpecialJQueryElements(currentChart)
 
         templateContext = { 

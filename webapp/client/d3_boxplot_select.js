@@ -2,9 +2,6 @@
  * bug D3 does not handle nested svg gracefully.
  * http://stackoverflow.com/questions/17494930/d3-onmouseover-event-does-not-work-with-nested-svg-elements
  */
-bridgeTip = function() {
-    debugger;
-}
 
 makeSelectableBoxPlot = function(backdrops) {
 
@@ -100,7 +97,6 @@ makeSelectableBoxPlot = function(backdrops) {
                         d3.event.stopPropagation();
                         var y = d3.mouse(gNode)[1];
                         var yR = window.yRange.invert(y);
-                        debugger;
                         var c = self.tip.attr("class");
                         self.tip.html( " value = " + yR.toPrecision(3));
                         self.tip.show();
@@ -111,6 +107,8 @@ makeSelectableBoxPlot = function(backdrops) {
                         else if (side == 's')
                             self.set_south(y);
 
+                        updateGroup("High", hiGroup);
+                        updateGroup("Low", lowGroup);
                     });
             });
     } // resizeHandle
@@ -142,34 +140,67 @@ makeSelectableBoxPlot = function(backdrops) {
     hiSouth.south = lowNorth;
     lowNorth.north = hiSouth;
 
-    return;
 
 
 
-     var updateSelectedNodes = function (rect, tip) {
+     var updateGroup = function (name, rect) {
+
         var rect_x = parseFloat(rect.attr("x"));
         var rect_y = parseFloat(rect.attr("y"));
         var rect_width = parseFloat(rect.attr("width"));
         var rect_height = parseFloat(rect.attr("height"));
 
-        var data = [];
+
+        var group = {
+            name: name,
+            yRangeStart: window.yRange.invert(rect_y),
+            yRangeEnd: window.yRange.invert(rect_y + rect_height),
+            samplelist:[]
+        };
+
 
         d3.select(gNode).selectAll('circle').each( function( sample, i) {
             var circle = d3.select(this);
             var circle_x = parseFloat(circle.attr("cx"));
             var circle_y = parseFloat(circle.attr("cy"));
-            if ( rect_x <= circle_x && circle_x <= rect_x + rect_width && rect_y <= circle_y && circle_y <= rect_y + rect_height)
-            {
-            data.push(sample);
+            if ( rect_x <= circle_x && circle_x <= rect_x + rect_width && rect_y <= circle_y && circle_y <= rect_y + rect_height) {
+                var s = {"Patient": sample.Patient};
+                if ('Sample' in sample)
+                    s.Sample = sample.Sample;
+                group.samplelist.push(s);
             }
         });
-        rect.data = data;
-        // Overlay("Inspector", { data: data, title: "Selected Samples", });
-        tip.html(
-            '<button id="bridgeTipButton" onclick="bridgeTip(this)" type="button" style="margin:10px;" class="btn btn-default">' + data.length + ' selected </button>'
-        );
-        window.currentContrastTable.addToTable("Group1", data);
+        group.samplelist = group.samplelist.sort(function (a,b) { 
+                try {
+                    return a.Patient.localeCompare(b.Patient)
+                } catch (err) {
+                    debugger
+                    return 0;
+                }
+        });
+
+        // Overlay("Inspector", { samplelist: samplelist, title: "Selected Samples", });
+        var cc = Session.get("CurrentChart");
+        var contrast;
+       
+        if (cc.contrast) {
+            contrast = cc.contrast;
+            var replaced = false;
+            contrast.groups.map(function(g, i) {
+                if (g.name == group.name) {
+                    contrast.groups[i] = group; //clumsy
+                    replaced = true;
+                }
+            });
+            if (!replaced)
+                contrast.groups.push(group);
+        } else {
+            contrast = {name: "contrastName", groups: [group]};
+        }
+        Charts.update({_id: cc._id}, {$set: { contrast: contrast}});
      }
 
-    })
+     updateGroup("High", hiGroup);
+     updateGroup("Low", lowGroup);
+    }) // each backdrop
 }

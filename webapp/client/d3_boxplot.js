@@ -176,8 +176,6 @@ var PlotHeight = 500;
 var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
-window.currentContrastTable = null;
-
 
 window.makeD3BoxPlotChart= function(chartType, extraOptions) {
   return function(pivotData, opts, exclusions) {
@@ -224,7 +222,6 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
             appendTo(window.$div);
             */
         addMedBookButtons(window.$div, null)
-        window.currentContrastTable = new ContrastTable(window.$div);
         return window.$div
     }
 };

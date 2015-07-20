@@ -90,6 +90,16 @@
     <div style="display: inline-block;" class="dataExplorerControlPanel">
         <div class="output" style="margin: 30px;"></div>
     </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"  data-toggle="collapse" data-target="#pb">
+          <h3 class="panel-title">Box Plot Contrast</h3>
+       </div>
+       <div id="pb" class="panel-body collapse">
+            {{> BoxPlotContrastTable}}
+       </div>
+    </div>
+
 </template>
 
 <template name="Transforms">
@@ -144,3 +154,4 @@
   <h2>Geneset</h2>
   <div id="chart1" width="100%"></div>
 </template>
+

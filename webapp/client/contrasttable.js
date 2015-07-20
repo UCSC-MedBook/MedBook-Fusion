@@ -1,12 +1,10 @@
 ContrastTable = function(attachPoint) {
-    debugger;
     var groupTable = $("<table class='table table-responsive'>").attr("cellpadding", 5).appendTo(attachPoint);
     var header = $("<thead><tr><th>Group</th><th>Samples</th></tr></thead>").appendTo(groupTable);
     this.tableBody = $("<tbody>").appendTo(groupTable);
 
 
     this.addToTable = function(groupName, samples) {
-       debugger;
        var tr = $("<tr >").appendTo(this.tableBody);
        var td = $("<td><i><span class='groupName'> " + groupName + "</span></i></td>").appendTo(tr);
        var select = $("<select class='contrastGroup form-control input-sm'>").appendTo(td);
