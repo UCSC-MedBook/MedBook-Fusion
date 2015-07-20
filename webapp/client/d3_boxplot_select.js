@@ -28,18 +28,18 @@ makeSelectableBoxPlot = function(backdrops) {
             group.attr('y', y);
             var height = Math.max(10, parseFloat(group.attr('height')) - (y - y0));
             group.attr('height', height);
-            this.resizeHandleRect.style('y', handle_y() +"px");
+            this.resizeHandleRect.attr('y', handle_y());
 
-            if (this.north && y < parseFloat(this.north.resizeHandleRect.style("y")))
+            if (this.north && y < parseFloat(this.north.resizeHandleRect.attr("y")))
                 this.north.set_south(y);
         }
         this.set_south = function(y) {
             var y0 = handle_y();
             var height = Math.max(10, parseFloat(group.attr('height')) - (y0 - y));
             group.attr('height', height);
-            this.resizeHandleRect.style('y', handle_y() +"px");
+            this.resizeHandleRect.attr('y', handle_y());
 
-            if (this.south && y >  parseFloat(this.south.resizeHandleRect.style("y")))
+            if (this.south && y >  parseFloat(this.south.resizeHandleRect.attr("y")))
                 this.south.set_north(y);
         }
 
@@ -48,9 +48,9 @@ makeSelectableBoxPlot = function(backdrops) {
             if (side == 's') return parseFloat(group.attr("y")) + parseFloat(group.attr("height"));
         }
 
-        this.resizeHandleRect = d3.select(gNode).append("rect").style(
-                { x: group.style("x"), y: handle_y(), width: backdrop_width, height: 10, 
-                fill: "orange", "fill-opacity": 0.5}) ;
+        this.resizeHandleRect = d3.select(gNode).append("rect")
+            .attr({ x: group.attr("x"), y: handle_y(), width: backdrop_width, height: 10})
+            .style({ fill: "orange", "fill-opacity": 0.5}) ;
 
         this.tip = d3.tip().attr('class', 'd3-tip')
         this.tip.direction('e');
@@ -79,9 +79,9 @@ makeSelectableBoxPlot = function(backdrops) {
                 group.inMotion = true;
 
                 // Here is the big trick. We put an invisible scrim over the entire area, so that all events are directed here.
-                var resizeScrim = d3.select(gNode).append("rect").style(
-                    { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
-                    fill: "transparent", "fill-opacity": 0}) ;
+                var resizeScrim = d3.select(gNode).append("rect")
+                    .attr({ x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height})
+                    .style({fill: "yellow", "fill-opacity": 0.0}) ;
 
                 resizeScrim.on("mouseup", function() { 
                     group.inMotion = false;
