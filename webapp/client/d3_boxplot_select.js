@@ -2,6 +2,10 @@
  * bug D3 does not handle nested svg gracefully.
  * http://stackoverflow.com/questions/17494930/d3-onmouseover-event-does-not-work-with-nested-svg-elements
  */
+bridgeTip = function() {
+    debugger;
+}
+
 makeSelectableBoxPlot = function(backdrops) {
 
   backdrops .each( function( ) {
@@ -19,23 +23,53 @@ makeSelectableBoxPlot = function(backdrops) {
     while (svg.tagName != "svg")
         svg = svg.parentElement;
 
-    tip = d3.tip()
-      .attr('class', 'd3-tip')
-      .html(function(d) { return "d3 top"; });
+
+     var updateSelectedNodes = function (rect, tip) {
+        var rect_x = parseFloat(rect.attr("x"));
+        var rect_y = parseFloat(rect.attr("y"));
+        var rect_width = parseFloat(rect.attr("width"));
+        var rect_height = parseFloat(rect.attr("height"));
+
+        var data = [];
+
+        d3.select(gNode).selectAll('circle').each( function( sample, i) {
+            var circle = d3.select(this);
+            var circle_x = parseFloat(circle.attr("cx"));
+            var circle_y = parseFloat(circle.attr("cy"));
+            if ( rect_x <= circle_x && circle_x <= rect_x + rect_width && rect_y <= circle_y && circle_y <= rect_y + rect_height)
+            {
+            data.push(sample);
+            }
+        });
+        rect.data = data;
+        // Overlay("Inspector", { data: data, title: "Selected Samples", });
+        tip.html(
+            '<button id="bridgeTipButton" onclick="bridgeTip(this)" type="button" style="margin:10px;" class="btn btn-default">' + data.length + ' selected </button>'
+        );
+        window.currentContrastTable.addToTable("Group1", data);
+     }
 
     function transformSelectionIntoGroup() {
         // remove selection frame
         // d3.selectAll( "rect.selection").remove();
         //
-        var group = d3.select(svg).selectAll('.selection')
+        var group = d3.select(svg).select('.selection')
             .on("mousedown", null)
             .on("mouseup", null)
             .on("mouseout", null)
             .classed({ "selection": false, "group": true});
 
+
+
+        var tip = d3.tip()
+          .attr('class', 'd3-tip')
+          .html(function(d) { return "d3 top"; });
+        group.call(tip);
+
+        updateSelectedNodes(group, tip)
+
         function resizeHandle(side) {
             function handle_y() {
-                if (window.NOW) debugger;
                 if (side == 'n') return parseInt(group.attr("y"));
                 if (side == 's') return parseInt(group.attr("y")) + parseInt(group.attr("height"));
             }
@@ -66,6 +100,7 @@ makeSelectableBoxPlot = function(backdrops) {
                     d3.event.stopPropagation();
                     group.inMotion = true;
 
+                    // Here is the big trick. We put an invisible scrim over the entire area, so that all events are directed here.
                     var resizeScrim = d3.select(gNode).append("rect").style(
                         { x: backdrop_x, y: backdrop_y, width: backdrop_width, height: backdrop_height,
                         fill: "transparent", "fill-opacity": 0}) ;
@@ -95,7 +130,6 @@ makeSelectableBoxPlot = function(backdrops) {
                                 group.attr('height', height);
                             }
 
-                            window.NOW = true;
                             resizeHandle.style('y', handle_y() +"px");
                         });
                 });
@@ -112,12 +146,14 @@ makeSelectableBoxPlot = function(backdrops) {
         });
 
         group.on("mouseout", function hover() {
-            tip.hide();
+            setTimeout(function() {
+                tip.hide();
+            }, 5000);
         });
 
     }
 
-    function mouseout() {
+    function backdrop_mouseout() {
         d3.event.stopPropagation();
         var selection = d3.select(".selection");
         if (selection.empty())
@@ -126,14 +162,16 @@ makeSelectableBoxPlot = function(backdrops) {
             transformSelectionIntoGroup();
     }
 
-    function mouseup() {
+    function backdrop_mouseup() {
         d3.event.stopPropagation();
+        window.SuppressRollover = false;
+
         var selection = d3.select(".selection");
         if (selection.empty())
             return;
         transformSelectionIntoGroup();
     };
-    function mousemove() {
+    function backdrop_mousemove() {
         d3.event.stopPropagation();
         var selection = d3.select(".selection");
         if (selection.empty())
@@ -166,22 +204,9 @@ makeSelectableBoxPlot = function(backdrops) {
 
 
         selection.attr(rectangle);
+
         // deselect all temporary selected state objects
         d3.selectAll('.selected').classed( "selected", false);
-        /*
-        d3.selectAll(gNode).selectAll('circle').each( function( state_data, i) {
-            if( 
-                !d3.select( this).classed( "selected") && 
-                    // inner circle inside selection frame
-                state_data.x-radius>=rectangle.x && state_data.x+radius<=rectangle.x+rectangle.width && 
-                state_data.y-radius>=rectangle.y && state_data.y+radius<=rectangle.y+rectangle.height
-            ) {
-
-                .classed( "selection", true)
-                .classed( "selected", true);
-            }
-        });
-        */
     }
 
     backdrop.on( "mousedown", function() {
@@ -189,7 +214,8 @@ makeSelectableBoxPlot = function(backdrops) {
         d3.event.stopPropagation();
 
         window.SuppressRollover = true;
-        clearToolTip();
+        clearToolTip(); // this is the  boxplot sample info tooltip
+
         if( !d3.event.ctrlKey) {
             d3.selectAll( 'g.selected').classed( "selected", false);
         }
@@ -203,18 +229,17 @@ makeSelectableBoxPlot = function(backdrops) {
             width   : backdrop_width,
             height  : 0
         })
-        .on( "mousemove", mousemove)
-        .on( "mouseup", mouseup)
-        .on( "mouseout", mouseout);
+        .on( "mousemove", backdrop_mousemove)
+        .on( "mouseup", backdrop_mouseup)
+        .on( "mouseout", backdrop_mouseout);
 
         rect.startX = p[0];
         window.startY = p[1];
 
-    rect.call(tip);
 
     })
-    .on( "mousemove", mousemove)
-    .on( "mouseup", mouseup)
-    .on( "mouseout", mouseout);
+    .on( "mousemove", backdrop_mousemove)
+    .on( "mouseup", backdrop_mouseup)
+    .on( "mouseout", backdrop_mouseout);
  }) // each
 }

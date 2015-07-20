@@ -149,6 +149,7 @@ Meteor.startup(function() {
             var row_label = groupArray[r + 1][0];
             var data = groupArray[r + 1][c];
             console.log("GROUP", col_label, row_label, data);
+            debugger;
             window.POKECONTRAST(data)
         }
 
@@ -179,6 +180,7 @@ Meteor.startup(function() {
         editChartBtn.click(editChart);
         */
         addMedBookButtons(result, groupArray);
+
         return result;
       };
     };
