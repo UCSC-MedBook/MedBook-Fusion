@@ -1,6 +1,14 @@
 
-DIPSC_coll = new Meteor.Collection("DIPSC");
+HTTP.methods({
+ hello: function(data){
+    var response = "hello world\n";
+    this.setStatusCode(200)
+    return response;
+ }
+});
+
 DIPSC_coll._ensureIndex({gen:1});
+
 
 dipsc_usecase = function() {
     DIPSC_coll.find({gen: "correlation", phenotype:"high_psa"})
@@ -9,7 +17,6 @@ dipsc_usecase = function() {
 dipsc_correlate = function(shufflePlan, phe1, phe2) {
     return DIPSC_coll.find({gen: "correlation", phenotype:"high_psa"})
 }
-
 
 
 dipsc_incremental = function(chart_id) {
@@ -46,6 +53,28 @@ function getPhe(chart_id) {
    return chart;
 }
 
+dipsc_snarf = function(dipsc_id) {
+    var b = new Date();
+   console.log("snarfing");
+   var dir = process.env.MEDBOOK_WORKSPACE + "DIPSC/";
+   dir +=  dipsc_id + "/";
+
+   var corrFileName = dir + "correlations.tab";
+   var pValuesFileName = dir + "pValues.tab";
+   var varFileName = dir + "variances.tab";
+
+  // JOURNAL output after commmand
+   DIPSC_coll.upsert({_id: dipsc_id}, 
+       {output: {
+           "status": 0,
+           correlations: parseTSV(corrFileName),
+           pValues: parseTSV(pValuesFileName),
+           variances: parseTSV(varFileName)}});
+   console.log("done reading ");
+    var e = new Date();
+    var t = e - b;
+   console.log("done snarfing ", t);
+};
 
 dipsc_classic = function(chart_id) { 
    var dipsc_id = DIPSC_coll.insert({chart_id: chart_id, gen: "classic"});
@@ -109,8 +138,8 @@ dipsc_classic = function(chart_id) {
    shlurp.on('error', function(error) { console.log(cmd + 'command failed '+error) });
    shlurp.on('close', function(retcode) {
 
-       // THE PROCESS IS DONE
-       Fiber(function() {
+   // THE PROCESS IS DONE
+   Fiber(function() {
            console.log('DIPSC', cmd, "done executing", retcode, new Date() - start);
 
           // JOURNAL output after commmand
@@ -120,12 +149,14 @@ dipsc_classic = function(chart_id) {
                    correlations: parseTSV(corrFileName),
                    pValues: parseTSV(pValuesFileName),
                    variances: parseTSV(varFileName)}});
+           Charts.update({_id: chart_id}, {$push: {dipsc_ids: dipsc_id}}); 
        }).run();  
     } );
 } 
 
 Meteor.methods({
    // dipsc : dipsc,
+   snarf : dipsc_snarf
 });
 
 function shuffle(a, n)  {
@@ -151,9 +182,5 @@ function shufflePlanFor(samplelist) {
 
 
 Meteor.startup(function() {
-    var b = new Date();
-    var a = shufflePlanFor(getPhe("yCLdYGyozBcKFzHfs").samplelist);
-    var e = new Date();
-    var t = e - a;
-    console.log("getPhe", t);
 });
+

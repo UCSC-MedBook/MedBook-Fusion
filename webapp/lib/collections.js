@@ -1,5 +1,6 @@
 CRFmetadataCollection = new Meteor.Collection("CRFmetadataCollection");
 
+DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
 Expression = new Meteor.Collection('expression2');
 ExpressionIsoform = new Meteor.Collection('expression_isoform');

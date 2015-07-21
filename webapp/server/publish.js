@@ -2,6 +2,11 @@
 Meteor.publish('studies', function() {
     return Studies.find({});
 });
+Meteor.publish('DIPSC', function(_id) {
+    var cursor = DIPSC_coll.find({_id: _id});
+    console.log("DIPSC publish", _id, cursor.count());
+    return cursor;
+});
 
 Meteor.publish('Chart', function(_id) {
     var q;

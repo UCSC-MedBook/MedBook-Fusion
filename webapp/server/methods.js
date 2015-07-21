@@ -7,9 +7,10 @@ parseTSV = function(filename) {
     console.log("parseTSV", filename);
     try {
         var content = String(fs.readFileSync(filename));
+
         if (content && content.length >0) {
             var lines = content.split("\n");
-            if (lines > 0) {
+            if (lines.length > 0) {
                 var rows = lines
                     .map(function (line) { 
                             var res = line && line.split("\t");
