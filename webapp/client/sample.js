@@ -35,6 +35,13 @@ Meteor.startup(function() {
 
 
 Template.Controls.helpers({
+   dipsc : function() {
+      var dipsc_id =  CurrentChart("dipsc_id");
+      if (dipsc_id == null) return null;
+      Meteor.subscribe("DIPSC", dipsc_id);
+      var dipsc =  DIPSC_coll.findOne({_id: dipsc_id});
+      return dipsc;
+   },
    geneLikeDataDomains : function() {
       var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
       if (prevGeneLikeDataDomains)
@@ -122,6 +129,14 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'click #DIPSC' : function(evt, tmpl) {
+      var dipsc_id =  CurrentChart("dipsc_id");
+      if (dipsc_id == null)
+          return;
+      var dipsc = DIPSC_coll.findOne({_id: dipsc_id}); 
+      if (dipsc)
+          Overlay("DIPSC", dipsc);
+   },
    'change .transform' : function(evt, tmpl) {
        var transforms = [];
        $('.transform').map(function(i, e) {
@@ -355,6 +370,9 @@ renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
     var currentChart = watch.fetch()[0];
+
+    var dipsc_id =  CurrentChart("dipsc_id");
+    Meteor.subscribe("DIPSC", dipsc_id);
 
     RefreshChart = function(id, fields) {
         console.log("RefreshChart", id, fields);
