@@ -217,11 +217,9 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
 
         processStrata(strata, strataSampleSets, $pVals);
 
-        /*
-        var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  
-            appendTo(window.$div);
-            */
         addMedBookButtons(window.$div, null)
+        $('<button type="button" onclick="selectContrast()" style="margin:10px;" class="btn btn-default">Select Contrast</button>').  
+            appendTo(window.$div);
         return window.$div
     }
 };
@@ -253,6 +251,9 @@ function iqr(k) {
   };
 }
 
+selectContrast = function() {
+  makeSelectableBoxPlot(d3.select(".backdrop"));
+}
 
 function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategoricalVariables) {
 
@@ -405,7 +406,6 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
       svgTop.attr("width", X + 500); // approximate size of legend
       svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
 
-      makeSelectableBoxPlot(backdrop);
 
       setTimeout(function() {
           var legendText =  d3.selectAll("text.legendText");
