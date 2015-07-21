@@ -112,44 +112,24 @@ makeSelectableBoxPlot = function(backdrops) {
                     });
             });
     } // resizeHandle
-    var hi = {
+
+    var hiGroup = d3.select(gNode).append("rect")
+      .attr({
         class   : "selection",
         x       : backdrop_x,
         y       : 0,
         width   : backdrop_width,
         height  : backdrop_height/2
-    };
+    }).style("fill", "red");
 
-    var low = {
+    var lowGroup = d3.select(gNode).append("rect")
+      .attr({
         class   : "selection",
         x       : backdrop_x,
         y       : backdrop_height/2,
         width   : backdrop_width,
         height  : backdrop_height/2
-    }
-
-
-    var cc = Session.get("CurrentChart");
-    debugger;
-
-    // restore previous ranges if stored in CurrentChart
-    if (cc.contrast.groups && cc.contrast.groups.length == 2) { 
-        var h,l;
-        if (cc.contrast.groups[0].name == "Low") {
-            l = cc.contrast.groups[0];
-            h = cc.contrast.groups[1];
-        } else {
-            l = cc.contrast.groups[1];
-            h = cc.contrast.groups[0];
-        }
-        low.y = yRange(l.yRangeStart);
-        low.height = yRange(l.yRangeEnd) - low.y;
-        hi.y = yRange(h.yRangeStart);
-        hi.height = yRange(h.yRangeEnd) - hi.y;
-    }
-
-    var hiGroup = d3.select(gNode).append("rect") .attr(hi).style("fill", "red");
-    var lowGroup = d3.select(gNode).append("rect") .attr(low).style("fill", "blue");
+    }).style("fill", "blue");
 
 
     var hiNorth = new resizeHandle(hiGroup, 'n', 'hi');
@@ -159,6 +139,7 @@ makeSelectableBoxPlot = function(backdrops) {
 
     hiSouth.south = lowNorth;
     lowNorth.north = hiSouth;
+
 
 
 
