@@ -2,13 +2,13 @@
 var SCREENWIDTH  = 600;
 var SCREENHEIGHT = 700;
 var FONTSIZE =  12;
-var margin = 25;
+var margin = 40;
 var thermWidth = 10;
 
 var titleY = margin;
 var PHEHEIGHT = 1.2*FONTSIZE;
 var thermX = SCREENWIDTH - (7*FONTSIZE); // thermometer X offset
-var textX =  thermX - (3*thermWidth);
+var textX =  thermX - (5*thermWidth);
 var thermY = titleY + (2*FONTSIZE); // thermometer Y offset
 var thermHeight = SCREENHEIGHT - (3*margin); // annotations to the right of the thermoment
 var thermHalf = thermHeight/2;
@@ -16,7 +16,7 @@ var thermHalf = thermHeight/2;
 var dipstickPaper = null;
 
 
-function Load(CurrentChart, SelectedItem) {
+function Load(CurrentChart, DIPSCSelectedItem) {
     if (dipstickPaper == null)
         return;
     dipstickPaper.clear();
@@ -34,6 +34,8 @@ function Load(CurrentChart, SelectedItem) {
         M[key] = i;
         N[i] = key;
     });
+    if (DIPSCSelectedItem == null)
+        DIPSCSelectedItem = N[1]; // 0 would be id, so lets just pick 1
 
 
     var ResultsDisplayList = _.clone(results[0])
@@ -42,7 +44,7 @@ function Load(CurrentChart, SelectedItem) {
 
 
     ResultsDisplayList.sort(function(a,b) { 
-        var r  = results[SelectedItem];
+        var r  = results[M[DIPSCSelectedItem]];
         try {
             var aa = parseFloat(r[M[a]])
             var bb = parseFloat(r[M[b]])
@@ -81,14 +83,14 @@ function Load(CurrentChart, SelectedItem) {
     therm.attr({ "fill":  "90-#00f-#fff:45-#f00", "fill-opacity": 0.5 });
 
     function LayoutTheResults(fresh) {
-        TitleText.attr({text : N[SelectedItem].replace("_PHENOTYPE","")});
+        TitleText.attr({text : DIPSCSelectedItem.replace("_PHENOTYPE","")});
         currY = thermY;
         present = new Object
         if (lineSet)
            lineSet.remove()
         lineSet = dipstickPaper.set()
         ResultsDisplayList.map(function(p,i) {
-            var value = parseFloat(results[SelectedItem][M[p]]);
+            var value = parseFloat(results[M[DIPSCSelectedItem]][M[p]]);
             if (i > 10 && i < (ResultsDisplayList.length -10) && !/=/.test(p) ) {
                if (p in YG) {
                   YG[p].remove()
@@ -101,17 +103,14 @@ function Load(CurrentChart, SelectedItem) {
                 var phe = YG[p]
                 if (currY != phe[0].attr("y") || 1 != phe[0].attr("x")) {
                    phe.attr({y:currY})
-                   // phe.animate( {x: textX, y:currY}, DELAY, ">")
-                   // var t =  p + " "+ results[SelectedItem][p];
-                   // phe.attr({text:t})
                 }
             } else {
                 var phe = makeOneResult(p,i)
                 YG[p] = phe
             }
             phe.button.pearsonR = value
-            phe.button.pValue = pValues[SelectedItem][M[p]];
-            phe.button.vari = variances[SelectedItem][M[p]];
+            phe.button.pValue = pValues[M[DIPSCSelectedItem]][M[p]];
+            phe.button.vari = variances[M[DIPSCSelectedItem]][M[p]];
             present[p] = i;
 
             // draw line
@@ -153,7 +152,7 @@ function Load(CurrentChart, SelectedItem) {
             button.click(function(event){ 
                       if (highlight)
                           highlight.remove()
-                      Session.set("SelectedItem", M[this.entry]);
+                      Session.set("DIPSCSelectedItem", this.entry);
                   })
 
             st.button = button
@@ -198,12 +197,11 @@ function Load(CurrentChart, SelectedItem) {
 Template.DIPSC.onRendered(function() {
     dipstickPaper = Raphael("dipstickPaper", SCREENWIDTH, SCREENHEIGHT);
     dipstickPaper.canvas.style.backgroundColor = '#FFF';
-    Session.set("SelectedItem", 1);
 });
 
 
 Template.DIPSC.helpers({
    ready : function() {
-       Load(Template.currentData(), Session.get("SelectedItem"));
+       Load(Template.currentData(), Session.get("DIPSCSelectedItem"));
    }
 });

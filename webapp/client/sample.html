@@ -103,9 +103,15 @@
 
     {{#with dipsc}}
         <div class="panel panel-default">
-            <center>
+          <div id="pb" class="panel-body">
+            <div class="leftdiv" style="font-size:5" >
+                Most important correlations:
+                {{>Picker data=mostImportantCorrelations settings=mostImportantCorrelationsFields}}
+            </div>
+            <div class="rightdiv">
                 {{> DIPSC}}
-            </center>
+            </div>
+          </div>
         </div>
     {{/with}}
 

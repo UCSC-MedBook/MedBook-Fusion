@@ -64,3 +64,21 @@ body {
 .includeThisGene {
     background: blue;
 }
+
+.leftdiv{
+    float:left;
+    width:50%;
+    overflow:hidden;
+}
+.rightdiv{
+    float:left;
+    width:50%;
+    overflow:hidden;
+} 
+.correlate-headerCell {
+    font-size:12px;
+}
+
+.correlate-cell {
+    font-size:11px;
+}
