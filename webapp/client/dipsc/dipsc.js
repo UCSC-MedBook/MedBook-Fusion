@@ -1,14 +1,24 @@
-
 Template.DIPSC.helpers({
    ready : function() {
        return "here we are";
    }
 });
 
-SCREENWIDTH  = 1400;
-SCREENHEIGHT = 1000;
-FONTSIZE =  24;
-PHEHEIGHT = 30;
+var SCREENWIDTH  = 1400;
+
+var SCREENHEIGHT = 1000;
+var FONTSIZE =  24;
+var margin = 50;
+var thermWidth = 20;
+
+var titleY = margin;
+var PHEHEIGHT = 1.2*FONTSIZE;
+var thermX = SCREENWIDTH/2; // thermometer X offset
+var textX =  thermX - (2*thermWidth);
+var thermY = titleY + (2*FONTSIZE); // thermometer Y offset
+var thermHeight = SCREENHEIGHT - (3*margin); // annotations to the right of the thermoment
+var thermHalf = thermHeight/2;
+
 
 var SelectedItem = 1;
 
@@ -40,7 +50,6 @@ Template.DIPSC.onRendered(function() {
 
         ResultsDisplayList.shift();  // we don't need "id";
 
-        UNITWIDTH = 5
 
         ResultsDisplayList.sort(function(a,b) { 
             var r  = results[SelectedItem];
@@ -61,41 +70,28 @@ Template.DIPSC.onRendered(function() {
         var TitleText = null;
         var maxWidth = 0;
 
+        id = results["id"];
+        currY = FONTSIZE +100;
+        FIRSTBUTTON = null;
 
+        var very = heatmap.text(thermX + 2*thermWidth,thermY,"+1 very correlated")
+        very.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
 
-            id = results["id"];
-            currY = FONTSIZE +100;
-            FIRSTBUTTON = null;
+        var zero = heatmap.text(thermX + 2*thermWidth,thermY + thermHalf,"0 uncorrelated")
+        zero.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
 
-            var titleY =4*FONTSIZE
-            var textX =  650
-            var thermX = 700
-            var thermY = titleY + (2*FONTSIZE)
-            var thermW = 20
-            var thermH = 800
-            var thermHalf = thermH/2
+        var anti = heatmap.text(thermX + 2*thermWidth,thermY + thermHeight,"-1 anti-correlated")
+        anti.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
 
-            var very = heatmap.text(thermX + 2*thermW,thermY,"+1 very correlated")
-            very.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
-
-            var zero = heatmap.text(thermX + 2*thermW,thermY + thermHalf,"0 uncorrelated")
-            zero.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
-
-            var anti = heatmap.text(thermX + 2*thermW,thermY + thermH,"-1 anti-correlated")
-            anti.attr({"font-size": 0.75*FONTSIZE, "text-anchor": "start"});
-
-            if (!TitleText)  {
-                TitleText = heatmap.text(thermX,titleY,"Something")
-                TitleText.attr({"font-size": 1.5*FONTSIZE, "text-anchor": "center"});
-            }
-            var therm = heatmap.rect(thermX, thermY, thermW, thermH);
-            therm.attr({ "fill":  "90-#00f-#fff:45-#f00", "fill-opacity": 0.5 });
-
-
+        if (!TitleText)  {
+            TitleText = heatmap.text(thermX,titleY,"Something")
+            TitleText.attr({"font-size": 1.5*FONTSIZE, "text-anchor": "center"});
+        }
+        var therm = heatmap.rect(thermX, thermY, thermWidth, thermHeight);
+        therm.attr({ "fill":  "90-#00f-#fff:45-#f00", "fill-opacity": 0.5 });
 
         function LayoutTheResults(fresh) {
             TitleText.attr({text : N[SelectedItem].replace("_PHENOTYPE","")});
-
             currY = thermY;
             present = new Object
             if (lineSet)
@@ -130,7 +126,7 @@ Template.DIPSC.onRendered(function() {
 
                 // draw line
                 var y = Math.round(thermY + thermHalf - (value * thermHalf)) ;
-                var r = heatmap.rect(thermX, y, thermW, 2);
+                var r = heatmap.rect(thermX, y, thermWidth, 2);
                 lineSet.push(r);
                 if (phe.r)
                     phe.r.remove();
@@ -202,12 +198,6 @@ Template.DIPSC.onRendered(function() {
                 return st
             }
 
-
-            SetupWidth = function() {
-                imageX = maxWidth + 30;
-                imageWidth = SCREENWIDTH - imageX
-                unitWidth = UNITWIDTH; // FIX
-            }
 
             currY = PHEHEIGHT/2;
             LayoutTheResults(true);
