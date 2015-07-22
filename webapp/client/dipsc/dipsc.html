@@ -2,6 +2,24 @@
     <div id="dipstickPaper" >
         {{ ready }}
     </div>
+    <div id="pvalue-block-loc">
+        <div id="pvalue-block">
+            P-Value Cutoff Filter
+            <input type="number" min="0.000001" max="0.999999" id="pvalue-cutoff" value="0.05" />
+            <div id="pvalue-range"></div>
+            <div id="pvalue-range-labels">
+
+                <label style="left: -5%;  text-align: left;">.001</label>
+                <label style="left: 15%; text-align: center;">.01</label>
+                <label style="left: 37%; text-align: center;">.05</label>
+                <label style="left: 56.2%; text-align: center;">.1</label>
+                <label style="left: 78%; text-align: left;">.25</label>
+                <label style="right: 0%; text-align: left;">none</label>
+
+            </div>
+        </div>
+    </div>
+
 </template>
 
 

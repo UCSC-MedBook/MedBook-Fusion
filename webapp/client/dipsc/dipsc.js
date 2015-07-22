@@ -16,7 +16,7 @@ var thermHalf = thermHeight/2;
 var dipstickPaper = null;
 
 
-function Load(CurrentChart, DIPSCSelectedItem) {
+function Load(CurrentChart, DIPSCSelectedItem, pValueCutoff) {
     if (dipstickPaper == null)
         return;
     dipstickPaper.clear();
@@ -34,8 +34,21 @@ function Load(CurrentChart, DIPSCSelectedItem) {
         M[key] = i;
         N[i] = key;
     });
-    if (DIPSCSelectedItem == null)
-        DIPSCSelectedItem = N[1]; // 0 would be id, so lets just pick 1
+    if (DIPSCSelectedItem == null) {
+        var tmp = pValues[1];
+        var leastPvalueIndex = 1;
+        var leastPvalue = parseFloat(tmp[leastPvalueIndex]);
+        if (isNaN(leastPvalue)) leastPvalue = 1.0;
+
+        for (var i = 2; i < tmp.length; i++)  {
+             v = parseFloat(tmp[i]);
+             if (!isNaN(v) && leastPvalue > tmp[i]) {
+                 leastPvalueIndex = i;
+                 leastPvalue = tmp[leastPvalueIndex];
+             }
+        }
+        DIPSCSelectedItem = N[leastPvalueIndex];
+    }
 
 
     var ResultsDisplayList = _.clone(results[0])
@@ -53,7 +66,6 @@ function Load(CurrentChart, DIPSCSelectedItem) {
             var cc = (bb - aa);
             return (cc)
         } catch (err) {
-            debugger;
             return 0;
         }
     });
@@ -82,14 +94,22 @@ function Load(CurrentChart, DIPSCSelectedItem) {
     var therm = dipstickPaper.rect(thermX, thermY, thermWidth, thermHeight);
     therm.attr({ "fill":  "90-#00f-#fff:45-#f00", "fill-opacity": 0.5 });
 
-    function LayoutTheResults(fresh) {
+    function LayoutTheResults() {
         TitleText.attr({text : DIPSCSelectedItem.replace("_PHENOTYPE","")});
         currY = thermY;
         present = new Object
         if (lineSet)
            lineSet.remove()
         lineSet = dipstickPaper.set()
+
+
         ResultsDisplayList.map(function(p,i) {
+            var pValue = parseFloat(pValues[M[DIPSCSelectedItem]][M[p]]);
+            if (pValueCutoff && pValue > pValueCutoff) {
+                return;
+            }
+
+
             var value = parseFloat(results[M[DIPSCSelectedItem]][M[p]]);
             if (i > 10 && i < (ResultsDisplayList.length -10) && !/=/.test(p) ) {
                if (p in YG) {
@@ -188,20 +208,41 @@ function Load(CurrentChart, DIPSCSelectedItem) {
 
 
         currY = PHEHEIGHT/2;
-        LayoutTheResults(true);
+        LayoutTheResults();
         imageY = currY;
         imageHeight = NUMROWS;
 };
 
+var cachedCurrentData;
 
 Template.DIPSC.onRendered(function() {
     dipstickPaper = Raphael("dipstickPaper", SCREENWIDTH, SCREENHEIGHT);
     dipstickPaper.canvas.style.backgroundColor = '#FFF';
+
+
+     var valMap = [.001, .01, .05, .1, .25, null];
+                
+     $("#pvalue-range").slider({ min: 0, max: valMap.length - 1, value: 2,
+          slide: function(event, ui) {                        
+              var val = valMap[ui.value];                
+              $("#pvalue-cutoff").val(val);                
+              Session.set("DIPSCPvalueCutOff", val);
+          }       
+     });
+     Session.set("DIPSCPvalueCutOff", 0.05);
 });
 
+Template.DIPSC.events( {
+    'input #pvalue-cutoff' : function() {
+          var val = $("#pvalue-cutoff").val();
+          Session.set("DIPSCPvalueCutOff", val);
+    }
+});
 
 Template.DIPSC.helpers({
    ready : function() {
-       Load(Template.currentData(), Session.get("DIPSCSelectedItem"));
+       Load(Template.currentData(), 
+           Session.get("DIPSCSelectedItem"),
+           Session.get("DIPSCPvalueCutOff"));
    }
 });

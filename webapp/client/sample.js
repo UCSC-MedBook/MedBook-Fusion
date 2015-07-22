@@ -68,7 +68,7 @@ Template.Controls.helpers({
 
        return { fields: [
          { fn: fn, key: 'correlates', label: 'Correlates' , cellClass: 'correlate-cell col-md-3', headerClass: 'correlate-headerCell'},
-         { key: 'p_value', label: 'P-Value' ,  cellClass:  'correlate-cell col-md-1', headerClass: 'correlate-headerCell'},
+         { key: 'p_value', sortOrder: 0, sortDirection: 'ascending', label: 'P-Value' ,  cellClass:  'correlate-cell col-md-1', headerClass: 'correlate-headerCell'},
          { key: 'correlation', label: 'Pearson R' ,  cellClass:  'correlate-cell col-md-1', headerClass: 'correlate-headerCell'},
          { key: 'variance', label: 'Variance' ,  cellClass:  'correlate-cell col-md-1', headerClass: 'correlate-headerCell'}
         ]};
@@ -77,9 +77,11 @@ Template.Controls.helpers({
 
    mostImportantCorrelations : function() {
        var d = Template.currentData();
+       /*
        if (d == null) return null;
        if (cache_dipsc == d)
            return cache_dipsc_linear;
+       */
 
        cache_dipsc = d;
 
@@ -88,13 +90,22 @@ Template.Controls.helpers({
        var v = cache_dipsc.output.variances;
        var k = c[0].length;
 
+       var cutoff = Session.get("DIPSCPvalueCutOff");
+
+
        var cache_dipsc_linear = [];
        for (var i = 1; i < k; i++)
-           for (var j = 1; j < k; j++)
+           for (var j = 1; j < k; j++) {
+               var pValue = parseFloat(p[i][j]);
+               if (isNaN(pValue)) 
+                   continue
+               if (cutoff && pValue > cutoff) 
+                   continue
                cache_dipsc_linear.push({correlates: [ c[i][0],  c[0][j] ],  // TRICKY B MUST MATCH A
-                   p_value: formatFloat(p[i][j]), 
+                   p_value: formatFloat(pValue), 
                    correlation: formatFloat(c[i][j]),
                    variance: formatFloat(v[i][j])});
+           }
        cache_dipsc_linear = cache_dipsc_linear.sort(function(a,b) { return  b.p_value - a.p_value; });
        return cache_dipsc_linear
    },
