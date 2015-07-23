@@ -197,7 +197,6 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
                 .style("opacity", .9);      
 
             divD = d;
-            debugger;
             var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient_ID + "?Study_ID=" + d.Study_ID
                 + "'>" + d.label + "</a><br/>" + d.text;
             div.html(m)
@@ -220,7 +219,6 @@ function addViz(z, h, v, l, minX,minY,maxX,maxY) {
     }
     dots(z);
 
-    debugger;
     var reg = regression('linear', z);
     var a = reg.equation[0];
     var b = reg.equation[1];
