@@ -43,11 +43,12 @@
            <input value="{{genelist}}" class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
               <span>
               <button id="clear">Clear Gene List</button>
-            <select id="genesets">
-              <option >Gene Sets</option>
-              {{#each genesets}}
-                  <option>{{this.name}}</option>
-              {{/each}}
+            <label>Gene List</label>
+            <select id="genesets" multiple>
+                <optGroup label="">>
+                    <option style="display:none;" value="" disabled selected>Select your geneset</option>
+                </optGroup>
+               {{{genesets}}}
             </select>
               <button id="clear">All Genes In</button>
               <br>

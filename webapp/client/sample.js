@@ -154,11 +154,32 @@ Template.Controls.helpers({
     };
    },
 
-   genesets : function() {
-      return GeneSets.find({}, {sort: {"name":1}});
-   },
    studies : function() {
       return Studies.find({}, {sort: {"name":1}});
+   },
+   genesets : function() {
+       var html = '';
+       var type = null;
+       var currentChart = Template.currentData();
+       var selectedGenesets = currentChart.genesets;
+
+       GeneSets.find({}, {sort: [["type", "asc"], ["name", "asc"]]})
+        .forEach(function(vv) {
+           if (type == null || type != vv.type) {
+               if (type != null)
+                   html += '</optGroup>\n';
+               type = vv.type;
+               html += '<optGroup label="'+ type +'">';
+           }
+           selected = _.contains(vv._id, selectedGenesets) ? " selected " : "";
+           if (selected.length > 0)
+               debuggger
+           html += '    <option value="'+ vv._id + '"' + selected + '>' + vv.name + '</option>';
+       });
+       html += '</optGroup>\n';
+
+
+       return html;
    },
    additionalQueries : function() {
        var html = '';
@@ -254,7 +275,7 @@ Template.Controls.events({
                 renderRow: function(elem, d) {
                     if (d.Hugo_Symbol == null)
                         return;
-                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist");
                     var k = genelist.indexOf(d.Hugo_Symbol);
                     if (k >= 0) {
                         $(elem).addClass("includeThisGene");
@@ -265,13 +286,13 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist");
                     $(elem).addClass("includeThisGene");
                     var k = genelist.indexOf(gene);
                     if (k < 0) {
                         // add it
                         genelist.push(gene)
-                        UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
+                        UpdateCurrentChart("genelist", genelist);
                         var $genelist = $("#genelist");
                         $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
                     }
@@ -281,13 +302,13 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist");
                     $(elem).removeClass("includeThisGene");
                     var k = genelist.indexOf(gene);
                     if (k >= 0) {
                         // remove it
                         genelist.splice(k,1);
-                        UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
+                        UpdateCurrentChart("genelist", genelist);
                         var $genelist = $("#genelist");
                         $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
                     }
@@ -298,7 +319,7 @@ Template.Controls.events({
                     var gene = d.Hugo_Symbol;
                     if (gene == null)
                         return
-                    var genelist = CurrentChart("genelist"); // Pipeline Phase 1
+                    var genelist = CurrentChart("genelist");
                     var k = genelist.indexOf(gene);
                     if (k >= 0) {
                         // remove it
@@ -309,7 +330,7 @@ Template.Controls.events({
                         $(elem).addClass("includeThisGene");
                         genelist.push(gene)
                     }
-                    UpdateCurrentChart("genelist", genelist); // Pipeline Phase 1
+                    UpdateCurrentChart("genelist", genelist);
 
                     var $genelist = $("#genelist");
                     $genelist.select2("data", genelist.map(function(e) { return { id: e, text: e} }));
@@ -319,7 +340,7 @@ Template.Controls.events({
    },
 
 
-   'click .inspect': function(evt, tmpl) {
+   'clicgg.inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
         var data = CurrentChart(v);
@@ -331,31 +352,27 @@ Template.Controls.events({
    },
    'change #additionalQueries' : function(evt, tmpl) {
        var additionalQueries = $("#additionalQueries").select2("val");
-       UpdateCurrentChart("additionalQueries", additionalQueries); // Pipeline Phase 1
+       UpdateCurrentChart("additionalQueries", additionalQueries);
    },
    'change #samplelist' : function(evt, tmpl) {
        var s = $("#samplelist").val();
        s = s.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
-       UpdateCurrentChart("samplelist", s); // Pipeline Phase 1
+       UpdateCurrentChart("samplelist", s);
    },
 
    'change #genelist' : function(evt, tmpl) {
        var $genelist = $("#genelist");
        var before = $genelist.select2("val");
-       UpdateCurrentChart("genelist", before); // Pipeline Phase 1
+       UpdateCurrentChart("genelist", before);
    },
 
-   // genesets are just a quick way to add genes to the genelist, simlar to above event
    'change #genesets' : function(evt, tmpl) {
-       var val = $(evt.target).val();
-       var gs = GeneSets.findOne({name: val});
-       if (gs) {
-           var $genelist = $("#genelist");
-           var before = $genelist.select2("val");
-           var after = before.concat(gs.members);
-           UpdateCurrentChart("genelist", after); // Pipeline Phase 1
-           $genelist.select2("data", after.map(function(e) { return { id: e, text: e} }));
-       }
+       var genesets = [];
+       $(evt.target.selectedOptions).each(function(i, opt) {
+           var _id = $(opt).val();
+           genesets.push(_id);
+       });
+       UpdateCurrentChart("genesets", genesets); 
    },
 
    'click #clear' : function(evt, tmpl) {
@@ -402,6 +419,8 @@ function initializeSpecialJQueryElements(document) {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
      });
+     var $genesets = $("#genesets");
+     $genesets.select2();
 
 }
 
@@ -465,7 +484,12 @@ renderChart = function() {
 
             if (f.length == 2 && _.isEqual(f.sort(), [ "selectedFieldNames", "updatedAt"]))
                 return
+            if ("genesets" in fields) {
+              // debugger;  may need special handling.
+            }
         }
+
+
         Session.set("CurrentChart", currentChart);
 
         if (f && f.length == 2 && _.isEqual(f.sort(), [ "contrast", "updatedAt"]))
@@ -500,8 +524,9 @@ renderChart = function() {
     watch.observeChanges({
         changed: RefreshChart
     }); // watch.observeChanges
-} // renderChart;
 
+    $('#genesets').select2({ placeholder: "Select a pathway or geneset" });
+} // renderChart;
 
 
 Template.Controls.rendered = renderChart;
