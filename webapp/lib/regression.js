@@ -74,7 +74,7 @@
 
                 var stat = "R = " + r.toPrecision(3) + "  P-value = " + r_p_value.toPrecision(3) + " N = " + xx.length;
 
-                return { stat: stat, correlation: correlation, equation: [gradient, intercept], points: results, string: string};
+                return { stat: stat, correlation: correlation, p_value: r_p_value, equation: [gradient, intercept], points: results, string: string};
             },
 
             exponential: function(data) {

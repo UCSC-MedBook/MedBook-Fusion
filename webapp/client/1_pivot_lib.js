@@ -63,6 +63,9 @@ Meteor.startup(function() {
 
          return false;
      }
+     if (chartType  == "Bar Chart" && !colsAnyNumbers) {
+         return false;
+     }
 
      if (chartType  == "Box Plot" && !colsAnyNumbers) {
          $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Box Plot, please select numerical values such as gene expression for columns (top) and categorical values for columns (top) or rows (left size)</h3></div>")

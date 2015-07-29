@@ -26,7 +26,7 @@ Meteor.startup(
                   count: { $gt: 1 } 
               }}
         ]);
-        console.log("multipleDefaultPosts", multipleDefaultPosts);
+        // console.log("multipleDefaultPosts", multipleDefaultPosts);
 }
 );
 
