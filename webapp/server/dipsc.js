@@ -8,6 +8,7 @@ HTTP.methods({
 });
 
 DIPSC_coll._ensureIndex({gen:1});
+DIPSC_coll._ensureIndex({deps:1});
 
 
 dipsc_usecase = function() {
@@ -76,17 +77,33 @@ dipsc_snarf = function(dipsc_id) {
    // console.log("done snarfing ", t);
 };
 
-decrement = function(query) {
-    return DIPSC_coll.findAndModify({
-        query:  query,
-        update: {$inc: {count: -1}},
-        fields: {_id:1, count: 1},
-    });
+pull = function(dipsc_id) {
+    console.log("pull", dipsc_id);
+    var n = 1;
+    while (true) {
+        DIPSC_coll.update({deps: dipsc_id}, {$pull: {deps: dipsc_id}}, {multi:false}, function(err, res) { /* console.log("pull A", err, res); */ });
+        DIPSC_coll.find({ready:false, deps:[]}).forEach(function(obj) {
+            var obj2 = DIPSC_coll.findAndModify({
+                query: {_id: obj._id, ready: false},
+                "new": true,
+                update: { $set: {ready: true}}
+            });
+
+            if (obj2)
+                nextOp(obj2);
+        });
+        // console.log("20", DIPSC_coll.findOne({count:20}));
+        var loop = DIPSC_coll.find({deps: dipsc_id}).count();
+        if (loop > 0)
+            console.log(n++, "PULL LOOP", loop, dipsc_id);
+        else
+            return;
+    }
 }
 
 
-dipsc_classic = function(chart_id) { 
-   var dipsc_id = DIPSC_coll.insert({chart_id: chart_id, gen: "classic"});
+dipsc_adapter = function(chart) { 
+   var dipsc_id = DIPSC_coll.insert({chart_id: chart._id, gen: "classic"});
    var dir = process.env.MEDBOOK_WORKSPACE + "DIPSC/";
    try {
        var m = fs.mkdirSync(dir);
@@ -100,8 +117,7 @@ dipsc_classic = function(chart_id) {
    var pValuesFileName = dir + "pValues.tab";
    var varFileName = dir + "variances.tab";
 
-   var chart = getPhe(chart_id);
-   var phenotype = ConvertToTSV(chart.chartData, chart.selectedFieldNames);
+   var phenotype = ConvertToTSV(chart.chartData, ["Sample_ID"].concat(chart.selectedFieldNames));
    phenotype = phenotype.replace(/N\/A/g, "");
    fs.writeFile(pheFileName, phenotype);
 
@@ -109,7 +125,7 @@ dipsc_classic = function(chart_id) {
    var expressionData = [];
    Expression.find({ "Study_ID" : "prad_wcdt" }, 
        {fields: {"gene":1, "samples":1, "variance":1},
-        limit: 100,
+        limit: 1000,
         sort: { "variance.rsem_quan_log2" : -1} })
    .forEach(function (e) { 
 
@@ -143,7 +159,7 @@ dipsc_classic = function(chart_id) {
    var shlurp = spawn("/bin/env", argArray);
 
    var start = new Date();
-   // console.log( "DIPSC running ", cmd );
+   console.log( "DIPSC running ", cmd );
    shlurp.on('error', function(error) { console.log(cmd + 'command failed '+error) });
    shlurp.on('close', function(retcode) {
 
@@ -172,62 +188,67 @@ dipsc_classic = function(chart_id) {
        }).run();  
     } );
 } 
-nextOp = function(id) {
+
+/*
+nextOp0 = function(id) {
     var query = { op: {$exists:1}, ready:false};
     if (id) {
         query.operands = id;
     }
      var cursor = DIPSC_coll.find(query);
      // console.log("nextOp", query, cursor.count());
-     cursor.forEach(function (corr) {
-        var operands = DIPSC_coll.find({_id: {$in: corr.operands}, ready:true  }).fetch();
-        if (operands.length  == corr.operands.length) {
+     cursor.forEach(function (corr) {})
+*/
 
+nextOp = function(doc) {
+    var operands = DIPSC_coll.find({_id: {$in: doc.operands}, ready:true  }).fetch();
+    if (operands.length  == doc.operands.length) {
+        if (doc.op == "correlate") {
+            console.log("correlate op", doc._id);
+            var correlation = correlateDscore(operands[0], operands[1]);
+            DIPSC_coll.update({ _id: doc._id}, {$set: { ready: true, correlation: correlation,
+                positiveNs: [ operands[0].output.positiveN, operands[0].output.positiveN],
+                negativeNs: [ operands[0].output.negativeN, operands[0].output.negativeN],
+            }});
+            pull(doc._id);
+            // console.log("correlate after update", new Date() - doc.date, doc.op );
 
+        } else if (doc.op == "aggregate") {
+            console.log("aggregate op n=", operands.length, doc._id);
+            var correlations = [];
+            var p_values = [];
+            var positiveNs = [];
+            var negativeNs = [];
+            operands.map(function(correlation) {
+                correlations.push(correlation.correlation.correlation);
+                p_values.push(correlation.correlation.p_value);
+                positiveNs = positiveNs.concat(correlation.positiveNs);
+                negativeNs = negativeNs.concat(correlation.negativeNs);
+            });
 
-            if (corr.op == "correlate") {
-                console.log("correlate op", corr._id);
-                var correlation = correlateDscore(operands[0], operands[1]);
-                DIPSC_coll.update({ _id: corr._id}, {$set: { ready: true, correlation: correlation,
-                    positiveNs: [ operands[0].output.positiveN, operands[0].output.positiveN],
-                    negativeNs: [ operands[0].output.negativeN, operands[0].output.negativeN],
-                }});
-                // console.log("correlate after update", new Date() - corr.date, corr.op );
-
-            } else if (corr.op == "aggregation") {
-                var correlations = [];
-                var p_values = [];
-                var positiveNs = [];
-                var negativeNs = [];
-                operands.map(function(correlation) {
-                    correlations.push(correlation.correlation.correlation);
-                    p_values.push(correlation.correlation.p_value);
-                    positiveNs = positiveNs.concat(correlation.positiveNs);
-                    negativeNs = negativeNs.concat(correlation.negativeNs);
-                });
-
-                DIPSC_coll.update({ _id: corr._id}, {$set: { ready: true, 
-                    correlation: ss.mean(correlations),
-                    variance:  ss.variance(correlations),
-                    p_value:   ss.mean(p_values),
-                    positiveN: ss.mean(positiveNs),
-                    negativeN: ss.mean(negativeNs),
-                }});
-                console.log("TOTAL TIME", new Date() - START);
-            }
+            DIPSC_coll.update({ _id: doc._id}, {$set: { ready: true, 
+                correlation: ss.mean(correlations),
+                variance:  ss.variance(correlations),
+                p_value:   ss.mean(p_values),
+                positiveN: ss.mean(positiveNs),
+                negativeN: ss.mean(negativeNs),
+            }});
+            pull(doc._id);
+            console.log("TOTAL TIME", new Date() - START, DIPSC_coll.findOne({_id: doc._id}));
         }
-    }) // foreach operand;
+    }
 }
 
+/*
 function DIPSC_update(userId, doc, fieldNames, modifier, options) {
-    if (_.contains(fieldNames, "ready")) {
-        // console.log("update", doc.gen, fieldNames, Object.keys(doc));
-        nextOp(doc._id);
-    } // ready
+    if (_.contains(fieldNames, "ready") && doc.ready == true) {
+        pull(doc._id);
+    }
 }; 
 
 DIPSC_coll.after.update(DIPSC_update, {$set: {fetchPrevious: false}});
 
+*/
 Meteor.methods({
    // dipsc : dipsc,
    snarf : dipsc_snarf
@@ -259,104 +280,113 @@ Meteor.startup(function() {
 });
 
 
-SAM_classic = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,expressionData ) { 
+SAM_adapter = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,expressionData ) { 
 
    sampleList = _.intersection(sampleList, Object.keys(expressionData[0]));
 
    var dipsc_id = DIPSC_coll.insert({
-       gen: "sam_classic",
+       gen: "sam_adapter",
        ready: false,
        input: {chart_id: chart_id, phenotype:phenotype, sampleList:sampleList, geneList: geneList, phenotypeMap: phenotypeMap}});
 
-   var dir = process.env.MEDBOOK_WORKSPACE + "SAM/";
-   try {
+   console.log("SAM", dipsc_id);
+
+   return [ dipsc_id, function() {
+
+       console.log("spawn", dipsc_id);
+
+       var dir = process.env.MEDBOOK_WORKSPACE + "SAM/";
+       try {
+           var m = fs.mkdirSync(dir);
+       } catch (err) {};
+
+       dir +=  dipsc_id + "/";
        var m = fs.mkdirSync(dir);
-   } catch (err) {};
+       var samInputFileName = dir + "sam.input";
+       var samOutputFileName = dir + "sam.output";
+       var samErrorFileName = dir + "sam.error";
 
-   dir +=  dipsc_id + "/";
-   var m = fs.mkdirSync(dir);
-   var samInputFileName = dir + "sam.input";
-   var samOutputFileName = dir + "sam.output";
-   var samErrorFileName = dir + "sam.error";
-
-   var fd = fs.openSync(samInputFileName, "w");
-   var positiveN = 0;
-   var negativeN = 0;
-   sampleList.map(function(sample) {
-       if (phenotypeMap[sample]) {
-           fs.writeSync(fd, "\t1");
-           positiveN++;
-       } else {
-           fs.writeSync(fd, "\t0");
-           negativeN++;
-       }
-   });
-   // console.log("positiveN", positiveN, "negativeN", negativeN);
-
-
-   fs.writeSync(fd, "\n");
-   expressionData.map(function(expr) {
-       fs.writeSync(fd, expr.gene);
+       var fd = fs.openSync(samInputFileName, "w");
+       var positiveN = 0;
+       var negativeN = 0;
        sampleList.map(function(sample) {
-           fs.writeSync(fd, "\t"+expr[sample]);
+           if (phenotypeMap[sample]) {
+               fs.writeSync(fd, "\t1");
+               positiveN++;
+           } else {
+               fs.writeSync(fd, "\t0");
+               negativeN++;
+           }
        });
+       // console.log("positiveN", positiveN, "negativeN", negativeN);
+
+
        fs.writeSync(fd, "\n");
-   });
-   fs.close(fd);
+       expressionData.map(function(expr) {
+           fs.writeSync(fd, expr.gene);
+           sampleList.map(function(sample) {
+               fs.writeSync(fd, "\t"+expr[sample]);
+           });
+           fs.writeSync(fd, "\n");
+       });
+       fs.close(fd);
 
 
-   var  argArray = [process.env.MEDBOOK_SCRIPTS + "fileSAM.R", samInputFileName ];
-   var cmd =  argArray.join(" ");
-   // console.log("cmd", cmd);
+       var  argArray = [process.env.MEDBOOK_SCRIPTS + "fileSAM.R", samInputFileName ];
+       var cmd =  argArray.join(" ");
+       // console.log("cmd", cmd);
 
-   // LAUNCH THE PROCESS
-   var shlurp = spawn("/bin/env", argArray, {
-      stdio: [
-          0, // use parents stdin for child
-          fs.openSync(samOutputFileName, "w"),
-          fs.openSync(samErrorFileName, "w")
-   ]});
+       // LAUNCH THE PROCESS
+       var shlurp = spawn("/bin/env", argArray, {
+          stdio: [
+              0, // use parents stdin for child
+              fs.openSync(samOutputFileName, "w"),
+              fs.openSync(samErrorFileName, "w")
+       ]});
 
 
-   var start = new Date();
-   shlurp.on('error', function(error) { console.log(cmd + 'command failed '+error) });
-   shlurp.on('close', function(retcode) {
+       var start = new Date();
+       shlurp.on('error', function(error) { console.log(cmd + 'command failed '+error) });
+       shlurp.on('close', function(retcode) {
 
-   // THE PROCESS IS DONE
-   Fiber(function() {
+       // THE PROCESS IS DONE
+       Fiber(function() {
 
-           var samOutput = parseSAM(samOutputFileName);
-           samOutput.sort(function(a,b) { return a.gene.localeCompare(b.gene) });
-           var d_score = _.pluck(samOutput, "d_score");
+               var samOutput = parseSAM(samOutputFileName);
+               samOutput.sort(function(a,b) { return a.gene.localeCompare(b.gene) });
+               var d_score = _.pluck(samOutput, "d_score");
 
-          // JOURNAL output after commmand
-          if (retcode == 0)
-             DIPSC_coll.update({_id: dipsc_id}, 
-               {$set: 
-                  {ready : true,
-                   output: {
-                       "status": retcode,
-                       samOutput : samOutput,
-                       d_score: d_score,
-                       positiveN: positiveN,
-                       negativeN: negativeN
+              // JOURNAL output after commmand
+              if (retcode == 0) {
+                 DIPSC_coll.update({_id: dipsc_id}, 
+                   {$set: 
+                      {ready : true,
+                       output: {
+                           "status": retcode,
+                           samOutput : samOutput,
+                           d_score: d_score,
+                           positiveN: positiveN,
+                           negativeN: negativeN
                        }}});
-           else
-               DIPSC_coll.update({_id: dipsc_id}, 
-                   {$set:
-                       {output: { "status": retcode }}});
+                    pull(dipsc_id);
+               } else
+                   DIPSC_coll.update({_id: dipsc_id}, 
+                       {$set:
+                           {output: { "status": retcode }}});
 
-           // console.log('SAM_classic done', cmd, phenotype, "done executing", retcode, new Date() - start);
-       }).run();  
-    } );
+               // console.log('SAM_adapter done', cmd, phenotype, "done executing", retcode, new Date() - start);
+           }).run();  
+        } );
 
-   return dipsc_id;
+       return dipsc_id;
 
-} // SAM_classic
+   }];
+} // SAM_adapter
 
-SAM = function() {
+
+SAMtest = function() {
     START = new Date();
-    DIPSC_coll.remove({});
+    //# DIPSC_coll.remove({});
 
     var chart_id = "2vv6AbPtx7xfXPFu3";
     var abi_phe =  "Abiraterone";
@@ -398,7 +428,7 @@ SAM = function() {
        }
    });
   var shuffles = shuffle(sampleList, SHUFFLE_N );
-
+  var funcs = [];
   var operands = [];
   shuffles.map(function(shuffledSampleList) {
       var half =  shuffledSampleList.length / 2;
@@ -406,23 +436,68 @@ SAM = function() {
       var second = shuffledSampleList.slice(half);
 
 
-      var a_sam_id  = SAM_classic(chart_id, abi_phe, abi_phenotypeMap, first, geneList,expressionData);
-      var b_sam_id  = SAM_classic(chart_id, enz_phe, enz_phenotypeMap, second, geneList,expressionData);
-      var aa_sam_id = SAM_classic(chart_id, abi_phe, abi_phenotypeMap, second, geneList,expressionData);
-      var bb_sam_id = SAM_classic(chart_id, enz_phe, enz_phenotypeMap, first, geneList,expressionData);
+      var a_f  = SAM_adapter(chart_id, abi_phe, abi_phenotypeMap, first, geneList,expressionData);
+      var b_f  = SAM_adapter(chart_id, enz_phe, enz_phenotypeMap, second, geneList,expressionData);
+      var aa_f = SAM_adapter(chart_id, abi_phe, abi_phenotypeMap, second, geneList,expressionData);
+      var bb_f = SAM_adapter(chart_id, enz_phe, enz_phenotypeMap, first, geneList,expressionData);
 
-      var ab   = DIPSC_coll.insert({op: "correlate", ready: false, date: new Date(), operands: [a_sam_id, b_sam_id],   count:2 });
-      var aabb = DIPSC_coll.insert({op: "correlate", ready: false, date: new Date(), operands: [aa_sam_id, bb_sam_id], count:2 });
-      console.log("correlate", ab, a_sam_id, b_sam_id);
-      console.log("correlate", aabb, aa_sam_id, bb_sam_id);
+      funcs.push(a_f[1]);
+      funcs.push(b_f[1]);
+      funcs.push(aa_f[1]);
+      funcs.push(bb_f[1]);
+
+      var ab   = DIPSC_coll.insert({op: "correlate", ready: false, date: new Date(), 
+          operands: [a_f[0], b_f[0]],   
+          deps: [a_f[0], b_f[0]],   
+          count:2 });
+      var aabb = DIPSC_coll.insert({op: "correlate", ready: false, date: new Date(), 
+          operands: [aa_f[0], bb_f[0]],
+          deps: [aa_f[0], bb_f[0]],
+          count:2 });
+      // console.log("correlate", ab, a_f[0], b_f[0]);
+      // console.log("correlate", aabb, aa_f[0], bb_f[0]);
       operands.push(ab);
       operands.push(aabb);
+
+      var n = operands.length;
+
+      if (_.contains([1,4,8,10,20,50,100],n))
+          DIPSC_coll.insert({op: "aggregate", ready: false, date: new Date(), 
+              operands: operands, 
+              deps: operands, 
+              count: n });
   });
+  funcs.map(function(f) {
+    f();
+  });
+}
+DIPSCtest = function() {
+    START = new Date();
+    DIPSC_coll.remove({});
 
-  DIPSC_coll.insert({op: "aggregation", ready: false, date: new Date(), operands: operands, count: operands.length });
+    var chart_id = "2vv6AbPtx7xfXPFu3";
 
+    var abi_phe =  "Abiraterone";
+    var enz_phe =  "Enzalutamide";
 
-} // SAM
+    var chart = Charts.findOne({_id: chart_id});
+    var map = {};
+    var sampleList = []
+    chart.chartData = chart.chartData.map(function(o) {
+        var elem = {};
+        elem.Sample_ID = o.Sample_ID;
+        if (o[abi_phe]) {
+            elem[abi_phe]  = o[abi_phe] == "Resistant";
+        }
+        if (o[enz_phe]) {
+            elem[enz_phe] = o[enz_phe] == "Resistant";
+        }
+        return elem;
+    });
+
+    dipsc_adapter(chart);
+
+}
 
 parseSAM = function(filename) {
         var content = fs.readFileSync(filename, { encoding: "utf8"});
@@ -449,15 +524,13 @@ parseSAM = function(filename) {
 }
 
 correlateDscore = function(a, b) {
-    console.log('correlateDscore("', a._id, '","', b._id, '")');
-
     var z = a.output.d_score.map(function(a, i) { return [a, b.output.d_score[i]] });
     res = regression('linear', z)
     return res;
-
 }
 
 
-Meteor.startup(SAM);
+
+// Meteor.startup(DIPSCtest);
 
 
