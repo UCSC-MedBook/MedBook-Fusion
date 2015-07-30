@@ -51,6 +51,16 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+   Join : function() {
+      var j = CurrentChart("Join");
+      if (j == null) {
+          j = "Sample_ID";
+      }
+
+      $('button[value="' + j + '"]').addClass("active").siblings().removeClass("active");
+
+      return j;
+   },
 
    dipsc :  getCurrentDipsc,
 
@@ -218,6 +228,11 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'click button[name="focus"]' : function(e) {
+      var clickedButton = e.currentTarget;
+      UpdateCurrentChart("Join", $(clickedButton).val());
+      $(clickedButton).addClass("active").siblings().removeClass("active");
+   },
   'click .dipsc-phenotype': function(evt, tmpl) {
       Session.set("DIPSCSelectedItem", $(evt.target).data("phenotype"))
    },
@@ -426,6 +441,7 @@ function initializeSpecialJQueryElements(document) {
 
 
 Template.Transforms.helpers({
+
    dataFieldNames: function() {
        var dataFieldNames = CurrentChart("dataFieldNames");
        if (dataFieldNames) {

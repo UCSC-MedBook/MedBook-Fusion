@@ -133,158 +133,195 @@ function Transform_Clinical_Info(f) {
     return f;
 };
 
+function GeneJoin(userId, ChartDocument, fieldNames) {
+     var big = Expression.find(
+                 {"Study_ID" : "prad_tcga"}, 
+                 {
+                    fields: {
+                         "gene":1,
+                         "variance.rsem_quan_log2":1,
+                         "mean.rsem_quan_log2":1
+                    },
+                    limit: 1000,
+                    sort: {"variance.rsem_quan_log2":-1}
+                }
+             ).fetch().map(
+                 function(e) { 
+                     return { 
+                        Gene: e.gene,
+                        Variance: e.variance.rsem_quan_log2,
+                        Mean: e.mean.rsem_quan_log2
+                      }
+                   });
+    console.log("big",big.length);
+
+     Charts.direct.update({ _id : ChartDocument._id }, 
+          {$set: 
+              {
+                dataFieldNames: ['Expression', 'Variance', 'Mutation'],
+                selectedFieldNames: ['Expression', 'Variance', 'Mutation'],
+                chartData: big
+               }});
+}
+
+
+function SampleJoin(userId, ChartDocument, fieldNames) {
+    var b = new Date();
+    if (ChartDocument.studies == null || ChartDocument.length == 0) {
+      console.log("No studies selected");
+      return { dataFieldNames: [], chartData: []};
+    }
+
+    // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
+    var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
+
+    q.Study_ID = {$in:ChartDocument.studies}; 
+    var chartData = CRFmetadataCollectionMap.Clinical_Info.find(q).fetch();
+
+
+    var chartDataMap = {};
+    var mapPatient_ID_to_Sample_ID = {};
+
+    chartData.map(function (cd) { 
+        delete cd["_id"];
+        chartDataMap[cd.Sample_ID] = cd;
+    });
+    chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
+    ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
+
+        
+    // Join all the Gene like information into the samples into the ChartDataMap table
+    var gld = ChartDocument.geneLikeDataDomain;
+    var gl  = ChartDocument.genelist;
+    if (gld && gl && gld.length > 0 && gl.length > 0)  {
+
+        gld
+          .filter(function(domain) {return domain.state})
+          .map(function(domain) {
+            var query = {Study_ID:{$in: ChartDocument.studies}};
+            query[domain.queryField || "gene"] = {$in: gl};
+
+            var cursor = DomainCollections[domain.collection].find(query);
+            console.log("GeneLikeDomain", domain.collection, query, cursor.count());
+
+            cursor.forEach(function(geneData) {
+                // Mutations are organized differently than Expression
+                if (geneData.Hugo_Symbol) { 
+                    var geneName = geneData.Hugo_Symbol;
+                    var label = geneName + ' ' + domain.labelItem;
+                    var sampleID = geneData.sample;
+                    if (sampleID in chartDataMap)
+                        chartDataMap[sampleID][label] = geneData.Variant_Type;
+                } else if (geneData.gene) {
+
+                    var geneName = geneData.gene;
+                    var label = ('transcript' in geneData) 
+                        ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
+                        : geneName + ' ' + domain.labelItem
+                    label = label.replace(/\./g,"_");
+                    var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
+
+
+                    samplelist.map(function (sampleID) {
+                        var f = parseFloat(geneData.samples[sampleID][domain.field]);
+                        if (!isNaN(f)) {
+                            if (sampleID in chartDataMap) {
+                                if (f != 0.0)
+                                    chartDataMap[sampleID][label] = f;
+                            }
+                        }
+                    });
+                } // else if geneData.gene
+            }); //cursor.forEach
+          }); // .map 
+    } // if gld 
+
+    var mapPatient_ID_to_Sample_ID = null;
+
+
+    if (ChartDocument.additionalQueries)
+        ChartDocument.additionalQueries.map(function(query) {
+             var query = JSON.parse(unescape(query));
+             var collName = query.c;
+             var fieldName = query.f;
+
+             if (!(collName in CRFmetadataCollectionMap))
+                 CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
+
+             var fl = {};
+             fl[fieldName] = 1;
+             CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
+                 if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
+                     chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                 } else {
+                    if (mapPatient_ID_to_Sample_ID == null)  {
+                         mapPatient_ID_to_Sample_ID = {};
+                         chartData.map(function(cd) {
+                             if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
+                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
+                             else
+                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
+                         });
+                     }
+                     if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
+                         mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
+                             chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                         });
+                     // else console.log("addQ", collName, fieldName, doc);
+                } // else
+             }); // forEach
+        }); //  ChartDocument.additionalQueries.map
+
+
+
+    var keyUnion = {};  
+    chartData.map(function(datum) { 
+        Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
+    });
+
+    var dataFieldNames =  Object.keys(keyUnion);
+    var selectedFieldNames = _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null);
+
+    chartData = chartData.map(Transform_Clinical_Info, keyUnion);
+
+    var transforms = ChartDocument.transforms;
+    if (transforms)
+         chartData.map(function transformer(datum) {
+             transforms.map(function(transform) {
+                 if (transform.field in datum) {
+                    if (transform.op == "bin") {
+                         var dataValue = parseFloat(datum[transform.field]);
+                         var binValue = parseFloat(transform.value);
+                         if (!isNaN(dataValue) && !isNaN(binValue)) {
+                            var flooredValue = Math.floor(dataValue / binValue);
+                            datum[transform.field] = flooredValue * binValue;
+                         }
+                     } else if (transform.op == "rename") {
+                        datum[transform.value] = datum[transform.field];
+                        delete datum[transform.field];
+                     }
+                 } 
+             });
+        });
+      console.log("renderChartData", chartData.length);
+      Charts.direct.update({ _id : ChartDocument._id }, 
+          {$set: 
+              {
+                dataFieldNames: dataFieldNames,
+                selectedFieldNames: selectedFieldNames,
+                chartData: chartData
+               }});
+} 
+
 
 Meteor.startup(function() {
     CRFmetadataCollectionMap.Clinical_Info = new Meteor.Collection("Clinical_Info");
 
-    Charts.after.update(function(userId, ChartDocument, fieldNames) {
-
-
-        var b = new Date();
-        if (ChartDocument.studies == null || ChartDocument.length == 0) {
-          console.log("No studies selected");
-          return { dataFieldNames: [], chartData: []};
-        }
-
-        // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
-        var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
-
-        q.Study_ID = {$in:ChartDocument.studies}; 
-        var chartData = CRFmetadataCollectionMap.Clinical_Info.find(q).fetch();
-
-
-        var chartDataMap = {};
-        var mapPatient_ID_to_Sample_ID = {};
-
-        chartData.map(function (cd) { 
-            delete cd["_id"];
-            chartDataMap[cd.Sample_ID] = cd;
-        });
-        chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
-        ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
-
-            
-        // Join all the Gene like information into the samples into the ChartDataMap table
-        var gld = ChartDocument.geneLikeDataDomain;
-        var gl  = ChartDocument.genelist;
-        if (gld && gl && gld.length > 0 && gl.length > 0)  {
-
-            gld
-              .filter(function(domain) {return domain.state})
-              .map(function(domain) {
-                var query = {Study_ID:{$in: ChartDocument.studies}};
-                query[domain.queryField || "gene"] = {$in: gl};
-
-                var cursor = DomainCollections[domain.collection].find(query);
-                console.log("GeneLikeDomain", domain.collection, query, cursor.count());
-
-                cursor.forEach(function(geneData) {
-                    // Mutations are organized differently than Expression
-                    if (geneData.Hugo_Symbol) { 
-                        var geneName = geneData.Hugo_Symbol;
-                        var label = geneName + ' ' + domain.labelItem;
-                        var sampleID = geneData.sample;
-                        if (sampleID in chartDataMap)
-                            chartDataMap[sampleID][label] = geneData.Variant_Type;
-                    } else if (geneData.gene) {
-
-                        var geneName = geneData.gene;
-                        var label = ('transcript' in geneData) 
-                            ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
-                            : geneName + ' ' + domain.labelItem
-                        label = label.replace(/\./g,"_");
-                        var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
-
-
-                        samplelist.map(function (sampleID) {
-                            var f = parseFloat(geneData.samples[sampleID][domain.field]);
-                            if (!isNaN(f)) {
-                                if (sampleID in chartDataMap) {
-                                    if (f != 0.0)
-                                        chartDataMap[sampleID][label] = f;
-                                }
-                            }
-                        });
-                    } // else if geneData.gene
-                }); //cursor.forEach
-              }); // .map 
-        } // if gld 
-
-        var mapPatient_ID_to_Sample_ID = null;
-
-
-        if (ChartDocument.additionalQueries)
-            ChartDocument.additionalQueries.map(function(query) {
-                 var query = JSON.parse(unescape(query));
-                 var collName = query.c;
-                 var fieldName = query.f;
-
-                 if (!(collName in CRFmetadataCollectionMap))
-                     CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
-
-                 var fl = {};
-                 fl[fieldName] = 1;
-                 CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
-                     if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
-                         chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
-                     } else {
-                        if (mapPatient_ID_to_Sample_ID == null)  {
-                             mapPatient_ID_to_Sample_ID = {};
-                             chartData.map(function(cd) {
-                                 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
-                                     mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
-                                 else
-                                     mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
-                             });
-                         }
-                         if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
-                             mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
-                                 chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
-                             });
-                         // else console.log("addQ", collName, fieldName, doc);
-                    } // else
-                 }); // forEach
-            }); //  ChartDocument.additionalQueries.map
-
-
-
-        var keyUnion = {};  
-        chartData.map(function(datum) { 
-            Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
-        });
-
-        var dataFieldNames =  Object.keys(keyUnion);
-        var selectedFieldNames = _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null);
-
-        chartData = chartData.map(Transform_Clinical_Info, keyUnion);
-
-        var transforms = ChartDocument.transforms;
-        if (transforms)
-             chartData.map(function transformer(datum) {
-                 transforms.map(function(transform) {
-                     if (transform.field in datum) {
-                        if (transform.op == "bin") {
-                             var dataValue = parseFloat(datum[transform.field]);
-                             var binValue = parseFloat(transform.value);
-                             if (!isNaN(dataValue) && !isNaN(binValue)) {
-                                var flooredValue = Math.floor(dataValue / binValue);
-                                datum[transform.field] = flooredValue * binValue;
-                             }
-                         } else if (transform.op == "rename") {
-                            datum[transform.value] = datum[transform.field];
-                            delete datum[transform.field];
-                         }
-                     } 
-                 });
-            });
-          console.log("renderChartData", chartData.length);
-          Charts.direct.update({ _id : ChartDocument._id }, 
-              {$set: 
-                  {
-                    dataFieldNames: dataFieldNames,
-                    selectedFieldNames: selectedFieldNames,
-                    chartData: chartData
-                   }});
-    } // renderChartData
-  );// chart.after.update
+    Charts.after.update( function(userId, ChartDocument, fieldNames) {
+        console.log("Join", ChartDocument.Join)
+        if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")
+            SampleJoin(userId, ChartDocument, fieldNames);
+        else if (ChartDocument.Join == "Gene")
+            GeneJoin(userId, ChartDocument, fieldNames);
+    });// chart.after.update
 });

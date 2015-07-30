@@ -192,8 +192,12 @@ d3.box = function() {
       var sample = gg.selectAll("circle.sample")
           .data(full)
 
+      function L(d) {
+          return d.Label ? d.Label.replace("-", "") : "";
+      }
+
       sample.enter().insert("circle", "text")
-          .attr("class", function(d) { return d.ValueClass + " " + d.Patient.replace("-", ""); })
+          .attr("class", function(d) { return d.ValueClass + " " + L(d); })
           .attr("cx", function(d) { return d.cx; })
           .attr("cy", function(d) { return d.cy; })
           .attr("r", function(d) { return d.r; })
@@ -242,14 +246,14 @@ d3.box = function() {
                 .style("opacity", .9);      
 
             highlightedSample = d;
-            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Patient + "?Study_ID=" + d.Study_ID
-                + "'>" + d.Patient + "</a><br/>" + 
+            var m = "<a style='text-decoration: underline;' href='/wb/patient/" + d.Label + "?Study_ID=" + d.Study_ID
+                + "'>" + L(d) + "</a><br/>" + 
                 ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
                  + d.Value.toFixed(3);
             toolTip.html(m)
                 .style("left", (d3.event.pageX + 15) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px");    
-            d.ccc = d3.selectAll("." + d.Patient.replace("-", ""))
+            d.ccc = d3.selectAll("." + L(d))
                     .attr("r", function(d) { return 2 *d.r; })
                     .style("stroke", "red")
                     .style("stroke-width", "3")

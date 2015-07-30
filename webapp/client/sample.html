@@ -2,7 +2,7 @@
 
 <div class="around-intro">
     <div class="intro">
-      <h1>Sample Data Fusion Tool</h1>
+      <h1>Data Fusion Tool</h1>
         This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations
         based around using Patient Samples from SU2C and TCGA datasets.
     </div>
@@ -14,6 +14,16 @@
 
 
 <template name="Controls">
+    <div class="panel panel-default">
+      <div class="panel-heading" >
+         <h3 class="panel-title">Focus on</h3>
+         <div class="btn-group" value="{{Join}}" id="focus" role="group" aria-label="...">
+             <button type="button" name="focus" value="Sample_ID" class="btn btn-default">Samples</button>
+             <button type="button" name="focus" value="Gene"      class="btn btn-default">Genes</button>
+         </div>
+      </div>
+    </div>
+
     <div class="panel panel-default">
       <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
 

@@ -135,7 +135,7 @@ BoxPlotChartData = function(pivotData, exclusions) {
                 var value = elem[plotPredicates[0].label];
                 var f = parseFloat(value);
                 var g = { 
-                    Patient: elem.Sample_ID, 
+                    Label: elem.Sample_ID ? elem.Sample_ID : elem.Gene, 
                     Study_ID: elem.Study_ID, 
                     ValueClass: rowLabel,
                     ValueColor: value_color,
