@@ -211,8 +211,10 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                     var geneName = geneData.Hugo_Symbol;
                     var label = geneName + ' ' + domain.labelItem;
                     var sampleID = geneData.sample;
-                    if (sampleID in chartDataMap)
+                    if (sampleID in chartDataMap) {
                         chartDataMap[sampleID][label] = geneData.Variant_Type;
+                    console.log("found", sampleID,label, chartDataMap[sampleID][label]);
+                    }
                 } else if (geneData.gene) {
 
                     var geneName = geneData.gene;
@@ -234,11 +236,16 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                     });
                 } // else if geneData.gene
             }); //cursor.forEach
+
+            // normalizing
+            var labels  = gl.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
             ChartDocument.samplelist.map(function (sampleID) {
                 var datum = chartDataMap[sampleID];
-                var missing = _.difference(gl, Object.keys(datum));
-                missing.map(function(geneName) {
-                    var label = geneName + ' ' + domain.labelItem;
+                var missing = _.difference(labels, Object.keys(datum));
+                if (sampleID ==  "DTB-040")
+                    console.log("normalizing", missing, datum);
+                // console.log("FF", datum.Sample_ID, Object.keys(datum));
+                missing.map(function(label) {
                     datum[label] = "wt";
                 });
             });
