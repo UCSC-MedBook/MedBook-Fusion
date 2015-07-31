@@ -8,7 +8,7 @@ window.DownloadButton = function () {
 }
 
 window.postButton = function () { 
-    var cloned = _.clone(ChartDocument);
+    var cloned = _.clone(Session.get("CurrentChart"));
     delete cloned["_id"];
     delete cloned["userId"];
     cloned.posted = true;

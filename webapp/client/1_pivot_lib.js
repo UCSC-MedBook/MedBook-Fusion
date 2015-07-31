@@ -15,7 +15,7 @@ Meteor.startup(function() {
 
   function preflight(input, subopts) {
      var chartType = $('.pvtRenderer').val();
-     if (chartType  != "Box Plot" && chartType != "Scatter Chart")
+     if (chartType != "Bar Chart" && chartType  != "Box Plot" && chartType != "Scatter Chart")
         return true;
 
      var analysis = {};
@@ -56,6 +56,7 @@ Meteor.startup(function() {
      input.boxplot.rowsAllNumbers = rowsAllNumbers;
      input.boxplot.colsAllNumbers = colsAllNumbers;
 
+
      if (chartType == "Scatter Chart" && 
              (subopts.cols.length == 0 || !allNumbers(extract(subopts.cols[0]))
               ||  subopts.rows.length == 0 || !allNumbers(extract(subopts.rows[0])))) {
@@ -65,6 +66,30 @@ Meteor.startup(function() {
      }
      if (chartType  == "Bar Chart" && !colsAnyNumbers) {
          return false;
+     }
+     if (chartType  == "Bar Chart")
+         subopts.cols.compactLabels = true;
+
+     if (chartType  == "Bar Chart" && colsAllNumbers && subopts.aggregatorName == "Count" && subopts.cols.length == 1) {
+             subopts.cols.compactLabels = true;
+
+             var col = subopts.cols[0];
+             var vals = allColValues[0].map(parseFloat).filter(function(f) { return !isNaN(f) })
+                 .sort(function(a, b){return a-b});
+             if (vals.length > 3) {
+                 var min = vals[0];
+                 var max = vals[vals.length -1];
+                 var range = max - min;
+                 var binWidth = range / 3;
+                 if (binWidth > 1)
+                     binWidth = parseInt(binWidth);
+                 input.map(function(record) {
+                      var v = parseFloat(record[col]);
+                      if (!isNaN(v))
+                          record[col] = v - v % binWidth;
+                 });
+             }
+             return true;
      }
 
      if (chartType  == "Box Plot" && !colsAnyNumbers) {
@@ -294,6 +319,32 @@ Meteor.startup(function() {
           };
         };
       },
+      value: function(formatter) {
+        if (formatter == null) {
+          formatter = usFmt;
+        }
+        return function(_arg) {
+          var attr;
+          attr = _arg[0];
+          return function(data, rowKey, colKey) {
+            return {
+              memo: 0,
+              push: function(record) {
+                GROUPER(this, record, rowKey, colKey);
+                if (!isNaN(parseFloat(record[attr]))) {
+                  this.memo = parseFloat(record[attr]);
+                  return 0;
+                }
+              },
+              value: function() {
+                return this.memo
+              },
+              format: formatter,
+              numInputs: attr != null ? 0 : 1
+            };
+          };
+        };
+      },
       average: function(formatter) {
         if (formatter == null) {
           formatter = usFmt;
@@ -418,6 +469,7 @@ Meteor.startup(function() {
     };
     aggregators = (function(tpl) {
       return {
+        "Value": tpl.value(usFmtInt),
         "Count": tpl.count(usFmtInt),
         "Mean": tpl.average(usFmt),
         "Sum": tpl.sum(usFmt),
@@ -637,13 +689,19 @@ Meteor.startup(function() {
         this.colTotals = {};
         this.allTotal = this.aggregator(this, [], []);
         this.sorted = false;
+        this.saveInput = _.clone(input);
+        var filteredInput = [];
+
         PivotData.forEachRecord(input, opts.derivedAttributes, (function(_this) {
           return function(record) {
             if (opts.filter(record)) {
+              filteredInput.push(record);
               return _this.processRecord(record);
             }
           };
         })(this));
+        debugger;
+        this.input = filteredInput;
       }
 
       PivotData.forEachRecord = function(input, derivedAttributes, f) {
@@ -756,6 +814,26 @@ Meteor.startup(function() {
         this.sortKeys();
         return this.rowKeys;
       };
+      PivotData.prototype.label = function(x, record) {
+          var l = record[x];
+
+          if (this.aggregatorName == "Value")
+              return record.Sample_ID;
+
+          if (this.colAttrs.compactLabels)
+              return l;
+
+          if (x != null && l != null)
+              return  x +":"+ l;
+
+          if (x != null)
+              return  x;
+
+          if (l != null)
+              return  l;
+
+          return "null";
+      }
 
       PivotData.prototype.processRecord = function(record) {
         var colKey, flatColKey, flatRowKey, rowKey, x, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
@@ -764,12 +842,12 @@ Meteor.startup(function() {
         _ref = this.colAttrs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           x = _ref[_i];
-          colKey.push((_ref1 = record[x]) != null ? x +":"+ _ref1 : "null");
+          colKey.push(this.label(x, record));
         }
         _ref2 = this.rowAttrs;
         for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
           x = _ref2[_j];
-          rowKey.push((_ref3 = record[x]) != null ? x +":"+ _ref3 : "null");
+          rowKey.push(this.label(x, record));
         }
         flatRowKey = rowKey.join(String.fromCharCode(0));
         flatColKey = colKey.join(String.fromCharCode(0));
@@ -1011,7 +1089,12 @@ Meteor.startup(function() {
         },
         aggregator: aggregatorTemplates.count()(),
         aggregatorName: "Count",
-        sorters: function() {},
+        sorters: function(attr) {
+            return function(a,b) {
+                console.log(a,b,attr);
+                debugger;
+            }
+        },
         derivedAttributes: {},
         renderer: pivotTableRenderer,
         rendererOptions: null,

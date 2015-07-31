@@ -24,12 +24,28 @@ Meteor.startup(function() {
           aggregationTarget: 'auto',
 
         };
-        opts = $.extend({}, defaults, opts);
+        pts = $.extend({}, defaults, opts);
         rowKeys = pivotData.getRowKeys();
         if (rowKeys.length === 0) {
           rowKeys.push([]);
         }
-        colKeys = pivotData.getColKeys();
+
+        if ($('.pvtRenderer').val() == "Bar Chart" && this.aggregatorName == "Value") {
+            var ns = $.pivotUtilities.naturalSort;
+            var cols = this.cols;
+
+
+            function sortByColumnValue(a,b) {
+                for (var i = 0; i < cols.length; i++) {
+                    var k = cols[i];
+                    return - ns(a[k], b[k]);
+                }
+            }
+            pivotData.input = pivotData.input.sort(sortByColumnValue);
+            colKeys = pivotData.input.map(function(d) { return [d.Sample_ID]; });
+        } else {
+            colKeys = pivotData.getColKeys();
+        }
         if (colKeys.length === 0) {
           colKeys.push([]);
         }
@@ -149,7 +165,6 @@ Meteor.startup(function() {
             var row_label = groupArray[r + 1][0];
             var data = groupArray[r + 1][c];
             console.log("GROUP", col_label, row_label, data);
-            debugger;
             window.POKECONTRAST(data)
         }
 
