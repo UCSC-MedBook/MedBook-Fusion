@@ -471,6 +471,7 @@ Template.Controls.rendered = function() {
                             rows: config.rows,
                             aggregatorName: config.aggregatorName,
                             rendererName: config.rendererName,
+                            exclusions: config.exclusions,
                         };
 
                         delete ChartDocument["_id"];
