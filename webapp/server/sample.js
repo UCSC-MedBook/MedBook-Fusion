@@ -199,10 +199,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
           .filter(function(domain) {return domain.state})
           .map(function(domain) {
             var query = {Study_ID:{$in: ChartDocument.studies}};
-            query[domain.queryField || "gene"] = {$in: gl};
+            var qf = domain.label == "Mutations" ? "Hugo_Symbol" : "gene";
+            query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("GeneLikeDomain", domain.collection, query, cursor.count());
+            console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
 
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
@@ -233,6 +234,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                     });
                 } // else if geneData.gene
             }); //cursor.forEach
+            ChartDocument.samplelist.map(function (sampleID) {
+                var datum = chartDataMap[sampleID];
+                var missing = _.difference(gl, Object.keys(datum));
+                missing.map(function(geneName) {
+                    var label = geneName + ' ' + domain.labelItem;
+                    datum[label] = "wt";
+                });
+            });
           }); // .map 
     } // if gld 
 
