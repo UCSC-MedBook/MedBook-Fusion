@@ -1,0 +1,18 @@
+<template name="BoxPlotContrastTable">
+<table class="table table-responsive">
+    <thead><tr><th>Group</th><th>Samples</th></tr></thead>
+    <tbody>
+    {{#each this.contrast.groups}}
+    <tr>
+        <td>{{this.name}}</td>
+        <td>
+            {{#each this.samplelist}}
+            <a style='text-decoration: underline;' href='/wb/patient/{{Patient}}?Study_ID={{Study_ID}}'>{{Patient}}</a>
+            {{/each}}
+        </td>
+    </tr>
+    {{/each}}
+    </tbody>
+</table>
+
+</template>

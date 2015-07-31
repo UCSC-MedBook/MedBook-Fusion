@@ -1,0 +1,48 @@
+.box {
+  font: 10px sans-serif;
+}
+
+
+gLegendItem-symbol,
+.box line,
+.box circle {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1;
+}
+
+.box rect {
+  stroke-width:2;
+  stroke: #000;
+  fill: transparent;
+}
+
+.box .center {
+  stroke-dasharray: 3,3;
+}
+
+.median {
+  stroke: red;
+  stroke-width:1;
+}
+.positive { color:pink; }
+.negative { color:blue; }
+
+.box .outlier {
+  fill: none;
+  stroke: #ccc;
+}
+
+div.tooltip {   
+    position: absolute;           
+    text-align: center;           
+    width: 220px;                  
+    min-height: 68px;                 
+    margin: 10px;
+    height: auto;
+    padding: 2px;             
+    font: 18px sans-serif;        
+    background: lightsteelblue;   
+    border: 0px;      
+    border-radius: 8px;           
+}

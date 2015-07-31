@@ -1,0 +1,186 @@
+<template name="SampleFusion">
+
+<div class="around-intro">
+    <div class="intro">
+      <h1>Data Fusion Tool</h1>
+        This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations
+        based around using Patient Samples from SU2C and TCGA datasets.
+    </div>
+</div>
+
+    {{> Controls }}
+
+</template>
+
+
+<template name="Controls">
+<!--
+    <div class="panel panel-default">
+      <div class="panel-heading" >
+         <h3 class="panel-title">Focus on</h3>
+         <div class="btn-group" value="{{Join}}" id="focus" role="group" aria-label="...">
+             <button type="button" name="focus" value="Sample_ID" class="btn btn-default">Samples</button>
+             <button type="button" name="focus" value="Gene"      class="btn btn-default">Genes</button>
+         </div>
+      </div>
+    </div>
+
+-->
+    <div class="panel panel-default">
+      <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
+
+          <h3 class="panel-title">1. Select Studies (required)</h3>
+       </div>
+       <div id="p1" class="panel-body collapse">
+         <select id="studies"  multiple="multiple">
+            {{#each studies}}
+               <option value="{{this.id}}">{{this.name}}</option>
+            {{/each}}
+         </select>
+         <div>
+
+             {{> reactiveTable showNavigation="auto" fields=["id", "description"]
+                  settings=studiesSelectedSettings class="studiesSelectedTable"
+                  collection=studiesSelected rowsPerPage=20 class="studiesSelectedTable table borderless" }}
+         </div>
+       </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading" data-toggle="collapse" data-target="#p2">
+          <h3 class="panel-title">2. Select Genes (optional)
+          </h3>
+       </div>
+       <div id="p2" class="panel-body collapse">
+           <input value="{{genelist}}" class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+              <span>
+              <button id="clear">Clear Gene List</button>
+            <label>Gene List</label>
+            <select id="genesets" multiple>
+                <optGroup label="">>
+                    <option style="display:none;" value="" disabled selected>Select your geneset</option>
+                </optGroup>
+               {{{genesets}}}
+            </select>
+              <button id="clear">All Genes In</button>
+              <br>
+
+              <button class="topMutatedGenes" style="margin-top: 5px;">Select from top mutated genes</button>
+              </span>
+        {{>checkBox list=geneLikeDataDomains}}
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"  data-toggle="collapse" data-target="#p3">
+          <h3 class="panel-title">3. Include additional Clinical Report Forms and other data (optional)</h3>
+       </div>
+       <div id="p3" class="panel-body collapse">
+         <select id="additionalQueries"  multiple="multiple">
+            {{{additionalQueries}}}
+        </select>
+       </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Filter to these Patients or Samples (optional)</h3>
+       </div>
+       <div id="p4" class="panel-body collapse">
+              <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title"  data-toggle="collapse" data-target="#p5" >5. Rename, BIN or Transform the data</h3>
+       </div>
+       <div id="p5" class="panel-body collapse">
+            {{> Transforms }}
+        </div>
+    </div>
+
+    <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="output" style="margin: 30px;"></div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"  data-toggle="collapse" data-target="#pb">
+          <h3 class="panel-title">Box Plot Contrast</h3>
+       </div>
+       <div id="pb" class="panel-body collapse">
+            {{> BoxPlotContrastTable}}
+       </div>
+    </div>
+
+
+    {{#with dipsc}}
+        <div class="panel panel-default">
+          <div id="pb" class="panel-body">
+            <div class="leftdiv" style="font-size:5" >
+                Most important correlations:
+                {{>Picker data=mostImportantCorrelations settings=mostImportantCorrelationsFields}}
+            </div>
+            <div class="rightdiv">
+                {{> DIPSC}}
+            </div>
+          </div>
+        </div>
+    {{/with}}
+
+
+</template>
+
+<template name="Transforms">
+ <table class="table table-striped">
+     {{#each dataFieldNames}}
+     <tr>
+         <td>
+                {{this}}&nbsp;
+         </td>
+
+         <td>
+                <span>rename to
+                    <input name="{{this}}" data-op="rename" data-precedence=2 data-field={{this}} class="transform" type="text">
+                </span>
+         </td>
+
+         <td>
+                <span>Bin it
+                    <input style="width:40px;" name="{{this}}" data-op="bin" data-precedence=1 data-field={{this}} class="transform" type="number">
+                </span>
+         </td>
+     </tr>
+     {{/each}}
+  </table>
+ </template>
+
+
+<template name="checkBox">
+    {{#each list}}
+      <span class="checkbox">
+          <label>
+                <input name="{{this.checkBoxName}}" data-field={{this.field}} 
+                data-collection={{this.collection}} 
+                {{checked}}
+                class="geneLikeDataDomains" type="checkbox">{{this.label}}
+          </label>
+          <br>
+      </span>
+    {{/each}}
+
+  {{renderChart}}
+</template>
+
+
+<template name="charts">
+  <h2>Charts</h2>
+  <div id="chart1" width="100%"></div>
+  <input id="slider" type="range"/>
+</template>
+
+<template name="gene_set">
+  <h2>Geneset</h2>
+  <div id="chart1" width="100%"></div>
+</template>
+
