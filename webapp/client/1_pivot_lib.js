@@ -690,7 +690,9 @@ Meteor.startup(function() {
         this.allTotal = this.aggregator(this, [], []);
         this.sorted = false;
         this.saveInput = _.clone(input);
+        this.saveInput.boxplot = input.boxplot;
         var filteredInput = [];
+        filteredInput.boxplot = input.boxplot;
 
         PivotData.forEachRecord(input, opts.derivedAttributes, (function(_this) {
           return function(record) {
