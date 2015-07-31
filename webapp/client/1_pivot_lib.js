@@ -702,7 +702,6 @@ Meteor.startup(function() {
             }
           };
         })(this));
-        debugger;
         this.input = filteredInput;
       }
 
@@ -1094,7 +1093,7 @@ Meteor.startup(function() {
         sorters: function(attr) {
             return function(a,b) {
                 console.log(a,b,attr);
-                debugger;
+                // debugger;
             }
         },
         derivedAttributes: {},

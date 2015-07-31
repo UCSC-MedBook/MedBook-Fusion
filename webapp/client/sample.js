@@ -520,6 +520,7 @@ renderChart = function() {
                     rows: config.rows,
                     aggregatorName: config.aggregatorName,
                     rendererName: config.rendererName,
+                    exclusions: config.exclusions,
                 };
                 Charts.update(currentChart._id, { $set: {pivotTableConfig: currentChart.pivotTableConfig}});
             }

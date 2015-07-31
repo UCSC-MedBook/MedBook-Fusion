@@ -121,8 +121,6 @@ BoxPlotChartData = function(pivotData, exclusions) {
             for (var p = 0; good && p < rowCategoricalVariables.length; p++) {
                 var deciders = rowCategoricalVariables[p].deciders;
                 var oneIsGood = false;
-                if (elem.Sample_ID == "DTB-132")
-                    debugger;
                 for (var q = 0; good && q < deciders.length; q++) {
                     if (deciders[q](elem)) {
                         oneIsGood = true;
