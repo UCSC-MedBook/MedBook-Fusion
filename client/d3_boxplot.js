@@ -22,7 +22,6 @@ function processStrata(strata, strataSampleSets, $div) {
     var sub = Meteor.subscribe("QuickR", forTtest);
 
     whendone = function(foo, bar) {
-        debugger;
         QuickR.find({_id: forTtest}).observe({changed:function(newDoc, oldDoc) {
             var $table = $("<table class='table borderless'>").appendTo($div);
             var strataLabels = Object.keys(strata).sort();
@@ -91,7 +90,8 @@ BoxPlotChartData = function(pivotData, exclusions) {
         else  {
             columnCategoricalVariables.push(
                 boxPlot.allColValues[nthColumn]
-                .filter(function(value) { return !(label in exclusions && exclusions[label].indexOf(value) >= 0); })
+                .filter(function(value) { 
+                    return !(label in exclusions && exclusions[label].indexOf(value) >= 0); })
                 .map(
                   function (value) { 
                       return ({ label: label+":"+value, decide: function(elem) { return elem[label] == value; } });
@@ -121,6 +121,8 @@ BoxPlotChartData = function(pivotData, exclusions) {
             for (var p = 0; good && p < rowCategoricalVariables.length; p++) {
                 var deciders = rowCategoricalVariables[p].deciders;
                 var oneIsGood = false;
+                if (elem.Sample_ID == "DTB-132")
+                    debugger;
                 for (var q = 0; good && q < deciders.length; q++) {
                     if (deciders[q](elem)) {
                         oneIsGood = true;
@@ -129,10 +131,10 @@ BoxPlotChartData = function(pivotData, exclusions) {
                 if (oneIsGood) {
                     rowLabel = rowCategoricalVariables[p].text;
                     value_color = rowCategoricalVariables[p].color;
-                }
+                } 
             }
 
-            if (good) {
+            if (good && (rowCategoricalVariables.length == 0 || value_color != null)) {
                 var value = elem[plotPredicates[0].label];
                 var f = parseFloat(value);
                 var g = { 
