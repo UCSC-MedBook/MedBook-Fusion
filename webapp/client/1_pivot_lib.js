@@ -1329,6 +1329,8 @@ Meteor.startup(function() {
             } else {
               attrElem.removeClass("pvtFilteredAttribute");
             }
+            if (opts.onRefresh != null) 
+              opts.onRefresh(inputOpts);
             if (keys.length > opts.menuLimit) {
               return valueList.toggle();
             } else {
@@ -1351,7 +1353,11 @@ Meteor.startup(function() {
           if (hasExcludedItem) {
             attrElem.addClass('pvtFilteredAttribute');
           }
-          colList.append(attrElem).append(valueList);
+          // colList.append(attrElem).append(valueList);
+          // TG: Critical change: I want valueList to be under the attrElem so that where the button is tells us whether it is operational our not. Specifically this allows us to do a find(".pvtUsed")  
+          attrElem.append(valueList);
+          colList.append(attrElem);
+
           return attrElem.bind("dblclick", showFilterList);
         };
 
@@ -1377,9 +1383,9 @@ Meteor.startup(function() {
           aggregator.append($("<option>").val(x).html(x));
         }
         $("<td>").addClass('pvtVals').appendTo(tr1).append(aggregator).append($("<br>"));
-        $("<td>").addClass('pvtAxisContainer pvtHorizList pvtCols').appendTo(tr1);
+        $("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtHorizList pvtCols').appendTo(tr1);
         tr2 = $("<tr>").appendTo(uiTable);
-        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows').attr("valign", "top"));
+        tr2.append($("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtRows').attr("valign", "top"));
         pivotTable = $("<td>").attr("valign", "top").addClass('pvtRendererArea').appendTo(tr2);
         if (opts.unusedAttrsVertical === true || unusedAttrsVerticalAutoOverride) {
           uiTable.find('tr:nth-child(1)').prepend(rendererControl);
@@ -1461,7 +1467,7 @@ Meteor.startup(function() {
             subopts.aggregator = opts.aggregators[aggregator.val()](vals);
             subopts.renderer = opts.renderers[renderer.val()];
             exclusions = {};
-            _this.find('input.pvtFilter').not(':checked').each(function() {
+            _this.find(".pvtUsed").find('input.pvtFilter').not(':checked').each(function() {
               var filter;
               filter = $(this).data("filter");
               if (exclusions[filter[0]] != null) {

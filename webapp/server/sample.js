@@ -237,18 +237,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 } // else if geneData.gene
             }); //cursor.forEach
 
-            // normalizing
-            var labels  = gl.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
-            ChartDocument.samplelist.map(function (sampleID) {
-                var datum = chartDataMap[sampleID];
-                var missing = _.difference(labels, Object.keys(datum));
-                if (sampleID ==  "DTB-040")
-                    console.log("normalizing", missing, datum);
-                // console.log("FF", datum.Sample_ID, Object.keys(datum));
-                missing.map(function(label) {
-                    datum[label] = "wt";
+            //  Samples without mutations need to have a wt
+            if (domain.label == "Mutations") {
+                var labels  = gl.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
+                ChartDocument.samplelist.map(function (sampleID) {
+                    var datum = chartDataMap[sampleID];
+                    labels.map(function(label) {
+                        if (!(label in datum))
+                            datum[label] = "wt";
+                    });
                 });
-            });
+            }
           }); // .map 
     } // if gld 
 
