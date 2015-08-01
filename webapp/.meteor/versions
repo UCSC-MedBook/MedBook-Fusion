@@ -5,6 +5,8 @@ accounts-password@1.1.1
 accounts-ui@1.1.5
 accounts-ui-unstyled@1.1.7
 ajduke:bootstrap-tagsinput@0.6.0
+aldeed:autoform@5.3.2
+aldeed:simple-schema@1.1.0
 anti:i18n@0.4.3
 aslagle:reactive-table@0.8.0
 autoupdate@1.2.1
@@ -55,6 +57,7 @@ mizzao:bootstrap-3@3.3.1_1
 mizzao:build-fetcher@0.2.0
 mizzao:jquery-ui@1.11.2
 mobile-status-bar@1.0.3
+momentjs:moment@2.8.4
 mongo@1.1.0
 mongo-livedata@1.0.8
 mrt:jquery-ui@1.9.2
@@ -79,6 +82,7 @@ spacebars-compiler@1.0.6
 srp@1.0.3
 templating@1.1.1
 tracker@1.0.7
+ucscmedbook:api@0.2.3
 ui@1.0.6
 underscore@1.0.3
 url@1.0.4
