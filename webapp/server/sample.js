@@ -229,8 +229,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                         var f = parseFloat(geneData.samples[sampleID][domain.field]);
                         if (!isNaN(f)) {
                             if (sampleID in chartDataMap) {
-                                if (f != 0.0)
-                                    chartDataMap[sampleID][label] = f;
+                    //            if (f != 0.0)  KEEP ZERO
+                                chartDataMap[sampleID][label] = f;
+                                console.log("cdm", sampleID, label, f);
                             }
                         }
                     });
