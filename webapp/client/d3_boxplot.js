@@ -317,7 +317,8 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
                   });
        var backdrop = nestedG.append("rect").attr({ "class": "backdrop", x :  0, y: 0, 
                width: width, height: height});
-       backdrop.style("fill", "transprent");
+       backdrop.style("fill", "transparent");
+       backdrop.attr("fill", "transparent");
        // backdrop.style("fill-opacity", "0.5");
 
 
