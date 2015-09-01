@@ -146,21 +146,20 @@ Template.Controls.helpers({
       return {
         rowsPerPage: 10,
         showFilter: false,
-        fields: [ "id", "description",
-        /*
-           The description field is in HTML. But this recipe for displaying HTML in reactive table
-           causes an error in the console log.  Need a better recipe.
-
-            { key: 'id' }, 
+        fields: [ "id", "description", 
+            /*
+            { key: 'id',
+              label: 'ID',
+            }, 
             {
               key: 'description',
+              label: 'Description',
               fn: function (value) { 
                   // return new Spacebars.SafeString(value);
                   return value;
               }
-            }
-            */
-       ],
+            }*/
+       ]
     };
    },
 
