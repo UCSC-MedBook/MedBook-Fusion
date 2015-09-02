@@ -47,6 +47,25 @@ topMutatedGenes = function() {
        ] );
    return results;
 };
+topMutatedGenesOHSU = function() {
+   var results = Mutations.aggregate(  [
+           // { $match: {$not: {sample: {$regex: "LNCAP.*" }}}},
+           { $match: 
+               { $or: [ 
+                    {"effect_impact":"MODIFIER"},
+                    {"effect_impact":"MODERATE"},
+                    {"effect_impact":"HIGH"},
+                ]}},
+           { $project: { sample_label:1, gene_label: 1}},
+           { $group: { _id: "$gene_label", coll: { $addToSet: "$sample_label" } }},
+           { $project: { gene: "$_id", coll: "$coll", count: {$size: "$coll" }}},
+           { $match: {count: { $gt: 1}}},
+           { $sort: {count:-1}},
+
+       ] );
+   return results;
+};
+
 
 summarizeVariances = function(collName) {
     var start = new Date();
