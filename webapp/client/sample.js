@@ -137,7 +137,7 @@ Template.Controls.helpers({
     
      var studies = CurrentChart("studies");
      if (studies && studies.length > 0)
-        return Studies.find({id: {$in: studies }}, {sort: {"name":1}});
+        return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
      else
         return [];
    },
@@ -165,7 +165,7 @@ Template.Controls.helpers({
    },
 
    studies : function() {
-      return Studies.find({}, {sort: {"name":1}});
+      return Collections.studies.find({}, {sort: {"name":1}});
    },
    genesets : function() {
        var html = '';
@@ -193,7 +193,7 @@ Template.Controls.helpers({
    },
    additionalQueries : function() {
        var html = '';
-       CRFmetadataCollection.find({}).forEach(function(vv) {
+       Collections.Metadata.find({}).forEach(function(vv) {
            var collName = vv.name;
            html += '<optGroup label="'+ collName +'">';
 

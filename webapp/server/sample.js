@@ -176,7 +176,13 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
 
     q.Study_ID = {$in:ChartDocument.studies}; 
-    var chartData = CRFmetadataCollectionMap.Clinical_Info.find(q).fetch();
+    q.CRF = "Clinical_Info";
+    var chartData = Collections.CRFs.find(q).fetch();
+    /*
+    charData.map(function(cd) {
+       delete cd["CRF"];
+    })
+    */
 
 
     var chartDataMap = {};
@@ -261,12 +267,10 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              var collName = query.c;
              var fieldName = query.f;
 
-             if (!(collName in CRFmetadataCollectionMap))
-                 CRFmetadataCollectionMap[collName]  = new Meteor.Collection(collName);
 
              var fl = {};
              fl[fieldName] = 1;
-             CRFmetadataCollectionMap[collName].find({}, fl).forEach(function(doc) {
+             Collections.CRFs.find({CRF:collName}, fl).forEach(function(doc) {
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                      chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
                  } else {
@@ -331,8 +335,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
 Meteor.startup(function() {
-    CRFmetadataCollectionMap.Clinical_Info = new Meteor.Collection("Clinical_Info");
-
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
         console.log("Join", ChartDocument.Join)
         if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")

@@ -1,6 +1,6 @@
 
 Meteor.publish('studies', function() {
-    return Studies.find({});
+    return Collections.studies.find({});
 });
 Meteor.publish('DIPSC', function(_id) {
     var cursor = DIPSC_coll.find({_id: _id});
@@ -76,9 +76,9 @@ function assure(userId, collaborations)  {
         console.log('concat',user_record.profile.collaborations)
         collaborations = collaborations.concat(user_record.profile.collaborations)
     }
-    var cnt = Studies.find({collaborations: {$in: collaborations}}).count();
+    var cnt = Collections.studies.find({collaborations: {$in: collaborations}}).count();
     console.log ('member of',cnt, 'study based on ',collaborations)
-    return Studies.find({collaborations: {$in: collaborations}});
+    return Collections.studies.find({collaborations: {$in: collaborations}});
 }
 */
 
@@ -116,7 +116,7 @@ Meteor.publish('GeneSets', function() {
 });
 
 Meteor.publish('Metadata', function() {
-    var cursor =  CRFmetadataCollection.find({}, { sort: {"name":1}});
+    var cursor =  Collections.Metadata.find({}, { sort: {"name":1}});
     console.log("Metadata publish", cursor.count());
     return cursor;
 });

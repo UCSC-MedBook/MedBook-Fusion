@@ -50,7 +50,7 @@ Template.MasterLayout.helpers({
 		}	
 	},
 	studies: function() {
-		return Studies.find({},{sort: {short_name:1}});		
+		return Collections.studies.find({},{sort: {short_name:1}});		
 	},
 	selected: function(){
 		if (Session.get('studyID') == this.id) 
